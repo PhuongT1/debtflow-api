@@ -1,6 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
-import { UserRole, UserStatus } from '@generated/prisma';
+import { OrganizationRole, UserStatus } from '@generated/prisma';
 
 export class QueryUsersDto extends PaginationQueryDto {
   @IsOptional()
@@ -8,8 +8,8 @@ export class QueryUsersDto extends PaginationQueryDto {
   q?: string;
 
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsEnum(OrganizationRole)
+  role?: OrganizationRole;
 
   @IsOptional()
   @IsEnum(UserStatus)

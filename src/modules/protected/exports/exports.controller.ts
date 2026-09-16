@@ -1,6 +1,8 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import ExcelJS from 'exceljs';
 import type { Response } from 'express';
+import { CurrentUser } from '@auth/current-user.decorator';
+import type { JwtAuthPayload } from '@auth/jwt-auth.guard';
 import { ProtectedApi } from '@auth/auth-api.decorator';
 import { DEFAULT_PAGE, MAX_PAGE_SIZE } from '@common/constants/pagination.constants';
 import { SkipApiResponse } from '@common/decorators/api-response.decorator';
@@ -13,8 +15,8 @@ export class ExportsController {
   constructor(private readonly debtsService: DebtsService) {}
 
   @Get('debts')
-  async debts(@Query() query: Record<string, string | undefined>, @Res() response: Response) {
-    const debts = await this.debtsService.list({
+  async debts(@CurrentUser() user: JwtAuthPayload, @Query() query: Record<string, string | undefined>, @Res() response: Response) {
+    const debts = await this.debtsService.list(user.organizationId, {
       ...query,
       page: DEFAULT_PAGE,
       pageSize: MAX_PAGE_SIZE,

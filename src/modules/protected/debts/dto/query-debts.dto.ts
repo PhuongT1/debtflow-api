@@ -1,6 +1,6 @@
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
-import { CollectionStatus, DebtStatus, DebtType } from '@generated/prisma';
+import { CollectionStatus, DebtStatus, DebtType, SalesChannel } from '@generated/prisma';
 
 export class QueryDebtsDto extends PaginationQueryDto {
   @IsOptional()
@@ -25,6 +25,26 @@ export class QueryDebtsDto extends PaginationQueryDto {
 
   @IsOptional()
   @IsString()
+  provinceCode?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  brandId?: string;
+
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
+  @IsOptional()
+  @IsEnum(SalesChannel)
+  salesChannel?: SalesChannel;
+
+  @IsOptional()
+  @IsString()
   assignedToId?: string;
 
   @IsOptional()
@@ -44,6 +64,18 @@ export class QueryDebtsDto extends PaginationQueryDto {
   dueDate?: string;
 
   @IsOptional()
-  @IsString()
-  overdue?: string;
+  @IsDateString()
+  dueDateFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dueDateTo?: string;
+
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  overdue?: 'true' | 'false';
+
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  outstanding?: 'true' | 'false';
 }

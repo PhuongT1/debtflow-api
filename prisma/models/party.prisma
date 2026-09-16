@@ -6,13 +6,16 @@ enum PartyType {
 
 model Party {
   id           String   @id @default(cuid())
+  organizationId String
   type         PartyType
-  code         String?  @unique
+  code         String?
   name         String
   phone        String?
   email        String?
   taxCode      String?
   address      String?
+  provinceCode String?
+  provinceName String?
   address2     String?
   note         String?
   creditLimit  Decimal? @db.Decimal(18, 2)
@@ -22,13 +25,17 @@ model Party {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   createdBy  User?  @relation("PartyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   assignedTo User?  @relation("PartyAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
   debts      Debt[]
+  payments   Payment[] @relation("PartyPayments")
   imageUrl   String?
 
-  @@index([name])
+  @@unique([organizationId, code])
+  @@index([organizationId, name])
   @@index([type])
   @@index([isActive])
   @@index([assignedToId])
+  @@index([provinceCode])
 }

@@ -1,23 +1,2 @@
-import { Controller, Delete, Get, Param, Query } from '@nestjs/common';
-import { ProtectedApi } from '@auth/auth-api.decorator';
-import { Roles } from '@auth/roles.decorator';
-import { UserRole } from '@generated/prisma';
-import { PaymentsService } from './payments.service';
-import { QueryPaymentsDto } from './dto/query-payments.dto';
-
-@ProtectedApi()
-@Controller('payments')
-export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
-
-  @Get()
-  list(@Query() query: QueryPaymentsDto) {
-    return this.paymentsService.list(query);
-  }
-
-  @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.ACCOUNTANT)
-  remove(@Param('id') id: string) {
-    return this.paymentsService.remove(id);
-  }
-}
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common'; import { CurrentUser } from '@auth/current-user.decorator'; import { ProtectedApi } from '@auth/auth-api.decorator'; import type { JwtAuthPayload } from '@auth/jwt-auth.guard'; import { Roles } from '@auth/roles.decorator'; import { OrganizationRole } from '@generated/prisma'; import { PaymentsService } from './payments.service'; import { QueryPaymentsDto } from './dto/query-payments.dto'; import { CreateAllocatedPaymentDto } from './dto/create-allocated-payment.dto';
+@ProtectedApi() @Controller('payments') export class PaymentsController {constructor(private readonly service:PaymentsService){} @Get() list(@CurrentUser()u:JwtAuthPayload,@Query()q:QueryPaymentsDto){return this.service.list(q,u.organizationId)} @Post('auto-allocate') @Roles(OrganizationRole.OWNER,OrganizationRole.ADMIN,OrganizationRole.ACCOUNTANT) create(@CurrentUser()u:JwtAuthPayload,@Body()b:CreateAllocatedPaymentDto){return this.service.createAutoAllocated(b,u.organizationId,u.sub)} @Delete(':id') @Roles(OrganizationRole.OWNER,OrganizationRole.ADMIN,OrganizationRole.ACCOUNTANT) remove(@CurrentUser()u:JwtAuthPayload,@Param('id')id:string){return this.service.remove(id,u.organizationId)} }

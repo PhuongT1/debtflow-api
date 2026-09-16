@@ -20,7 +20,8 @@ enum CollectionStatus {
 
 model Debt {
   id               String           @id @default(cuid())
-  code             String           @unique
+  organizationId   String
+  code             String
   type             DebtType
   partyId          String
   assignedToId     String?
@@ -33,6 +34,7 @@ model Debt {
   originalAmount   Decimal          @db.Decimal(18, 2)
   paidAmount       Decimal          @default(0) @db.Decimal(18, 2)
   currency         String           @default("VND")
+  salesChannel     SalesChannel?
   issueDate        DateTime
   dueDate          DateTime
   status           DebtStatus       @default(OPEN)
@@ -43,16 +45,20 @@ model Debt {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   party      Party     @relation(fields: [partyId], references: [id], onDelete: Restrict)
   assignedTo User?     @relation("DebtAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdBy  User?     @relation("DebtCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  payments   Payment[]
+  paymentAllocations PaymentAllocation[]
+  items      DebtItem[]
 
-  @@index([type])
+  @@unique([organizationId, code])
+  @@index([organizationId, type, status])
   @@index([status])
   @@index([collectionStatus])
   @@index([dueDate])
   @@index([nextFollowUpAt])
   @@index([partyId])
   @@index([assignedToId])
+  @@index([salesChannel])
 }

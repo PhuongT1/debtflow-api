@@ -34,6 +34,14 @@ export class CreatePartyDto {
   note?: string;
 
   @IsOptional()
+  @IsString()
+  provinceCode?: string;
+
+  @IsOptional()
+  @IsString()
+  provinceName?: string;
+
+  @IsOptional()
   @IsNumberString()
   creditLimit?: string;
 

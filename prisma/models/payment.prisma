@@ -6,7 +6,9 @@ enum PaymentMethod {
 
 model Payment {
   id          String        @id @default(cuid())
-  debtId      String
+  organizationId String
+  partyId     String
+  type        DebtType
   amount      Decimal       @db.Decimal(18, 2)
   paidAt      DateTime
   method      PaymentMethod @default(BANK_TRANSFER)
@@ -15,9 +17,25 @@ model Payment {
   createdById String?
   createdAt   DateTime      @default(now())
 
-  debt      Debt  @relation(fields: [debtId], references: [id], onDelete: Restrict)
-  createdBy User? @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  party       Party               @relation("PartyPayments", fields: [partyId], references: [id], onDelete: Restrict)
+  allocations PaymentAllocation[]
+  createdBy   User?               @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
-  @@index([debtId])
+  @@index([organizationId, partyId, type, paidAt])
   @@index([paidAt])
+}
+
+model PaymentAllocation {
+  id        String   @id @default(cuid())
+  paymentId String
+  debtId    String
+  amount    Decimal  @db.Decimal(18, 2)
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  debt    Debt    @relation(fields: [debtId], references: [id], onDelete: Restrict)
+
+  @@unique([paymentId, debtId])
+  @@index([debtId])
 }

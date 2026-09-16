@@ -1,6 +1,18 @@
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
-import { PartyType } from '@generated/prisma';
+import { DebtType, PartyType } from '@generated/prisma';
+
+export enum PartySummarySortBy {
+  NAME = 'name',
+  OUTSTANDING_DOCUMENTS = 'outstandingDocuments',
+  RECEIVABLE = 'receivable',
+  PAYABLE = 'payable',
+}
+
+export enum SortOrder {
+  ASC = 'asc',
+  DESC = 'desc',
+}
 
 export class QueryPartiesDto extends PaginationQueryDto {
   @IsOptional()
@@ -14,6 +26,18 @@ export class QueryPartiesDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   assignedToId?: string;
+
+  @IsOptional()
+  @IsEnum(DebtType)
+  balanceType?: DebtType;
+
+  @IsOptional()
+  @IsEnum(PartySummarySortBy)
+  sortBy?: PartySummarySortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sortOrder?: SortOrder;
 
   @IsOptional()
   @IsIn(['today', 'last_7_days', 'this_month'])

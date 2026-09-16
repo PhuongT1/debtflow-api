@@ -1,0 +1,86 @@
+enum SalesChannel {
+  STORE
+  ONLINE
+  WHOLESALE
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  organizationId String
+  code      String
+  name      String
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  products Product[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive, sortOrder])
+  @@index([name])
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  organizationId String
+  code      String
+  name      String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  products Product[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([name])
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  organizationId String
+  code       String
+  name       String
+  categoryId String
+  brandId    String?
+  unit       String   @default("Cái")
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brand     Brand?    @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  debtItems DebtItem[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, categoryId])
+  @@index([brandId])
+  @@index([isActive])
+  @@index([name])
+}
+
+model DebtItem {
+  id           String   @id @default(cuid())
+  debtId       String
+  productId    String?
+  productCode  String?
+  productName  String
+  categoryName String?
+  brandName    String?
+  quantity     Decimal  @default(1) @db.Decimal(14, 3)
+  unit         String   @default("Cái")
+  unitPrice    Decimal  @db.Decimal(18, 2)
+  lineAmount   Decimal  @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  debt    Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([debtId])
+  @@index([productId])
+}

@@ -7,8 +7,8 @@ import { DebtsService } from '@modules/protected/debts/debts.service';
 export class ReportsService {
   constructor(private readonly debtsService: DebtsService) {}
 
-  async aging(query: Record<string, string | undefined>) {
-    const debts = await this.debtsService.list({
+  async aging(query: Record<string, string | undefined>, organizationId = 'org_legacy_debtflow') {
+    const debts = await this.debtsService.list(organizationId, {
       ...query,
       page: DEFAULT_PAGE,
       pageSize: MAX_PAGE_SIZE,

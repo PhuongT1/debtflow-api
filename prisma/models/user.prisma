@@ -1,12 +1,37 @@
-enum UserRole {
-  ADMIN
-  ACCOUNTANT
-  VIEWER
+enum SystemRole {
+  USER
+  PLATFORM_OWNER
+  PLATFORM_SUPPORT
 }
 
 enum UserStatus {
   ACTIVE
   INACTIVE
+}
+
+enum OrganizationKind {
+  PERSONAL
+  BUSINESS
+}
+
+enum OrganizationStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  ACCOUNTANT
+  VIEWER
+}
+
+enum OrganizationMembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
 }
 
 model User {
@@ -15,15 +40,62 @@ model User {
   email        String     @unique
   phone        String?    @unique
   passwordHash String?
-  role         UserRole   @default(VIEWER)
+  systemRole   SystemRole @default(USER)
   status       UserStatus @default(ACTIVE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  parties         Party[]    @relation("PartyCreatedBy")
-  assignedParties Party[]    @relation("PartyAssignedTo")
-  debts           Debt[]     @relation("DebtCreatedBy")
-  assignedDebts   Debt[]     @relation("DebtAssignedTo")
-  payments        Payment[]  @relation("PaymentCreatedBy")
-  auditLogs       AuditLog[] @relation("AuditActor")
+  memberships          OrganizationMembership[]
+  createdOrganizations Organization[] @relation("OrganizationCreatedBy")
+  parties              Party[]    @relation("PartyCreatedBy")
+  assignedParties      Party[]    @relation("PartyAssignedTo")
+  debts                Debt[]     @relation("DebtCreatedBy")
+  assignedDebts        Debt[]     @relation("DebtAssignedTo")
+  payments             Payment[]  @relation("PaymentCreatedBy")
+  auditLogs            AuditLog[] @relation("AuditActor")
+}
+
+model Organization {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  kind        OrganizationKind
+  status      OrganizationStatus @default(ACTIVE)
+  taxCode     String?
+  address     String?
+  createdById String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  createdBy   User? @relation("OrganizationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  memberships OrganizationMembership[]
+  parties     Party[]
+  debts       Debt[]
+  payments    Payment[]
+  auditLogs   AuditLog[]
+  categories  Category[]
+  brands      Brand[]
+  products    Product[]
+
+  @@index([status])
+  @@index([kind])
+}
+
+model OrganizationMembership {
+  id             String                       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole             @default(VIEWER)
+  status         OrganizationMembershipStatus @default(INVITED)
+  invitedAt      DateTime?
+  joinedAt       DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId, status])
+  @@index([organizationId, role, status])
 }

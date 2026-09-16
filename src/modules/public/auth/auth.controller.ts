@@ -1,9 +1,12 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { PublicApi } from '@auth/auth-api.decorator';
+import { CurrentUser } from '@auth/current-user.decorator';
+import { PublicApi, ProtectedApi } from '@auth/auth-api.decorator';
+import type { JwtAuthPayload } from '@auth/jwt-auth.guard';
 import { AuthService } from '@auth/auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SwitchOrganizationDto } from './dto/switch-organization.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -18,6 +21,12 @@ export class AuthController {
   @Post('login')
   login(@Body() body: LoginDto) {
     return this.authService.login(body);
+  }
+
+  @ProtectedApi()
+  @Post('switch-organization')
+  switchOrganization(@CurrentUser() user: JwtAuthPayload, @Body() body: SwitchOrganizationDto) {
+    return this.authService.switchOrganization(user.sub, body.organizationId);
   }
 
   @ApiOperation({ summary: 'Làm mới access token bằng refresh token' })

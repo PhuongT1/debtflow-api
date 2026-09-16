@@ -1,12 +1,16 @@
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
-import { DebtType } from '@generated/prisma';
+import { DebtType, SalesChannel } from '@generated/prisma';
+import { Type } from 'class-transformer';
+import { CreateDebtItemDto } from './create-debt-item.dto';
 
 export class CreateDebtDto {
   @IsEnum(DebtType)
@@ -43,6 +47,16 @@ export class CreateDebtDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsEnum(SalesChannel)
+  salesChannel?: SalesChannel;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateDebtItemDto)
+  items?: CreateDebtItemDto[];
 
   @IsNumberString()
   originalAmount!: string;

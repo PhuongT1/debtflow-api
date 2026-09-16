@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
@@ -33,4 +33,9 @@ export class LoginDto {
     context: { code: 'AUTH_PASSWORD_REQUIRED', statusCode: HttpStatus.BAD_REQUEST },
   })
   password!: string;
+
+  @ApiProperty({ required: false, description: 'Organization ID when the user belongs to more than one workspace.' })
+  @IsOptional()
+  @IsString()
+  organizationId?: string;
 }

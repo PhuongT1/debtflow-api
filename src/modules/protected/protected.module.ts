@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccountModule } from './account/account.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { CatalogModule } from './catalog/catalog.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DebtsModule } from './debts/debts.module';
 import { ExportsModule } from './exports/exports.module';
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
     AccountModule,
     UsersModule,
     PartiesModule,
+    CatalogModule,
     DebtsModule,
     PaymentsModule,
     DashboardModule,

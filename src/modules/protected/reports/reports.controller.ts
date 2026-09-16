@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ProtectedApi } from '@auth/auth-api.decorator';
+import { CurrentUser } from '@auth/current-user.decorator'; import type { JwtAuthPayload } from '@auth/jwt-auth.guard'; import { ProtectedApi } from '@auth/auth-api.decorator';
 import { ReportsService } from './reports.service';
 
 @ProtectedApi()
@@ -8,7 +8,7 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('aging')
-  aging(@Query() query: Record<string, string | undefined>) {
-    return this.reportsService.aging(query);
+  aging(@CurrentUser() user: JwtAuthPayload, @Query() query: Record<string, string | undefined>) {
+    return this.reportsService.aging(query, user.organizationId);
   }
 }

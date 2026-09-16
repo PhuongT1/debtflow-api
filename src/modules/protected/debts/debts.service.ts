@@ -1,37 +1,59 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { addBusinessDays, getBusinessDayRange } from '@common/utils/business-date.util';
 import { getPagination, paginate } from '@common/utils/pagination.util';
 import { CollectionStatus, DebtStatus, DebtType, Prisma } from '@generated/prisma';
 import { PrismaService } from '@database/prisma.service';
 import { CreateDebtDto } from './dto/create-debt.dto';
+import { DebtLineItemService } from './debt-line-item.service';
 import { QueryDebtsDto } from './dto/query-debts.dto';
 import { UpdateDebtCollectionDto } from './dto/update-debt-collection.dto';
 
 @Injectable()
 export class DebtsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly debtLineItems: DebtLineItemService,
+  ) {}
 
-  async list(query: QueryDebtsDto) {
+  async list(organizationId: string, query: QueryDebtsDto) {
     const pagination = getPagination(query);
     const now = new Date();
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(now);
-    endOfToday.setHours(23, 59, 59, 999);
+    const { end: endOfToday, start: startOfToday } = getBusinessDayRange(now);
 
-    const where: Prisma.DebtWhereInput = {
+    const where: Prisma.DebtWhereInput = { organizationId,
       ...(query.type ? { type: query.type as DebtType } : {}),
       ...(query.status ? { status: query.status as DebtStatus } : {}),
       ...(query.collectionStatus
         ? { collectionStatus: query.collectionStatus as CollectionStatus }
         : {}),
       ...(query.partyId ? { partyId: query.partyId } : {}),
+      ...(query.provinceCode ? { party: { provinceCode: query.provinceCode } } : {}),
+      ...(query.salesChannel ? { salesChannel: query.salesChannel } : {}),
+      ...(query.categoryId || query.brandId || query.productId
+        ? {
+            items: {
+              some: {
+                product: {
+                  ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+                  ...(query.brandId ? { brandId: query.brandId } : {}),
+                  ...(query.productId ? { id: query.productId } : {}),
+                },
+              },
+            },
+          }
+        : {}),
       ...(query.assignedToId ? { assignedToId: query.assignedToId } : {}),
       ...this.agingWhere(query.aging, now),
       ...this.followUpWhere(query.followUp, startOfToday, endOfToday),
       ...this.dueRangeWhere(query.dueRange, startOfToday, endOfToday),
       ...this.exactDueDateWhere(query.dueDate),
-      ...(query.overdue
-        ? { dueDate: { lt: now }, status: { notIn: [DebtStatus.PAID, DebtStatus.CANCELLED] } }
+      ...this.customDueDateRangeWhere(query.dueDateFrom, query.dueDateTo),
+      ...(query.outstanding === 'true'
+        ? { status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] } }
+        : {}),
+      ...(query.outstanding === 'false' ? { status: DebtStatus.PAID } : {}),
+      ...(query.overdue === 'true'
+        ? { dueDate: { lt: startOfToday }, status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] } }
         : {}),
       ...(query.q
         ? {
@@ -51,13 +73,24 @@ export class DebtsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.debt.findMany({
         where,
-        orderBy: query.overdue ? [{ dueDate: 'asc' }] : [{ createdAt: 'desc' }],
+        orderBy: query.overdue === 'true' ? [{ dueDate: 'asc' }] : [{ createdAt: 'desc' }],
         skip: pagination.skip,
         take: pagination.take,
         include: {
           party: true,
           assignedTo: { select: { id: true, name: true, email: true } },
-          _count: { select: { payments: true } },
+          items: {
+            select: {
+              id: true,
+              productName: true,
+              categoryName: true,
+              brandName: true,
+              quantity: true,
+              unit: true,
+              lineAmount: true,
+            },
+          },
+          _count: { select: { paymentAllocations: true } },
         },
       }),
       this.prisma.debt.count({ where }),
@@ -66,23 +99,31 @@ export class DebtsService {
     return paginate(items, total, pagination);
   }
 
-  detail(id: string) {
-    return this.prisma.debt.findUniqueOrThrow({
-      where: { id },
+  async detail(id: string, organizationId: string) {
+    const debt = await this.prisma.debt.findFirstOrThrow({
+      where: { id, organizationId },
       include: {
         party: true,
         assignedTo: { select: { id: true, name: true, email: true } },
-        payments: {
-          orderBy: { paidAt: 'desc' },
-          include: { createdBy: { select: { id: true, name: true, email: true } } },
+        items: { include: { product: { include: { brand: true, category: true } } } },
+        paymentAllocations: {
+          orderBy: { payment: { paidAt: 'desc' } },
+          include: { payment: { include: { createdBy: { select: { id: true, name: true, email: true } } } } },
         },
       },
     });
+
+    return {
+      ...debt,
+      payments: debt.paymentAllocations.map(({ amount, payment }) => ({ ...payment, amount })),
+    };
   }
 
-  async create(input: CreateDebtDto) {
+  async create(input: CreateDebtDto, organizationId: string, userId: string) {
     const issueDate = new Date(input.issueDate);
     const dueDate = new Date(input.dueDate);
+    const originalAmount = new Prisma.Decimal(String(input.originalAmount));
+    const items = await this.debtLineItems.prepare(input.items, originalAmount, organizationId);
 
     if (dueDate < issueDate) {
       throw new BadRequestException('Ngày đến hạn không được trước ngày phát sinh');
@@ -90,7 +131,8 @@ export class DebtsService {
 
     return this.prisma.debt.create({
       data: {
-        code: await this.nextDebtCode(),
+        organizationId,
+        code: await this.nextDebtCode(organizationId),
         type: input.type,
         partyId: input.partyId,
         assignedToId: this.nullable(input.assignedToId),
@@ -100,7 +142,7 @@ export class DebtsService {
         contractNo: this.nullable(input.contractNo),
         poNo: this.nullable(input.poNo),
         description: this.nullable(input.description),
-        originalAmount: new Prisma.Decimal(String(input.originalAmount)),
+        originalAmount,
         paidAmount: new Prisma.Decimal(0),
         issueDate,
         dueDate,
@@ -108,12 +150,16 @@ export class DebtsService {
         collectionStatus: CollectionStatus.NEW,
         nextFollowUpAt: input.nextFollowUpAt ? new Date(String(input.nextFollowUpAt)) : null,
         followUpNote: this.nullable(input.followUpNote),
+        salesChannel: input.salesChannel,
+        createdById: userId,
+        ...(items.length > 0 ? { items: { create: items } } : {}),
       },
       include: { party: true },
     });
   }
 
-  updateCollection(id: string, input: UpdateDebtCollectionDto) {
+  async updateCollection(id: string, input: UpdateDebtCollectionDto, organizationId: string) {
+    await this.detail(id, organizationId);
     return this.prisma.debt.update({
       where: { id },
       data: {
@@ -131,23 +177,23 @@ export class DebtsService {
     });
   }
 
-  async cancel(id: string) {
+  async cancel(id: string, organizationId: string) {
     const debt = await this.prisma.debt.findUniqueOrThrow({
-      where: { id },
-      include: { payments: true },
+      where: { id, organizationId },
+      include: { paymentAllocations: true },
     });
 
-    if (debt.payments.length > 0) {
+    if (debt.paymentAllocations.length > 0) {
       throw new BadRequestException('Không thể hủy công nợ đã có thanh toán');
     }
 
     return this.prisma.debt.update({ where: { id }, data: { status: DebtStatus.CANCELLED } });
   }
 
-  private async nextDebtCode() {
+  private async nextDebtCode(organizationId = 'org_legacy_debtflow') {
     const now = new Date();
     const prefix = `CN-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const count = await this.prisma.debt.count({ where: { code: { startsWith: prefix } } });
+    const count = await this.prisma.debt.count({ where: { organizationId, code: { startsWith: prefix } } });
     return `${prefix}-${String(count + 1).padStart(4, '0')}`;
   }
 
@@ -189,13 +235,15 @@ export class DebtsService {
     const end = new Date(endOfToday);
     if (range === 'today') return { dueDate: { gte: start, lte: end } };
     if (range === 'tomorrow') {
-      start.setDate(start.getDate() + 1);
-      end.setDate(end.getDate() + 1);
-      return { dueDate: { gte: start, lte: end } };
+      return {
+        dueDate: {
+          gte: addBusinessDays(start, 1),
+          lte: addBusinessDays(end, 1),
+        },
+      };
     }
     if (range === 'next_7_days') {
-      end.setDate(end.getDate() + 6);
-      return { dueDate: { gte: start, lte: end } };
+      return { dueDate: { gte: start, lte: addBusinessDays(end, 6) } };
     }
     if (range === 'this_month') {
       start.setDate(1);
@@ -206,10 +254,23 @@ export class DebtsService {
     return {};
   }
 
+  private customDueDateRangeWhere(
+    dueDateFrom: string | undefined,
+    dueDateTo: string | undefined,
+  ): Prisma.DebtWhereInput {
+    if (!dueDateFrom && !dueDateTo) return {};
+
+    const from = dueDateFrom ? new Date(dueDateFrom + 'T00:00:00+07:00') : undefined;
+    const to = dueDateTo ? new Date(dueDateTo + 'T23:59:59.999+07:00') : undefined;
+    if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime()))) return {};
+
+    return { dueDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } };
+  }
+
   private exactDueDateWhere(dueDate: string | undefined): Prisma.DebtWhereInput {
     if (!dueDate) return {};
-    const start = new Date(`${dueDate}T00:00:00`);
-    const end = new Date(`${dueDate}T23:59:59.999`);
+    const start = new Date(`${dueDate}T00:00:00+07:00`);
+    const end = new Date(`${dueDate}T23:59:59.999+07:00`);
     return Number.isNaN(start.getTime()) ? {} : { dueDate: { gte: start, lte: end } };
   }
 }

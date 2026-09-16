@@ -1,5 +1,6 @@
 model AuditLog {
   id         String   @id @default(cuid())
+  organizationId String
   actorId    String?
   entityType String
   entityId   String
@@ -8,8 +9,9 @@ model AuditLog {
   after      Json?
   createdAt  DateTime @default(now())
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  @@index([entityType, entityId])
+  @@index([organizationId, entityType, entityId])
   @@index([actorId])
 }
