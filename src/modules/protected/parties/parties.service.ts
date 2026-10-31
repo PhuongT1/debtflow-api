@@ -1,25 +1,47 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { badRequest } from '@common/errors/app-errors';
+import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
+import { applyListQuery, type ListQueryResult } from '@common/query';
 import { getPagination, paginate } from '@common/utils/pagination.util';
-import { DebtStatus, DebtType, PartyType, Prisma } from '@generated/prisma';
+import { partySearchText } from '@common/utils/search-normalization.util';
+import {
+  addBusinessDays,
+  formatBusinessDate,
+  getBusinessDayRange,
+  getBusinessDayRangeForDate,
+} from '@common/utils/business-date.util';
+import { DebtStatus, DebtType, OrganizationMembershipStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '@database/prisma.service';
 import { CreatePartyDto } from './dto/create-party.dto';
-import { PartySummarySortBy, QueryPartiesDto, SortOrder } from './dto/query-parties.dto';
+import { QueryPartiesDto } from './dto/query-parties.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
+import { buildPartyCreateData, buildPartyUpdateData } from './party-data';
+import { compareParties } from './party-sort';
+
+const COMPUTED_BALANCE_FIELDS = new Set(['receivable', 'payable']);
 
 @Injectable()
 export class PartiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+  ) {}
 
-  async list(organizationId: string, query: QueryPartiesDto) {
+  async list(organizationId: string, query: QueryPartiesDto, listQuery?: ListQueryResult) {
     const pagination = getPagination(query);
-    const where = this.buildListWhere(organizationId, query);
+    const { where, orderBy } = applyListQuery<
+      Prisma.PartyWhereInput,
+      Prisma.PartyOrderByWithRelationInput[]
+    >(listQuery, {
+      where: this.buildListWhere(organizationId, query),
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+    // Receivable/payable are derived from the debts, so the database cannot order by them.
+    const computedSort = listQuery?.sort.find(({ field }) => COMPUTED_BALANCE_FIELDS.has(field));
 
-    if (
-      query.sortBy === PartySummarySortBy.RECEIVABLE ||
-      query.sortBy === PartySummarySortBy.PAYABLE
-    ) {
-      // Balance is derived from originalAmount - paidAmount. Calculate it before
-      // slicing the page so ordering remains correct across every page.
+    if (computedSort) {
+      // Calculate the balance before slicing the page so ordering stays correct across every page.
       const items = await this.prisma.party.findMany({
         where,
         include: {
@@ -27,23 +49,25 @@ export class PartiesService {
           _count: { select: { debts: true } },
         },
       });
-      const balances = await this.getBalances(items.map((party) => party.id), organizationId);
-      const balanceKey = query.sortBy === PartySummarySortBy.RECEIVABLE ? 'receivable' : 'payable';
-      const direction = query.sortOrder === SortOrder.DESC ? -1 : 1;
+      const balances = await this.getBalances(
+        items.map((party) => party.id),
+        organizationId,
+      );
       const sortedItems = items
         .map((party) => ({ ...party, balance: balances.get(party.id) ?? this.emptyBalance() }))
-        .sort((left, right) => {
-          const compared = left.balance[balanceKey].comparedTo(right.balance[balanceKey]);
-          return compared === 0 ? left.name.localeCompare(right.name) : compared * direction;
-        });
+        .sort((left, right) => compareParties(left, right, listQuery!.sort));
 
-      return paginate(sortedItems.slice(pagination.skip, pagination.skip + pagination.take), sortedItems.length, pagination);
+      return paginate(
+        sortedItems.slice(pagination.skip, pagination.skip + pagination.take),
+        sortedItems.length,
+        pagination,
+      );
     }
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.party.findMany({
         where,
-        orderBy: this.buildListOrderBy(query),
+        orderBy,
         skip: pagination.skip,
         take: pagination.take,
         include: {
@@ -53,7 +77,10 @@ export class PartiesService {
       }),
       this.prisma.party.count({ where }),
     ]);
-    const balances = await this.getBalances(items.map((party) => party.id), organizationId);
+    const balances = await this.getBalances(
+      items.map((party) => party.id),
+      organizationId,
+    );
 
     return paginate(
       items.map((party) => ({ ...party, balance: balances.get(party.id) ?? this.emptyBalance() })),
@@ -72,43 +99,69 @@ export class PartiesService {
     });
   }
 
-  create(organizationId: string, userId: string, input: CreatePartyDto) {
-    return this.prisma.party.create({
-      data: { organizationId, createdById: userId, ...this.toPartyData(input) },
+  async create(organizationId: string, userId: string, input: CreatePartyDto) {
+    const data = buildPartyCreateData(input);
+    await this.assertAssignee(organizationId, data.assignedToId);
+
+    const party = await this.prisma.party.create({
+      data: { organizationId, createdById: userId, ...data },
     });
+
+    emitAudit(this.events, {
+      organizationId,
+      actorId: userId,
+      entityType: 'Party',
+      entityId: party.id,
+      action: AuditAction.PartyCreated,
+      after: scalarSnapshot(party),
+    });
+
+    return party;
   }
 
-  async update(organizationId: string, id: string, input: UpdatePartyDto) {
-    await this.detail(organizationId, id);
-    return this.prisma.party.update({
-      where: { id },
-      data: this.toPartyData(input),
+  async update(organizationId: string, id: string, input: UpdatePartyDto, actorId?: string) {
+    const before = await this.detail(organizationId, id);
+    const data = buildPartyUpdateData(input, before);
+    if (data.assignedToId) await this.assertAssignee(organizationId, data.assignedToId);
+
+    const party = await this.prisma.party.update({ where: { id }, data });
+
+    emitAudit(this.events, {
+      organizationId,
+      actorId,
+      entityType: 'Party',
+      entityId: id,
+      action: AuditAction.PartyUpdated,
+      before: scalarSnapshot(before),
+      after: scalarSnapshot(party),
     });
+
+    return party;
   }
 
-  async deactivate(organizationId: string, id: string) {
-    await this.detail(organizationId, id);
+  async deactivate(organizationId: string, id: string, actorId?: string) {
+    const before = await this.detail(organizationId, id);
     const activeDebtCount = await this.prisma.debt.count({
       where: { organizationId, partyId: id, status: { notIn: ['PAID', 'CANCELLED'] } },
     });
 
     if (activeDebtCount > 0) {
-      throw new BadRequestException('Không thể xóa khách còn công nợ chưa tất toán');
+      throw badRequest('parties.CANNOT_DELETE_ACTIVE_DEBTS');
     }
 
-    return this.prisma.party.update({ where: { id }, data: { isActive: false } });
-  }
+    const party = await this.prisma.party.update({ where: { id }, data: { isActive: false } });
 
-  private buildListOrderBy(query: QueryPartiesDto): Prisma.PartyOrderByWithRelationInput[] {
-    const direction = query.sortOrder === SortOrder.DESC ? 'desc' : 'asc';
+    emitAudit(this.events, {
+      organizationId,
+      actorId,
+      entityType: 'Party',
+      entityId: id,
+      action: AuditAction.PartyDeactivated,
+      before: scalarSnapshot(before),
+      after: scalarSnapshot(party),
+    });
 
-    switch (query.sortBy) {
-      case PartySummarySortBy.OUTSTANDING_DOCUMENTS:
-        return [{ debts: { _count: direction } }, { name: 'asc' }, { id: 'asc' }];
-      case PartySummarySortBy.NAME:
-      default:
-        return [{ name: direction }, { id: 'asc' }];
-    }
+    return party;
   }
 
   private async getBalances(partyIds: string[], organizationId?: string) {
@@ -143,33 +196,27 @@ export class PartiesService {
     return { payable: new Prisma.Decimal(0), receivable: new Prisma.Decimal(0) };
   }
 
-  private toPartyData(input: CreatePartyDto | UpdatePartyDto): Omit<Prisma.PartyUncheckedCreateInput, 'organizationId'> {
-    return {
-      type: (input.type as PartyType) ?? 'CUSTOMER',
-      code: this.nullable(input.code),
-      name: String(input.name ?? '').trim(),
-      phone: this.nullable(input.phone),
-      email: this.nullable(input.email),
-      taxCode: this.nullable(input.taxCode),
-      address: this.nullable(input.address),
-      provinceCode: this.nullable(input.provinceCode)?.toUpperCase(),
-      provinceName: this.nullable(input.provinceName),
-      note: this.nullable(input.note),
-      creditLimit:
-        input.creditLimit === '' || input.creditLimit == null
-          ? null
-          : new Prisma.Decimal(String(input.creditLimit)),
-      assignedToId: this.nullable(input.assignedToId),
-    };
-  }
+  /** The assignee must be an active member of the same organization (never a user of another tenant). */
+  private async assertAssignee(organizationId: string, userId?: string | null) {
+    if (!userId) return;
 
-  private nullable(value: unknown) {
-    const text = String(value ?? '').trim();
-    return text.length > 0 ? text : null;
+    const member = await this.prisma.organizationMembership.findFirst({
+      where: {
+        organizationId,
+        userId,
+        status: OrganizationMembershipStatus.ACTIVE,
+        user: { status: 'ACTIVE' },
+      },
+      select: { id: true },
+    });
+
+    if (!member) throw badRequest('parties.ASSIGNEE_NOT_FOUND');
   }
 
   private buildListWhere(organizationId: string, query: QueryPartiesDto): Prisma.PartyWhereInput {
     const createdAt = this.createdAtFilter(query);
+
+    const searchText = query.q ? partySearchText(query.q) : undefined;
 
     return {
       organizationId,
@@ -187,38 +234,27 @@ export class PartiesService {
           }
         : {}),
       ...(createdAt ? { createdAt } : {}),
-      ...(query.q
+      ...(searchText
         ? {
-            OR: [
-              { name: { contains: query.q, mode: 'insensitive' } },
-              { code: { contains: query.q, mode: 'insensitive' } },
-              { phone: { contains: query.q, mode: 'insensitive' } },
-              { taxCode: { contains: query.q, mode: 'insensitive' } },
-            ],
+            searchText: { contains: searchText },
           }
         : {}),
     };
   }
 
   private createdRange(range: string): Prisma.DateTimeFilter | undefined {
-    const now = new Date();
-    const start = new Date(now);
+    const { start } = getBusinessDayRange();
 
     if (range === 'today') {
-      start.setHours(0, 0, 0, 0);
       return { gte: start };
     }
 
     if (range === 'last_7_days') {
-      start.setDate(start.getDate() - 6);
-      start.setHours(0, 0, 0, 0);
-      return { gte: start };
+      return { gte: addBusinessDays(start, -6) };
     }
 
     if (range === 'this_month') {
-      start.setDate(1);
-      start.setHours(0, 0, 0, 0);
-      return { gte: start };
+      return { gte: getBusinessDayRangeForDate(`${formatBusinessDate().slice(0, 7)}-01`).start };
     }
 
     return undefined;
@@ -229,11 +265,17 @@ export class PartiesService {
       return query.createdRange ? this.createdRange(query.createdRange) : undefined;
     }
 
-    const from = query.createdFrom ? new Date(`${query.createdFrom}T00:00:00`) : undefined;
-    const to = query.createdTo ? new Date(`${query.createdTo}T23:59:59.999`) : undefined;
+    let from: Date | undefined;
+    let to: Date | undefined;
+    try {
+      from = query.createdFrom ? getBusinessDayRangeForDate(query.createdFrom).start : undefined;
+      to = query.createdTo ? getBusinessDayRangeForDate(query.createdTo).end : undefined;
+    } catch {
+      throw badRequest('parties.INVALID_DATE_RANGE');
+    }
 
     if (from && to && from > to) {
-      throw new BadRequestException('Ngày bắt đầu không được sau ngày kết thúc');
+      throw badRequest('parties.INVALID_DATE_RANGE');
     }
 
     return { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) };

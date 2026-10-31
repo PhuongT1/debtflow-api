@@ -1,11 +1,17 @@
 import { Controller, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProtectedApi } from '@auth/auth-api.decorator';
 import { Roles } from '@auth/roles.decorator';
 import { OrganizationRole } from '@generated/prisma';
 
+@ApiTags('Imports')
 @ProtectedApi()
 @Controller('imports')
 export class ImportsController {
+  @ApiOperation({
+    summary: 'Import debts from Excel (scaffold)',
+    description: 'Not implemented yet: returns a placeholder message and imports nothing.',
+  })
   @Post('debts')
   @Roles(OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   debts() {

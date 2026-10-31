@@ -11,7 +11,7 @@ import { JwtAuthPayload } from '@auth/jwt-auth.guard';
 export class AccountController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOperation({ summary: 'Lấy thông tin user hiện tại từ Bearer token' })
+  @ApiOperation({ summary: 'Get the current user and their organizations' })
   @Get('me')
   me(@CurrentUser() user: JwtAuthPayload) {
     return this.authService.getCurrentUser(user.sub);

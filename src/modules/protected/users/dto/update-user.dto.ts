@@ -1,30 +1,29 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
-import { OrganizationRole, UserStatus } from '@generated/prisma';
+import { IsEnum, Matches, ValidateIf, Length } from 'class-validator';
+import { Trim } from '@common/validation/trim.decorator';
+import { PHONE_PATTERN } from '@modules/protected/parties/dto/create-party.dto';
+import { OrganizationRole } from '@generated/prisma';
 
 export class UpdateUserDto {
-  @ApiPropertyOptional({ example: 'Nguyen Van A' })
-  @IsOptional()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString()
+  /**
+   * Full name. Editable only when the account belongs to this organization alone (or by the user themselves).
+   * @example "Nguyen Van A"
+   */
+  @ValidateIf((_object, value) => value !== undefined)
+  @Trim()
   @Length(2, 100)
   name?: string;
 
-  @ApiPropertyOptional({ example: '0901234567', nullable: true })
+  /**
+   * Phone number, `null` clears it. Same restriction as `name`.
+   * @example "0901234567"
+   */
   @ValidateIf((_object, value) => value !== undefined && value !== null)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString()
-  @Length(8, 20)
+  @Trim()
+  @Matches(PHONE_PATTERN, { message: 'validation.INVALID_PHONE' })
   phone?: string | null;
 
-  @ApiPropertyOptional({ enum: OrganizationRole })
-  @IsOptional()
+  /** New role in this organization. Granting or removing OWNER requires an OWNER, and you cannot change your own role. */
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(OrganizationRole)
   role?: OrganizationRole;
-
-  @ApiPropertyOptional({ enum: UserStatus })
-  @IsOptional()
-  @IsEnum(UserStatus)
-  status?: UserStatus;
 }

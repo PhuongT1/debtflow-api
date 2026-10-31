@@ -7,7 +7,10 @@ import { ROLES_KEY } from './roles.decorator';
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
   canActivate(context: ExecutionContext) {
-    const allowedRoles = this.reflector.getAllAndOverride<OrganizationRole[]>(ROLES_KEY, [context.getHandler(), context.getClass()]);
+    const allowedRoles = this.reflector.getAllAndOverride<OrganizationRole[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (!allowedRoles?.length) return true;
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     return Boolean(request.user && allowedRoles.includes(request.user.role));

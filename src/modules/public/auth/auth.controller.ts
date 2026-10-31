@@ -13,7 +13,7 @@ import { SwitchOrganizationDto } from './dto/switch-organization.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOperation({ summary: 'Đăng nhập bằng email và mật khẩu' })
+  @ApiOperation({ summary: 'Log in with email and password' })
   @ApiBody({ type: LoginDto })
   @ApiUnauthorizedResponse({ description: 'Sai tài khoản, mật khẩu hoặc tài khoản bị khóa.' })
   @PublicApi()
@@ -23,13 +23,17 @@ export class AuthController {
     return this.authService.login(body);
   }
 
+  @ApiOperation({
+    summary: 'Switch the active organization',
+    description: 'Issues a new token pair scoped to another organization the user belongs to.',
+  })
   @ProtectedApi()
   @Post('switch-organization')
   switchOrganization(@CurrentUser() user: JwtAuthPayload, @Body() body: SwitchOrganizationDto) {
     return this.authService.switchOrganization(user.sub, body.organizationId);
   }
 
-  @ApiOperation({ summary: 'Làm mới access token bằng refresh token' })
+  @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
   @ApiBody({ type: RefreshTokenDto })
   @ApiUnauthorizedResponse({ description: 'Refresh token không hợp lệ hoặc đã hết hạn.' })
   @PublicApi()

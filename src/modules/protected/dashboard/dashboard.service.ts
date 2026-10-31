@@ -16,12 +16,13 @@ export class DashboardService {
     const periodStart = query.dateFrom
       ? new Date(query.dateFrom + 'T00:00:00.000+07:00')
       : undefined;
-    const periodEnd = query.dateTo
-      ? new Date(query.dateTo + 'T23:59:59.999+07:00')
-      : undefined;
-    const paymentPeriod = periodStart || periodEnd ? { gte: periodStart, lte: periodEnd } : undefined;
+    const periodEnd = query.dateTo ? new Date(query.dateTo + 'T23:59:59.999+07:00') : undefined;
+    const paymentPeriod =
+      periodStart || periodEnd ? { gte: periodStart, lte: periodEnd } : undefined;
     const [debts, recentPayments, topDebts] = await Promise.all([
-      this.prisma.debt.findMany({ where: { organizationId, status: { not: DebtStatus.CANCELLED } } }),
+      this.prisma.debt.findMany({
+        where: { organizationId, status: { not: DebtStatus.CANCELLED } },
+      }),
       this.prisma.payment.findMany({
         orderBy: { paidAt: 'desc' },
         where: { organizationId, ...(paymentPeriod ? { paidAt: paymentPeriod } : {}) },

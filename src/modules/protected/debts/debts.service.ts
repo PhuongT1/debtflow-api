@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { badRequest } from '@common/errors/app-errors';
+import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
+import { applyListQuery, type ListQueryResult } from '@common/query';
 import { addBusinessDays, getBusinessDayRange } from '@common/utils/business-date.util';
 import { getPagination, paginate } from '@common/utils/pagination.util';
 import { CollectionStatus, DebtStatus, DebtType, Prisma } from '@generated/prisma';
@@ -13,14 +17,16 @@ export class DebtsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly debtLineItems: DebtLineItemService,
+    private readonly events: EventEmitter2,
   ) {}
 
-  async list(organizationId: string, query: QueryDebtsDto) {
+  async list(organizationId: string, query: QueryDebtsDto, listQuery?: ListQueryResult) {
     const pagination = getPagination(query);
     const now = new Date();
     const { end: endOfToday, start: startOfToday } = getBusinessDayRange(now);
 
-    const where: Prisma.DebtWhereInput = { organizationId,
+    const baseWhere: Prisma.DebtWhereInput = {
+      organizationId,
       ...(query.type ? { type: query.type as DebtType } : {}),
       ...(query.status ? { status: query.status as DebtStatus } : {}),
       ...(query.collectionStatus
@@ -69,11 +75,18 @@ export class DebtsService {
           }
         : {}),
     };
+    const { where, orderBy } = applyListQuery<
+      Prisma.DebtWhereInput,
+      Prisma.DebtOrderByWithRelationInput[]
+    >(listQuery, {
+      where: baseWhere,
+      orderBy: query.overdue === 'true' ? [{ dueDate: 'asc' }] : [{ createdAt: 'desc' }],
+    });
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.debt.findMany({
         where,
-        orderBy: query.overdue === 'true' ? [{ dueDate: 'asc' }] : [{ createdAt: 'desc' }],
+        orderBy,
         skip: pagination.skip,
         take: pagination.take,
         include: {
@@ -108,7 +121,9 @@ export class DebtsService {
         items: { include: { product: { include: { brand: true, category: true } } } },
         paymentAllocations: {
           orderBy: { payment: { paidAt: 'desc' } },
-          include: { payment: { include: { createdBy: { select: { id: true, name: true, email: true } } } } },
+          include: {
+            payment: { include: { createdBy: { select: { id: true, name: true, email: true } } } },
+          },
         },
       },
     });
@@ -126,10 +141,10 @@ export class DebtsService {
     const items = await this.debtLineItems.prepare(input.items, originalAmount, organizationId);
 
     if (dueDate < issueDate) {
-      throw new BadRequestException('Ngày đến hạn không được trước ngày phát sinh');
+      throw badRequest('debts.DUE_DATE_BEFORE_ISSUE');
     }
 
-    return this.prisma.debt.create({
+    const debt = await this.prisma.debt.create({
       data: {
         organizationId,
         code: await this.nextDebtCode(organizationId),
@@ -156,11 +171,27 @@ export class DebtsService {
       },
       include: { party: true },
     });
+
+    emitAudit(this.events, {
+      organizationId,
+      actorId: userId,
+      entityType: 'Debt',
+      entityId: debt.id,
+      action: AuditAction.DebtCreated,
+      after: scalarSnapshot(debt),
+    });
+
+    return debt;
   }
 
-  async updateCollection(id: string, input: UpdateDebtCollectionDto, organizationId: string) {
-    await this.detail(id, organizationId);
-    return this.prisma.debt.update({
+  async updateCollection(
+    id: string,
+    input: UpdateDebtCollectionDto,
+    organizationId: string,
+    actorId?: string,
+  ) {
+    const before = await this.detail(id, organizationId);
+    const debt = await this.prisma.debt.update({
       where: { id },
       data: {
         assignedToId: this.nullable(input.assignedToId),
@@ -175,25 +206,54 @@ export class DebtsService {
       },
       include: { party: true, assignedTo: { select: { id: true, name: true, email: true } } },
     });
+
+    emitAudit(this.events, {
+      organizationId,
+      actorId,
+      entityType: 'Debt',
+      entityId: id,
+      action: AuditAction.DebtUpdated,
+      before: scalarSnapshot(before),
+      after: scalarSnapshot(debt),
+    });
+
+    return debt;
   }
 
-  async cancel(id: string, organizationId: string) {
+  async cancel(id: string, organizationId: string, actorId?: string) {
     const debt = await this.prisma.debt.findUniqueOrThrow({
       where: { id, organizationId },
       include: { paymentAllocations: true },
     });
 
     if (debt.paymentAllocations.length > 0) {
-      throw new BadRequestException('Không thể hủy công nợ đã có thanh toán');
+      throw badRequest('debts.CANNOT_CANCEL_PAID_DEBT');
     }
 
-    return this.prisma.debt.update({ where: { id }, data: { status: DebtStatus.CANCELLED } });
+    const cancelled = await this.prisma.debt.update({
+      where: { id },
+      data: { status: DebtStatus.CANCELLED },
+    });
+
+    emitAudit(this.events, {
+      organizationId,
+      actorId,
+      entityType: 'Debt',
+      entityId: id,
+      action: AuditAction.DebtCancelled,
+      before: scalarSnapshot(debt),
+      after: scalarSnapshot(cancelled),
+    });
+
+    return cancelled;
   }
 
   private async nextDebtCode(organizationId = 'org_legacy_debtflow') {
     const now = new Date();
     const prefix = `CN-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const count = await this.prisma.debt.count({ where: { organizationId, code: { startsWith: prefix } } });
+    const count = await this.prisma.debt.count({
+      where: { organizationId, code: { startsWith: prefix } },
+    });
     return `${prefix}-${String(count + 1).padStart(4, '0')}`;
   }
 

@@ -1,5 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
+// `export =` module: the CommonJS form is required for Vercel's serverless bundle.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import express = require('express');
 import type { Request, Response } from 'express';
 import { AppModule } from './app.module';

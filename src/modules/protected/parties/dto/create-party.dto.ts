@@ -1,51 +1,102 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { OptionalBlank } from '@common/validation/optional-blank.decorator';
+import { Trim } from '@common/validation/trim.decorator';
 import { PartyType } from '@generated/prisma';
 
+/** Digits, spaces and + - . ( ) only, 8 to 20 characters. */
+export const PHONE_PATTERN = /^[0-9+\-\s().]{8,20}$/;
+/** Non-negative amount with up to 2 decimals. */
+export const AMOUNT_PATTERN = /^\d{1,16}(\.\d{1,2})?$/;
+
 export class CreatePartyDto {
+  /** Customer, supplier, or both. */
   @IsEnum(PartyType)
   type!: PartyType;
 
-  @IsOptional()
+  /**
+   * Optional business code, unique within the organization.
+   * @example "CUS-0001"
+   */
+  @OptionalBlank()
+  @Trim()
   @IsString()
+  @MaxLength(50)
   code?: string;
 
+  /**
+   * Display name.
+   * @example "Boutique An Nhiên"
+   */
+  @Trim()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   name!: string;
 
-  @IsOptional()
-  @IsString()
+  /** @example "0283910011" */
+  @OptionalBlank()
+  @Trim()
+  @Matches(PHONE_PATTERN, { message: 'validation.INVALID_PHONE' })
   phone?: string;
 
-  @IsOptional()
+  /**
+   * Stored lower-cased.
+   * @example "contact@an-nhien.vn"
+   */
+  @OptionalBlank()
+  @Trim()
   @IsEmail()
+  @MaxLength(254)
   email?: string;
 
-  @IsOptional()
+  /** @example "0312345678" */
+  @OptionalBlank()
+  @Trim()
   @IsString()
+  @MaxLength(20)
   taxCode?: string;
 
-  @IsOptional()
+  @OptionalBlank()
+  @Trim()
   @IsString()
+  @MaxLength(500)
   address?: string;
 
-  @IsOptional()
+  @OptionalBlank()
+  @Trim()
   @IsString()
+  @MaxLength(1000)
   note?: string;
 
-  @IsOptional()
+  /**
+   * Province code, stored upper-case.
+   * @example "HCM"
+   */
+  @OptionalBlank()
+  @Trim()
   @IsString()
+  @MaxLength(10)
   provinceCode?: string;
 
-  @IsOptional()
+  /** @example "TP. Hồ Chí Minh" */
+  @OptionalBlank()
+  @Trim()
   @IsString()
+  @MaxLength(100)
   provinceName?: string;
 
-  @IsOptional()
-  @IsNumberString()
+  /**
+   * Maximum outstanding receivable allowed for this party, as a decimal string (>= 0).
+   * @example "50000000"
+   */
+  @OptionalBlank()
+  @Trim()
+  @Matches(AMOUNT_PATTERN, { message: 'validation.INVALID_AMOUNT' })
   creditLimit?: string;
 
-  @IsOptional()
+  /** Id of an active member of the organization responsible for this party. */
+  @OptionalBlank()
+  @Trim()
   @IsString()
   assignedToId?: string;
 }

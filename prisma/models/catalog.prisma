@@ -4,6 +4,7 @@ enum SalesChannel {
   WHOLESALE
 }
 
+/// Product grouping, unique by code per organization.
 model Category {
   id        String    @id @default(cuid())
   organizationId String
@@ -22,6 +23,7 @@ model Category {
   @@index([name])
 }
 
+/// Product brand, unique by code per organization.
 model Brand {
   id        String    @id @default(cuid())
   organizationId String
@@ -39,6 +41,7 @@ model Brand {
   @@index([name])
 }
 
+/// Sellable item that can be referenced by debt line items.
 model Product {
   id         String   @id @default(cuid())
   organizationId String
@@ -63,9 +66,11 @@ model Product {
   @@index([name])
 }
 
+/// Line item of a debt. Product code, name, category and brand are copied so history survives catalog changes.
 model DebtItem {
   id           String   @id @default(cuid())
   debtId       String
+  /// Nullable: the product may be deleted or the line may be free text.
   productId    String?
   productCode  String?
   productName  String

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from '@auth/auth.module';
 import { ApiExceptionFilter } from '@common/filters/api-exception.filter';
 import { I18nModule } from '@common/i18n/i18n.module';
@@ -19,6 +20,7 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
       envFilePath: [`.env.${nodeEnv}`, '.env'],
       validate: validateEnv,
     }),
+    EventEmitterModule.forRoot(),
     I18nModule,
     DatabaseModule,
     AuthModule,

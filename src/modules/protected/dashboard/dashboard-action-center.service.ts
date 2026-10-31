@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { badRequest } from '@common/errors/app-errors';
 import {
   addBusinessDays,
   formatBusinessDate,
@@ -25,7 +26,7 @@ export class DashboardActionCenterService {
     const periodEnd = period?.dateTo ? getBusinessDayRangeForDate(period.dateTo).end : endOfToday;
 
     if (periodStart > periodEnd) {
-      throw new BadRequestException('dateFrom must not be after dateTo');
+      throw badRequest('parties.INVALID_DATE_RANGE');
     }
     const endOfNextSevenDays = addBusinessDays(endOfToday, 6);
     const receivable = this.scope(DebtType.RECEIVABLE, organizationId);
@@ -107,12 +108,22 @@ export class DashboardActionCenterService {
     const issueDate = { gte: start, lte: end };
     const [sales, purchases, cashIn, cashOut] = await Promise.all([
       this.prisma.debt.aggregate({
-        where: { organizationId, type: DebtType.RECEIVABLE, status: { not: DebtStatus.CANCELLED }, issueDate },
+        where: {
+          organizationId,
+          type: DebtType.RECEIVABLE,
+          status: { not: DebtStatus.CANCELLED },
+          issueDate,
+        },
         _count: { _all: true },
         _sum: { originalAmount: true },
       }),
       this.prisma.debt.aggregate({
-        where: { organizationId, type: DebtType.PAYABLE, status: { not: DebtStatus.CANCELLED }, issueDate },
+        where: {
+          organizationId,
+          type: DebtType.PAYABLE,
+          status: { not: DebtStatus.CANCELLED },
+          issueDate,
+        },
         _count: { _all: true },
         _sum: { originalAmount: true },
       }),

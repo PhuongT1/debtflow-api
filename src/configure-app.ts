@@ -1,6 +1,7 @@
-import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { INestApplication, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ListQueryAwareValidationPipe } from '@common/query';
 import { createValidationException } from '@common/validation/validation-exception.factory';
 
 export function configureApp(app: INestApplication) {
@@ -17,7 +18,7 @@ export function configureApp(app: INestApplication) {
     credentials: true,
   });
   app.useGlobalPipes(
-    new ValidationPipe({
+    new ListQueryAwareValidationPipe({
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
@@ -25,13 +26,7 @@ export function configureApp(app: INestApplication) {
       exceptionFactory: createValidationException,
     }),
   );
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Sales Debt Management API')
-    .setDescription('Standalone backend API for sales debt management')
-    .setVersion('0.1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  const document = createOpenApiDocument(app);
   const httpAdapter = app.getHttpAdapter();
 
   httpAdapter.get('/docs-json', (_request, response) => {
@@ -41,6 +36,27 @@ export function configureApp(app: INestApplication) {
   httpAdapter.get('/docs', (_request, response) => {
     response.type('html').send(renderSwaggerHtml());
   });
+}
+
+export function createOpenApiDocument(app: INestApplication) {
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Sales Debt Management API')
+    .setDescription(
+      'Standalone backend API for sales debt management. Successful responses are wrapped in ' +
+        'a `{ success, statusCode, code, message, data, meta?, timestamp, path }` envelope; see docs/guides/api-response-format.md.',
+    )
+    .setVersion('0.1.0')
+    .addBearerAuth()
+    .addGlobalParameters({
+      name: 'Accept-Language',
+      in: 'header',
+      required: false,
+      description: 'Response language for messages and errors. Defaults to vi.',
+      schema: { type: 'string', enum: ['vi', 'en'], default: 'vi' },
+    })
+    .build();
+
+  return SwaggerModule.createDocument(app, swaggerConfig);
 }
 
 function renderSwaggerHtml() {

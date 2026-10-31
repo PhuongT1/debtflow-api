@@ -2,17 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { DEFAULT_PAGE, MAX_PAGE_SIZE } from '@common/constants/pagination.constants';
 import { DebtStatus, Prisma } from '@generated/prisma';
 import { DebtsService } from '@modules/protected/debts/debts.service';
+import type { ListQueryResult } from '@common/query';
 
 @Injectable()
 export class ReportsService {
   constructor(private readonly debtsService: DebtsService) {}
 
-  async aging(query: Record<string, string | undefined>, organizationId = 'org_legacy_debtflow') {
-    const debts = await this.debtsService.list(organizationId, {
-      ...query,
-      page: DEFAULT_PAGE,
-      pageSize: MAX_PAGE_SIZE,
-    });
+  async aging(
+    query: Record<string, string | undefined>,
+    organizationId = 'org_legacy_debtflow',
+    listQuery?: ListQueryResult,
+  ) {
+    const debts = await this.debtsService.list(
+      organizationId,
+      {
+        ...query,
+        page: DEFAULT_PAGE,
+        pageSize: MAX_PAGE_SIZE,
+      },
+      listQuery,
+    );
     const now = new Date();
     const buckets = {
       notDue: { label: 'Chưa đến hạn', amount: new Prisma.Decimal(0), count: 0 },

@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { badRequest } from '@common/errors/app-errors';
 import { Prisma } from '@generated/prisma';
 
 type CatalogProduct = Prisma.ProductGetPayload<{ include: { brand: true; category: true } }>;
@@ -20,7 +21,11 @@ import { CreateDebtItemDto } from './dto/create-debt-item.dto';
 export class DebtLineItemService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async prepare(items: CreateDebtItemDto[] | undefined, originalAmount: Prisma.Decimal, organizationId: string) {
+  async prepare(
+    items: CreateDebtItemDto[] | undefined,
+    originalAmount: Prisma.Decimal,
+    organizationId: string,
+  ) {
     if (!items?.length) return [];
 
     const productIds = items.flatMap((item) => (item.productId ? [item.productId] : []));
@@ -33,7 +38,7 @@ export class DebtLineItemService {
     const total = prepared.reduce((sum, item) => sum.plus(item.lineAmount), new Prisma.Decimal(0));
 
     if (!total.equals(originalAmount)) {
-      throw new BadRequestException('Tổng tiền dòng hàng phải bằng tổng công nợ');
+      throw badRequest('items.TOTAL_MISMATCH');
     }
 
     return prepared;
@@ -46,16 +51,16 @@ export class DebtLineItemService {
     const product = item.productId ? productById.get(item.productId) : undefined;
 
     if (item.productId && !product) {
-      throw new BadRequestException('Mặt hàng không tồn tại hoặc đã ngừng hoạt động');
+      throw badRequest('items.PRODUCT_NOT_FOUND');
     }
 
     const quantity = new Prisma.Decimal(item.quantity);
     const unitPrice = new Prisma.Decimal(item.unitPrice);
     const productName = product?.name ?? item.productName?.trim();
 
-    if (!productName) throw new BadRequestException('Tên mặt hàng là bắt buộc');
+    if (!productName) throw badRequest('items.NAME_REQUIRED');
     if (!quantity.greaterThan(0) || !unitPrice.greaterThan(0)) {
-      throw new BadRequestException('Số lượng và đơn giá phải lớn hơn 0');
+      throw badRequest('items.QUANTITY_PRICE_INVALID');
     }
 
     return {

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { badRequest } from '@common/errors/app-errors';
+import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
+import { applyListQuery, type ListQueryResult } from '@common/query';
 import { getPagination, paginate } from '@common/utils/pagination.util';
 import { DebtStatus, PaymentMethod, Prisma } from '@generated/prisma';
 import { PrismaService } from '@database/prisma.service';
@@ -10,10 +14,18 @@ const ACTIVE_DEBT_STATUSES = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+  ) {}
 
-  async create(debtId: string, input: CreatePaymentDto, organizationId: string, createdById?: string) {
-    return this.prisma.$transaction(async (tx) => {
+  async create(
+    debtId: string,
+    input: CreatePaymentDto,
+    organizationId: string,
+    createdById?: string,
+  ) {
+    const payment = await this.prisma.$transaction(async (tx) => {
       const debt = await tx.debt.findFirstOrThrow({ where: { id: debtId, organizationId } });
       const amount = this.validateAmount(input.amount);
       this.assertPayable(debt, amount);
@@ -25,10 +37,18 @@ export class PaymentsService {
         type: debt.type,
       });
     });
+
+    this.auditCreated(payment, organizationId, createdById);
+
+    return payment;
   }
 
-  async createAutoAllocated(input: CreateAllocatedPaymentDto, organizationId = 'org_legacy_debtflow', createdById?: string) {
-    return this.prisma.$transaction(async (tx) => {
+  async createAutoAllocated(
+    input: CreateAllocatedPaymentDto,
+    organizationId = 'org_legacy_debtflow',
+    createdById?: string,
+  ) {
+    const payment = await this.prisma.$transaction(async (tx) => {
       const amount = this.validateAmount(input.amount);
       const debts = await tx.debt.findMany({
         where: {
@@ -52,26 +72,44 @@ export class PaymentsService {
       }
 
       if (unapplied.greaterThan(0)) {
-        throw new BadRequestException('Số tiền thu/chi vượt quá tổng công nợ còn lại của đối tác');
+        throw badRequest('payments.AMOUNT_EXCEEDS_PARTY_BALANCE');
       }
       if (allocations.length === 0) {
-        throw new BadRequestException('Đối tác không còn công nợ phù hợp để cấn trừ');
+        throw badRequest('payments.NO_DEBT_TO_ALLOCATE');
       }
 
-      return this.createVoucher(tx, { allocations, input: { ...input, createdById }, partyId: input.partyId, type: input.type });
+      return this.createVoucher(tx, {
+        allocations,
+        input: { ...input, createdById },
+        partyId: input.partyId,
+        type: input.type,
+      });
     });
+
+    this.auditCreated(payment, organizationId, createdById);
+
+    return payment;
   }
 
-  async list(query: QueryPaymentsDto, organizationId = 'org_legacy_debtflow') {
+  async list(
+    query: QueryPaymentsDto,
+    organizationId = 'org_legacy_debtflow',
+    listQuery?: ListQueryResult,
+  ) {
     const pagination = getPagination(query);
-    const where: Prisma.PaymentWhereInput = { organizationId,
+    const baseWhere: Prisma.PaymentWhereInput = {
+      organizationId,
       ...(query.debtId ? { allocations: { some: { debtId: query.debtId } } } : {}),
       ...(query.partyId ? { partyId: query.partyId } : {}),
     };
+    const { where, orderBy } = applyListQuery<
+      Prisma.PaymentWhereInput,
+      Prisma.PaymentOrderByWithRelationInput[]
+    >(listQuery, { where: baseWhere, orderBy: [{ paidAt: 'desc' }] });
     const [items, total] = await this.prisma.$transaction([
       this.prisma.payment.findMany({
         where,
-        orderBy: { paidAt: 'desc' },
+        orderBy,
         skip: pagination.skip,
         take: pagination.take,
         include: this.paymentDetails(),
@@ -82,8 +120,8 @@ export class PaymentsService {
     return paginate(items, total, pagination);
   }
 
-  async remove(id: string, organizationId = 'org_legacy_debtflow') {
-    return this.prisma.$transaction(async (tx) => {
+  async remove(id: string, organizationId = 'org_legacy_debtflow', actorId?: string) {
+    const result = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.findFirstOrThrow({
         where: { id, organizationId },
         include: { allocations: { include: { debt: true } } },
@@ -99,8 +137,46 @@ export class PaymentsService {
         ),
       );
 
-      return { id, restoredDebtCount: payment.allocations.length };
+      return { payment, restoredDebtCount: payment.allocations.length };
     });
+
+    emitAudit(this.events, {
+      organizationId,
+      actorId,
+      entityType: 'Payment',
+      entityId: id,
+      action: AuditAction.PaymentReversed,
+      before: this.paymentSnapshot(result.payment),
+    });
+
+    return { id, restoredDebtCount: result.restoredDebtCount };
+  }
+
+  private auditCreated(
+    payment: { id: string; allocations: Array<{ debtId: string; amount: Prisma.Decimal }> },
+    organizationId: string,
+    actorId?: string,
+  ) {
+    emitAudit(this.events, {
+      organizationId,
+      actorId,
+      entityType: 'Payment',
+      entityId: payment.id,
+      action: AuditAction.PaymentCreated,
+      after: this.paymentSnapshot(payment),
+    });
+  }
+
+  private paymentSnapshot(payment: {
+    allocations: Array<{ debtId: string; amount: Prisma.Decimal }>;
+  }) {
+    return {
+      ...scalarSnapshot(payment),
+      allocations: payment.allocations.map(({ debtId, amount }) => ({
+        debtId,
+        amount: amount.toString(),
+      })),
+    };
   }
 
   private async createVoucher(
@@ -109,7 +185,16 @@ export class PaymentsService {
       partyId: string;
       type: 'PAYABLE' | 'RECEIVABLE';
       input: CreatePaymentDto & { createdById?: string };
-      allocations: Array<{ amount: Prisma.Decimal; debt: { id: string; organizationId: string; originalAmount: Prisma.Decimal; paidAmount: Prisma.Decimal; status: DebtStatus } }>;
+      allocations: Array<{
+        amount: Prisma.Decimal;
+        debt: {
+          id: string;
+          organizationId: string;
+          originalAmount: Prisma.Decimal;
+          paidAmount: Prisma.Decimal;
+          status: DebtStatus;
+        };
+      }>;
     },
   ) {
     const payment = await tx.payment.create({
@@ -117,7 +202,10 @@ export class PaymentsService {
         organizationId: payload.allocations[0].debt.organizationId ?? 'org_legacy_debtflow',
         partyId: payload.partyId,
         type: payload.type,
-        amount: payload.allocations.reduce((total, allocation) => total.plus(allocation.amount), new Prisma.Decimal(0)),
+        amount: payload.allocations.reduce(
+          (total, allocation) => total.plus(allocation.amount),
+          new Prisma.Decimal(0),
+        ),
         paidAt: new Date(payload.input.paidAt),
         method: payload.input.method ?? PaymentMethod.BANK_TRANSFER,
         referenceNo: this.nullable(payload.input.referenceNo),
@@ -160,17 +248,15 @@ export class PaymentsService {
     debt: { originalAmount: Prisma.Decimal; paidAmount: Prisma.Decimal; status: DebtStatus },
     amount: Prisma.Decimal,
   ) {
-    if (debt.status === DebtStatus.CANCELLED) throw new BadRequestException('Không thể thanh toán công nợ đã hủy');
-    if (debt.status === DebtStatus.PAID) throw new BadRequestException('Công nợ đã thanh toán đủ');
+    if (debt.status === DebtStatus.CANCELLED)
+      throw badRequest('payments.CANNOT_PAY_CANCELLED_DEBT');
+    if (debt.status === DebtStatus.PAID) throw badRequest('payments.DEBT_FULLY_PAID');
     if (amount.greaterThan(debt.originalAmount.minus(debt.paidAmount))) {
-      throw new BadRequestException('Số tiền thanh toán vượt quá số dư còn lại');
+      throw badRequest('payments.AMOUNT_EXCEEDS_REMAINING');
     }
   }
 
-  private debtPaymentState(
-    debt: { originalAmount: Prisma.Decimal },
-    paidAmount: Prisma.Decimal,
-  ) {
+  private debtPaymentState(debt: { originalAmount: Prisma.Decimal }, paidAmount: Prisma.Decimal) {
     const nextPaidAmount = Prisma.Decimal.max(paidAmount, new Prisma.Decimal(0));
     const status = nextPaidAmount.greaterThanOrEqualTo(debt.originalAmount)
       ? DebtStatus.PAID
@@ -183,7 +269,7 @@ export class PaymentsService {
 
   private validateAmount(value: string) {
     const amount = new Prisma.Decimal(value);
-    if (amount.lessThanOrEqualTo(0)) throw new BadRequestException('Số tiền thanh toán phải lớn hơn 0');
+    if (amount.lessThanOrEqualTo(0)) throw badRequest('payments.AMOUNT_MUST_BE_POSITIVE');
     return amount;
   }
 

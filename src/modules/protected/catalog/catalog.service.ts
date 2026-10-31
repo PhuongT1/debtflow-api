@@ -11,7 +11,10 @@ export class CatalogService {
         where: { organizationId, isActive: true },
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
-      this.prisma.brand.findMany({ where: { organizationId, isActive: true }, orderBy: { name: 'asc' } }),
+      this.prisma.brand.findMany({
+        where: { organizationId, isActive: true },
+        orderBy: { name: 'asc' },
+      }),
       this.prisma.product.findMany({
         where: { organizationId, isActive: true },
         orderBy: { name: 'asc' },

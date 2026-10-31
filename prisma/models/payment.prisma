@@ -4,11 +4,14 @@ enum PaymentMethod {
   OTHER
 }
 
+/// A voucher (receipt or disbursement) from or to one party. It is split across debts through PaymentAllocation.
 model Payment {
   id          String        @id @default(cuid())
   organizationId String
   partyId     String
+  /// RECEIVABLE = money received from a customer, PAYABLE = money paid to a supplier.
   type        DebtType
+  /// Total voucher amount. Equals the sum of its allocations.
   amount      Decimal       @db.Decimal(18, 2)
   paidAt      DateTime
   method      PaymentMethod @default(BANK_TRANSFER)
@@ -26,10 +29,12 @@ model Payment {
   @@index([paidAt])
 }
 
+/// The portion of a Payment applied to one Debt. Deleting a payment cascades here and rolls back the debts.
 model PaymentAllocation {
   id        String   @id @default(cuid())
   paymentId String
   debtId    String
+  /// Amount applied to this debt. Cannot exceed the debt's remaining balance.
   amount    Decimal  @db.Decimal(18, 2)
   createdAt DateTime @default(now())
 
