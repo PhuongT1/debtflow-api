@@ -5,3 +5,7 @@ dist
 !.env.production.example
 .DS_Store
 src/generated/prisma
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/.vitepress/.temp/
+.playwright-mcp/
