@@ -30,6 +30,7 @@ src/
       account/
       users/
       parties/
+      catalog/
       debts/
       payments/
       dashboard/
@@ -43,6 +44,8 @@ prisma/
   migrations/
   seed.ts
 docs/
+  README.md, 01-04 pages, guides/, adr/, generated/
+scripts/
 .codex/
   skills/
 ```
@@ -64,8 +67,8 @@ docs/
 
 ## Current Modules
 
-- Public: Auth login
-- Protected: Account, Users, Parties, Debts, Payments, Dashboard, Reports, Exports, Imports, Audit logs
+- Public: Auth (login, refresh, switch-organization)
+- Protected: Account, Users, Parties, Catalog, Debts, Payments, Dashboard, Reports, Exports, Imports, Audit logs
 
 ## API Auth Layout
 

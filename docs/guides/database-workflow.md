@@ -103,13 +103,13 @@ deployments changing the production schema.
 
 ## Useful Commands
 
-| Command               | Purpose                                      |
-| --------------------- | -------------------------------------------- |
-| `npm run db:migrate`  | Create and apply development migrations.     |
-| `npm run db:generate` | Generate Prisma Client and TypeScript types. |
-| `npm run db:deploy`   | Apply committed production migrations.       |
-| `npm run db:validate` | Validate all Prisma schema files.            |
-| `npm run db:check`    | Validate schema and generate client.         |
-| `npm run db:studio`   | Inspect database in Prisma Studio.           |
-| `npm run db:seed`     | Seed default admin user.                     |
+| Command               | Purpose                                                       |
+| --------------------- | ------------------------------------------------------------- |
+| `npm run db:migrate`  | Create and apply development migrations.                      |
+| `npm run db:generate` | Generate Prisma Client and TypeScript types.                  |
+| `npm run db:deploy`   | Apply committed production migrations.                        |
+| `npm run db:validate` | Validate all Prisma schema files.                             |
+| `npm run db:check`    | Validate schema and generate client.                          |
+| `npm run db:studio`   | Inspect database in Prisma Studio.                            |
+| `npm run db:seed`     | Seed default admin user.                                      |
 | `npm run build:prod`  | Build the production artifact without migrating the database. |

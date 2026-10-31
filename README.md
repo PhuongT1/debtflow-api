@@ -1,6 +1,8 @@
 # DebtFlow API
 
-NestJS backend API for Debt Flow / Sales Debt Management.
+NestJS backend API for Debt Flow / Sales Debt Management: multi-tenant tracking of receivables and
+payables, payments with automatic allocation, collection follow-up, dashboard, aging report and Excel export.
+Start with the [documentation](docs/README.md).
 
 ## Important: After Changing A Prisma Model
 
@@ -110,6 +112,11 @@ Role:     ADMIN
 | `npm run db:studio`      | Open Prisma Studio.                                           |
 | `npm run db:seed`        | Seed the admin and idempotent payment demo data.              |
 | `npm run import:parties` | Import 100 demo customers/suppliers directly into PostgreSQL. |
+| `npm test`               | Run unit tests (vitest).                                      |
+| `npm run docs:generate`  | Rebuild the OpenAPI JSON, API reference and database ERD.     |
+| `npm run docs:dev`       | Open the documentation site locally (http://localhost:5173).  |
+| `npm run docs:build`     | Build the static documentation site (`docs/.vitepress/dist`). |
+| `npm run docs:check`     | Fail if `docs/generated` is out of date.                      |
 
 ## Changing Prisma Models
 
@@ -161,18 +168,25 @@ npm run db:deploy
 `db:deploy` does not create a migration and does not regenerate Prisma Client. The `build` command
 generates Prisma Client before compiling the application.
 
-## More Docs
+## Documentation
 
-- [Run Source](docs/run-source.md)
-- [API And Swagger](docs/api-and-swagger.md)
-- [API Response Format](docs/api-response-format.md)
-- [Request Flow](docs/request-flow.md)
-- [Database Workflow](docs/database-workflow.md)
-- [Project Structure](docs/project-structure.md)
-- [Authentication And Authorization](docs/authorization.md)
-- [Validation And Errors](docs/validation-and-errors.md)
-- [Import Aliases](docs/import-aliases.md)
+Full documentation lives in [docs/](docs/README.md):
+
+- [Product Overview](docs/01-overview.md) - what DebtFlow does, features, glossary
+- [Architecture](docs/02-architecture.md) - system context, modules, auth, tenancy, frontend integration
+- [Business Rules](docs/03-business-rules.md) - roles, debt lifecycle, payment allocation
+- [Database](docs/04-database.md) and [generated ERD](docs/generated/database.md)
+- [API Reference](docs/generated/api-reference.md) (generated from OpenAPI)
+- Guides: [Run Source](docs/guides/run-source.md), [API And Swagger](docs/guides/api-and-swagger.md),
+  [API Response Format](docs/guides/api-response-format.md), [List Query](docs/guides/list-query.md),
+  [Localization](docs/guides/localization.md), [Audit Log](docs/guides/audit-log.md), [Vendure Reference](docs/guides/vendure-reference.md), [Request Flow](docs/guides/request-flow.md),
+  [Database Workflow](docs/guides/database-workflow.md), [Project Structure](docs/guides/project-structure.md),
+  [Authentication And Authorization](docs/guides/authorization.md),
+  [Validation And Errors](docs/guides/validation-and-errors.md), [Import Aliases](docs/guides/import-aliases.md)
 - [Project Codex Skills](.codex/skills/SKILLS.md)
+
+After changing an endpoint, DTO or Prisma model, run `npm run docs:generate` and commit
+`docs/generated/`. `npm run docs:check` fails if the committed files are out of date.
 
 ## Tech Stack
 

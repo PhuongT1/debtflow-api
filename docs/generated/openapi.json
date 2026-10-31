@@ -1,0 +1,5175 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Sai tài khoản, mật khẩu hoặc tài khoản bị khóa."
+          }
+        },
+        "summary": "Log in with email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/switch-organization": {
+      "post": {
+        "description": "Issues a new token pair scoped to another organization the user belongs to.",
+        "operationId": "AuthController_switchOrganization",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchOrganizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Switch the active organization",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Refresh token không hợp lệ hoặc đã hết hạn."
+          }
+        },
+        "summary": "Exchange a refresh token for a new token pair",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AccountController_me",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the current user and their organizations",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/users/options": {
+      "get": {
+        "description": "Lightweight list of active members used by assignee pickers.",
+        "operationId": "UsersController_options",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserOptionDto"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List members as select options",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "description": "Paginated members of the current organization. `status` is the effective status; `membershipStatus` and `userStatus` give the details.",
+        "operationId": "UsersController_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search over name, email and phone (case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Only members with this role.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OWNER",
+                "ADMIN",
+                "ACCOUNTANT",
+                "VIEWER"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Effective status: `ACTIVE` = active membership of an active account, `INACTIVE` = anything else\n(suspended or invited membership, or a disabled account).",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "membershipStatus",
+            "required": false,
+            "in": "query",
+            "description": "Exact membership status in this organization.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INVITED",
+                "SUSPENDED"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, email, phone, userStatus, role, membershipStatus, joinedAt, createdAt.",
+            "schema": {
+              "example": "-name",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "name",
+                "email",
+                "phone",
+                "userStatus",
+                "role",
+                "membershipStatus",
+                "joinedAt",
+                "createdAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[name]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[name][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[email]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[email][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[phone]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[phone][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[userStatus]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: ACTIVE, INACTIVE. Use `filter[userStatus][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[role]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: OWNER, ADMIN, ACCOUNTANT, VIEWER. Use `filter[role][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[membershipStatus]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: INVITED, ACTIVE, SUSPENDED. Use `filter[membershipStatus][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[joinedAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[joinedAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MemberDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "pagination": {
+                          "$ref": "#/components/schemas/PaginationMetaDto"
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List organization members",
+        "tags": [
+          "Users"
+        ]
+      },
+      "post": {
+        "description": "Creates a new account with an initial password and adds it to the organization as an ACTIVE member. Only an OWNER can create another OWNER.",
+        "operationId": "UsersController_create",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Member created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "RESOURCE_CREATED"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "409": {
+            "description": "The email or phone already belongs to an account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a member",
+        "tags": [
+          "Users"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN"
+        ]
+      }
+    },
+    "/api/users/{id}": {
+      "patch": {
+        "description": "Changes the role in this organization and/or the name and phone. Name and phone belong to the account, so they can only be edited by the user themselves or, for an account that belongs to no other organization, by an admin. You cannot change your own role; touching or granting OWNER requires an OWNER.",
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User id (the `id` returned by the list).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "404": {
+            "description": "The user is not a member of this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The phone already belongs to another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a member",
+        "tags": [
+          "Users"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN"
+        ]
+      },
+      "delete": {
+        "description": "Sets the membership to SUSPENDED: the user can no longer use this organization. The account and its other organizations are untouched. You cannot suspend yourself; suspending an OWNER requires an OWNER.",
+        "operationId": "UsersController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User id (the `id` returned by the list).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The member is already suspended.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "404": {
+            "description": "The user is not a member of this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend a member",
+        "tags": [
+          "Users"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN"
+        ]
+      }
+    },
+    "/api/users/{id}/reactivate": {
+      "post": {
+        "description": "Sets a suspended or invited membership back to ACTIVE.",
+        "operationId": "UsersController_reactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User id (the `id` returned by the list).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The member is already active.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "404": {
+            "description": "The user is not a member of this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reactivate a member",
+        "tags": [
+          "Users"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN"
+        ]
+      }
+    },
+    "/api/parties": {
+      "get": {
+        "description": "Paginated list of active parties. Each item includes the outstanding receivable/payable `balance`. `sortBy=receivable|payable|outstandingDocuments` sort by derived values.",
+        "operationId": "PartiesController_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Accent-insensitive search over name, code, phone and tax code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Only customers, suppliers or both.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CUSTOMER",
+                "SUPPLIER",
+                "BOTH"
+              ]
+            }
+          },
+          {
+            "name": "assignedToId",
+            "required": false,
+            "in": "query",
+            "description": "Only parties assigned to this member.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "balanceType",
+            "required": false,
+            "in": "query",
+            "description": "Only parties that still have unsettled debts of this direction.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RECEIVABLE",
+                "PAYABLE"
+              ]
+            }
+          },
+          {
+            "name": "createdRange",
+            "required": false,
+            "in": "query",
+            "description": "Shortcut for the creation date window, used when `createdFrom`/`createdTo` are absent.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "today",
+                "last_7_days",
+                "this_month"
+              ]
+            }
+          },
+          {
+            "name": "createdFrom",
+            "required": false,
+            "in": "query",
+            "description": "Created on or after this date (`YYYY-MM-DD`).",
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdTo",
+            "required": false,
+            "in": "query",
+            "description": "Created on or before this date (`YYYY-MM-DD`).",
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, code, type, phone, email, taxCode, provinceName, creditLimit, isActive, createdAt, updatedAt, outstandingDocuments, receivable, payable.",
+            "schema": {
+              "example": "-name",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "name",
+                "code",
+                "type",
+                "phone",
+                "email",
+                "taxCode",
+                "provinceName",
+                "creditLimit",
+                "isActive",
+                "createdAt",
+                "updatedAt",
+                "outstandingDocuments",
+                "receivable",
+                "payable"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[name]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[name][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[code]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[type]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: CUSTOMER, SUPPLIER, BOTH. Use `filter[type][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[phone]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[phone][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[email]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[email][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[taxCode]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[taxCode][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[provinceCode]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[provinceCode][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[provinceName]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[provinceName][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[creditLimit]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[creditLimit][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[assignedToId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[assignedToId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[updatedAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[updatedAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PartyListItemDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "pagination": {
+                          "$ref": "#/components/schemas/PaginationMetaDto"
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List customers and suppliers",
+        "tags": [
+          "Parties"
+        ]
+      },
+      "post": {
+        "description": "The `code` is optional but unique per organization. `assignedToId` must be an active member of the organization.",
+        "operationId": "PartiesController_create",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePartyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Party created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "RESOURCE_CREATED"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PartyResponseDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the assignee is not an active member.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "409": {
+            "description": "The code already exists in this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a party",
+        "tags": [
+          "Parties"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/parties/{id}": {
+      "get": {
+        "description": "Includes the assignee and all debts, nearest due date first.",
+        "operationId": "PartiesController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Party id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PartyDetailDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "404": {
+            "description": "The party does not exist in this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get party detail",
+        "tags": [
+          "Parties"
+        ]
+      },
+      "patch": {
+        "description": "Partial update: only the fields you send change. A blank or null value clears an optional field; `name` and `type` cannot be cleared.",
+        "operationId": "PartiesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Party id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePartyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PartyResponseDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, or the assignee is not an active member.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "404": {
+            "description": "The party does not exist in this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The code already exists in this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a party",
+        "tags": [
+          "Parties"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      },
+      "delete": {
+        "description": "Soft delete (`isActive=false`). Rejected while the party has unsettled debts.",
+        "operationId": "PartiesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Party id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "code",
+                    "message",
+                    "data",
+                    "timestamp",
+                    "path"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "SUCCESS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request completed successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PartyResponseDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The party still has unsettled debts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "404": {
+            "description": "The party does not exist in this organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deactivate a party",
+        "tags": [
+          "Parties"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/catalog/options": {
+      "get": {
+        "description": "Active categories, brands, products and the provinces that have parties.",
+        "operationId": "CatalogController_options",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get filter options",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/debts": {
+      "get": {
+        "description": "Paginated list with filters for type, status, collection status, party, product, aging bucket, due date range and follow-up.",
+        "operationId": "DebtsController_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RECEIVABLE",
+                "PAYABLE"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OPEN",
+                "PARTIAL",
+                "PAID",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "collectionStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "CONTACTED",
+                "PROMISED",
+                "DISPUTED",
+                "ESCALATED"
+              ]
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinceCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brandId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "salesChannel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "STORE",
+                "ONLINE",
+                "WHOLESALE"
+              ]
+            }
+          },
+          {
+            "name": "assignedToId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aging",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "not_due",
+                "1_7",
+                "8_30",
+                "31_60",
+                "60_plus"
+              ]
+            }
+          },
+          {
+            "name": "followUp",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "today",
+                "overdue",
+                "upcoming"
+              ]
+            }
+          },
+          {
+            "name": "dueRange",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "today",
+                "tomorrow",
+                "next_7_days",
+                "this_month"
+              ]
+            }
+          },
+          {
+            "name": "dueDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dueDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dueDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "overdue",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "outstanding",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
+            "schema": {
+              "example": "-code",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "code",
+                "title",
+                "type",
+                "status",
+                "collectionStatus",
+                "salesChannel",
+                "partyName",
+                "invoiceNo",
+                "orderNo",
+                "contractNo",
+                "poNo",
+                "originalAmount",
+                "paidAmount",
+                "issueDate",
+                "dueDate",
+                "nextFollowUpAt",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[code]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[title]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[title][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[type]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: RECEIVABLE, PAYABLE. Use `filter[type][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[status]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: OPEN, PARTIAL, PAID, CANCELLED. Use `filter[status][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[collectionStatus]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: NEW, CONTACTED, PROMISED, DISPUTED, ESCALATED. Use `filter[collectionStatus][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[salesChannel]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: STORE, ONLINE, WHOLESALE. Use `filter[salesChannel][op]=value`, op: eq, notEq, in, notIn, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyName]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyName][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[assignedToId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[assignedToId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[invoiceNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[invoiceNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[orderNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[orderNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[contractNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[contractNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[poNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[poNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[originalAmount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[originalAmount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[paidAmount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[paidAmount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[issueDate]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[issueDate][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[dueDate]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[dueDate][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[nextFollowUpAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[nextFollowUpAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[updatedAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[updatedAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List debts",
+        "tags": [
+          "Debts"
+        ]
+      },
+      "post": {
+        "description": "Creates a receivable or payable with an auto-generated code (CN-YYYYMM-NNNN). dueDate must not be before issueDate.",
+        "operationId": "DebtsController_create",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDebtDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a debt",
+        "tags": [
+          "Debts"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/debts/{id}": {
+      "get": {
+        "description": "Includes party, assignee, line items and the payments applied to the debt.",
+        "operationId": "DebtsController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get debt detail",
+        "tags": [
+          "Debts"
+        ]
+      },
+      "patch": {
+        "description": "Updates the assignee, collection status, follow-up schedule and reference numbers. Amounts and status are not editable here.",
+        "operationId": "DebtsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDebtCollectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update collection information",
+        "tags": [
+          "Debts"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      },
+      "delete": {
+        "description": "Sets status to CANCELLED. Rejected when the debt already has payments.",
+        "operationId": "DebtsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a debt",
+        "tags": [
+          "Debts"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/debts/{id}/payments": {
+      "post": {
+        "description": "Rejected when the debt is PAID or CANCELLED, or when the amount exceeds the remaining balance.",
+        "operationId": "DebtsController_payment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a payment against one debt",
+        "tags": [
+          "Debts"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/payments": {
+      "get": {
+        "description": "Paginated vouchers with their allocations. Filter by partyId or debtId.",
+        "operationId": "PaymentsController_list",
+        "parameters": [
+          {
+            "name": "debtId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: type, method, amount, paidAt, referenceNo, partyName, createdAt.",
+            "schema": {
+              "example": "-type",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "type",
+                "method",
+                "amount",
+                "paidAt",
+                "referenceNo",
+                "partyName",
+                "createdAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[type]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: RECEIVABLE, PAYABLE. Use `filter[type][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[method]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: CASH, BANK_TRANSFER, OTHER. Use `filter[method][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[amount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[amount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[paidAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[paidAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[referenceNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[referenceNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyName]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyName][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List payments",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/api/payments/auto-allocate": {
+      "post": {
+        "description": "Applies the amount to the party's OPEN/PARTIAL debts of the given type, oldest due date first. Rejected when the amount exceeds the party's total remaining balance.",
+        "operationId": "PaymentsController_create",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAllocatedPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a payment and auto-allocate it",
+        "tags": [
+          "Payments"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/payments/{id}": {
+      "delete": {
+        "description": "Deletes the voucher and subtracts its allocations from each debt, recomputing OPEN/PARTIAL/PAID.",
+        "operationId": "PaymentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse (delete) a payment",
+        "tags": [
+          "Payments"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "description": "Receivable and payable totals, overdue count, action center (follow-ups and due soon), recent payments and the nearest unsettled debts.",
+        "operationId": "DashboardController_get",
+        "parameters": [
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get dashboard summary",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/reports/aging": {
+      "get": {
+        "description": "Remaining balance grouped into buckets: not due, 1-7, 8-30, 31-60 and 60+ days overdue. Accepts the same query filters as GET /debts.",
+        "operationId": "ReportsController_aging",
+        "parameters": [
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
+            "schema": {
+              "example": "-code",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "code",
+                "title",
+                "type",
+                "status",
+                "collectionStatus",
+                "salesChannel",
+                "partyName",
+                "invoiceNo",
+                "orderNo",
+                "contractNo",
+                "poNo",
+                "originalAmount",
+                "paidAmount",
+                "issueDate",
+                "dueDate",
+                "nextFollowUpAt",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[code]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[title]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[title][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[type]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: RECEIVABLE, PAYABLE. Use `filter[type][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[status]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: OPEN, PARTIAL, PAID, CANCELLED. Use `filter[status][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[collectionStatus]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: NEW, CONTACTED, PROMISED, DISPUTED, ESCALATED. Use `filter[collectionStatus][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[salesChannel]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: STORE, ONLINE, WHOLESALE. Use `filter[salesChannel][op]=value`, op: eq, notEq, in, notIn, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyName]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyName][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[assignedToId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[assignedToId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[invoiceNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[invoiceNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[orderNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[orderNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[contractNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[contractNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[poNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[poNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[originalAmount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[originalAmount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[paidAmount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[paidAmount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[issueDate]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[issueDate][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[dueDate]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[dueDate][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[nextFollowUpAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[nextFollowUpAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[updatedAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[updatedAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Aging report",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/exports/debts": {
+      "get": {
+        "description": "Streams an .xlsx file (not wrapped in the JSON envelope). Accepts the same query filters as GET /debts, up to 1000 rows.",
+        "operationId": "ExportsController_debts",
+        "parameters": [
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
+            "schema": {
+              "example": "-code",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "code",
+                "title",
+                "type",
+                "status",
+                "collectionStatus",
+                "salesChannel",
+                "partyName",
+                "invoiceNo",
+                "orderNo",
+                "contractNo",
+                "poNo",
+                "originalAmount",
+                "paidAmount",
+                "issueDate",
+                "dueDate",
+                "nextFollowUpAt",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[code]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[title]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[title][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[type]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: RECEIVABLE, PAYABLE. Use `filter[type][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[status]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: OPEN, PARTIAL, PAID, CANCELLED. Use `filter[status][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[collectionStatus]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: NEW, CONTACTED, PROMISED, DISPUTED, ESCALATED. Use `filter[collectionStatus][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[salesChannel]",
+            "required": false,
+            "in": "query",
+            "description": " Type: enum. Values: STORE, ONLINE, WHOLESALE. Use `filter[salesChannel][op]=value`, op: eq, notEq, in, notIn, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[partyName]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[partyName][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[assignedToId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[assignedToId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[invoiceNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[invoiceNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[orderNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[orderNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[contractNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[contractNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[poNo]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[poNo][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[originalAmount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[originalAmount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[paidAmount]",
+            "required": false,
+            "in": "query",
+            "description": " Type: decimal. Use `filter[paidAmount][op]=value`, op: eq, notEq, in, notIn, lt, lte, gt, gte, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[issueDate]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[issueDate][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[dueDate]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[dueDate][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[nextFollowUpAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[nextFollowUpAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[updatedAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[updatedAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export debts to Excel",
+        "tags": [
+          "Exports"
+        ]
+      }
+    },
+    "/api/imports/debts": {
+      "post": {
+        "description": "Not implemented yet: returns a placeholder message and imports nothing.",
+        "operationId": "ImportsController_debts",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Import debts from Excel (scaffold)",
+        "tags": [
+          "Imports"
+        ],
+        "x-roles": [
+          "ADMIN",
+          "ACCOUNTANT"
+        ]
+      }
+    },
+    "/api/audit-logs": {
+      "get": {
+        "operationId": "AuditLogsController_list",
+        "parameters": [
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: entityType, action, createdAt.",
+            "schema": {
+              "example": "-entityType",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "schema": {
+              "enum": [
+                "entityType",
+                "action",
+                "createdAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Direction used with `sortBy`. Default asc.",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "required": false,
+            "in": "query",
+            "description": "How the `filter[...]` conditions are combined. Default AND.",
+            "schema": {
+              "enum": [
+                "AND",
+                "OR"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[actorId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[actorId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[entityType]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[entityType][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[entityId]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[entityId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[action]",
+            "required": false,
+            "in": "query",
+            "description": " Type: string. Use `filter[action][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[createdAt]",
+            "required": false,
+            "in": "query",
+            "description": " Type: date. Use `filter[createdAt][op]=value`, op: eq, lt, lte, gt, gte, before, after, between (no op means eq; `in`, `notIn` and `between` take comma-separated values).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "description": "Response language for messages and errors. Defaults to vi.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token hoặc token không hợp lệ."
+          },
+          "403": {
+            "description": "Tài khoản không có quyền thực hiện thao tác này."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List audit log entries of the current organization",
+        "tags": [
+          "Audit logs"
+        ],
+        "x-roles": [
+          "OWNER",
+          "ADMIN"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Sales Debt Management API",
+    "description": "Standalone backend API for sales debt management. Successful responses are wrapped in a `{ success, statusCode, code, message, data, meta?, timestamp, path }` envelope; see docs/guides/api-response-format.md.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@debtflow.local",
+            "description": "Login email."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Admin@123456",
+            "description": "Account password."
+          },
+          "organizationId": {
+            "type": "string",
+            "description": "Organization ID when the user belongs to more than one workspace."
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "SwitchOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "organizationId"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "UserOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User id. Use it for `assignedToId`."
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "ACCOUNTANT",
+              "VIEWER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "status",
+          "role"
+        ]
+      },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "example": 20
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "page",
+          "pageSize",
+          "total",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage"
+        ]
+      },
+      "MemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User id. This is the id used by every `/users/{id}` endpoint."
+          },
+          "membershipId": {
+            "type": "string",
+            "description": "Id of the membership of this user in the current organization."
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "description": "Effective status: ACTIVE only when both the account and the membership are active.",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "userStatus": {
+            "description": "Status of the account itself (global).",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "membershipStatus": {
+            "description": "Status of the membership in this organization.",
+            "enum": [
+              "ACTIVE",
+              "INVITED",
+              "SUSPENDED"
+            ],
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "ACCOUNTANT",
+              "VIEWER"
+            ],
+            "type": "string"
+          },
+          "systemRole": {
+            "enum": [
+              "USER",
+              "PLATFORM_OWNER",
+              "PLATFORM_SUPPORT"
+            ],
+            "type": "string"
+          },
+          "invitedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the user was added to this organization."
+          }
+        },
+        "required": [
+          "id",
+          "membershipId",
+          "name",
+          "email",
+          "phone",
+          "status",
+          "userStatus",
+          "membershipStatus",
+          "role",
+          "systemRole",
+          "invitedAt",
+          "joinedAt",
+          "createdAt"
+        ]
+      },
+      "ApiErrorDetailDto": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Name of the invalid input field."
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Localized message (see the `Accept-Language` header)."
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "ApiErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable code. Switch on this, display `message`.",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string",
+            "description": "Localized message."
+          },
+          "errors": {
+            "description": "Field-level details, present for validation errors.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiErrorDetailDto"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-10-30T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "example": "/api/parties"
+          }
+        },
+        "required": [
+          "success",
+          "statusCode",
+          "code",
+          "message",
+          "timestamp",
+          "path"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Tran Thi B",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "description": "Login email. Stored lower-cased; must not belong to another account.",
+            "example": "b.tran@an-phu.vn",
+            "maxLength": 254,
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "example": "0901234567"
+          },
+          "password": {
+            "type": "string",
+            "description": "Initial password, hashed before storage. 8-72 characters with a letter and a digit."
+          },
+          "role": {
+            "description": "Role in this organization. Only an OWNER can create another OWNER.",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "ACCOUNTANT",
+              "VIEWER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "role"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name. Editable only when the account belongs to this organization alone (or by the user themselves).",
+            "example": "Nguyen Van A",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number, `null` clears it. Same restriction as `name`.",
+            "example": "0901234567"
+          },
+          "role": {
+            "description": "New role in this organization. Granting or removing OWNER requires an OWNER, and you cannot change your own role.",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "ACCOUNTANT",
+              "VIEWER"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "UserSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "PartyBalanceDto": {
+        "type": "object",
+        "properties": {
+          "receivable": {
+            "type": "string",
+            "description": "Remaining amount customers owe the organization (open and partial receivables).",
+            "example": "8325000"
+          },
+          "payable": {
+            "type": "string",
+            "description": "Remaining amount the organization owes the party (open and partial payables).",
+            "example": "0"
+          }
+        },
+        "required": [
+          "receivable",
+          "payable"
+        ]
+      },
+      "PartyDebtCountDto": {
+        "type": "object",
+        "properties": {
+          "debts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "debts"
+        ]
+      },
+      "PartyListItemDto": {
+        "type": "object",
+        "properties": {
+          "assignedTo": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          },
+          "balance": {
+            "$ref": "#/components/schemas/PartyBalanceDto"
+          },
+          "_count": {
+            "$ref": "#/components/schemas/PartyDebtCountDto"
+          },
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "CUSTOMER",
+              "SUPPLIER",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditLimit": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "False after the party was deactivated."
+          },
+          "createdById": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedToId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assignedTo",
+          "balance",
+          "_count",
+          "id",
+          "organizationId",
+          "type",
+          "code",
+          "name",
+          "phone",
+          "email",
+          "taxCode",
+          "address",
+          "address2",
+          "note",
+          "provinceCode",
+          "provinceName",
+          "creditLimit",
+          "imageUrl",
+          "isActive",
+          "createdById",
+          "assignedToId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PartyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "CUSTOMER",
+              "SUPPLIER",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditLimit": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "False after the party was deactivated."
+          },
+          "createdById": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedToId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "type",
+          "code",
+          "name",
+          "phone",
+          "email",
+          "taxCode",
+          "address",
+          "address2",
+          "note",
+          "provinceCode",
+          "provinceName",
+          "creditLimit",
+          "imageUrl",
+          "isActive",
+          "createdById",
+          "assignedToId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreatePartyDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Customer, supplier, or both.",
+            "enum": [
+              "CUSTOMER",
+              "SUPPLIER",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "Optional business code, unique within the organization.",
+            "example": "CUS-0001",
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name.",
+            "example": "Boutique An Nhiên",
+            "maxLength": 200
+          },
+          "phone": {
+            "type": "string",
+            "example": "0283910011"
+          },
+          "email": {
+            "type": "string",
+            "description": "Stored lower-cased.",
+            "example": "contact@an-nhien.vn",
+            "maxLength": 254,
+            "format": "email"
+          },
+          "taxCode": {
+            "type": "string",
+            "example": "0312345678",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "provinceCode": {
+            "type": "string",
+            "description": "Province code, stored upper-case.",
+            "example": "HCM",
+            "maxLength": 10
+          },
+          "provinceName": {
+            "type": "string",
+            "example": "TP. Hồ Chí Minh",
+            "maxLength": 100
+          },
+          "creditLimit": {
+            "type": "string",
+            "description": "Maximum outstanding receivable allowed for this party, as a decimal string (>= 0).",
+            "example": "50000000"
+          },
+          "assignedToId": {
+            "type": "string",
+            "description": "Id of an active member of the organization responsible for this party."
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ]
+      },
+      "PartyDebtDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "collectionStatus": {
+            "type": "string"
+          },
+          "originalAmount": {
+            "type": "string",
+            "description": "Decimal string."
+          },
+          "paidAmount": {
+            "type": "string",
+            "description": "Decimal string."
+          },
+          "issueDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueDate": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "type",
+          "title",
+          "status",
+          "collectionStatus",
+          "originalAmount",
+          "paidAmount",
+          "issueDate",
+          "dueDate"
+        ]
+      },
+      "PartyDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "CUSTOMER",
+              "SUPPLIER",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditLimit": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "False after the party was deactivated."
+          },
+          "createdById": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedToId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "assignedTo": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          },
+          "debts": {
+            "description": "Every debt of the party, nearest due date first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyDebtDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "type",
+          "code",
+          "name",
+          "phone",
+          "email",
+          "taxCode",
+          "address",
+          "address2",
+          "note",
+          "provinceCode",
+          "provinceName",
+          "creditLimit",
+          "imageUrl",
+          "isActive",
+          "createdById",
+          "assignedToId",
+          "createdAt",
+          "updatedAt",
+          "assignedTo",
+          "debts"
+        ]
+      },
+      "UpdatePartyDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Customer, supplier, or both.",
+            "enum": [
+              "CUSTOMER",
+              "SUPPLIER",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "Optional business code, unique within the organization.",
+            "example": "CUS-0001",
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name.",
+            "example": "Boutique An Nhiên",
+            "maxLength": 200
+          },
+          "phone": {
+            "type": "string",
+            "example": "0283910011"
+          },
+          "email": {
+            "type": "string",
+            "description": "Stored lower-cased.",
+            "example": "contact@an-nhien.vn",
+            "maxLength": 254,
+            "format": "email"
+          },
+          "taxCode": {
+            "type": "string",
+            "example": "0312345678",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "provinceCode": {
+            "type": "string",
+            "description": "Province code, stored upper-case.",
+            "example": "HCM",
+            "maxLength": 10
+          },
+          "provinceName": {
+            "type": "string",
+            "example": "TP. Hồ Chí Minh",
+            "maxLength": 100
+          },
+          "creditLimit": {
+            "type": "string",
+            "description": "Maximum outstanding receivable allowed for this party, as a decimal string (>= 0).",
+            "example": "50000000"
+          },
+          "assignedToId": {
+            "type": "string",
+            "description": "Id of an active member of the organization responsible for this party."
+          }
+        }
+      },
+      "CreateDebtItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quantity",
+          "unitPrice"
+        ]
+      },
+      "CreateDebtDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "RECEIVABLE",
+              "PAYABLE"
+            ],
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string"
+          },
+          "assignedToId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "invoiceNo": {
+            "type": "string"
+          },
+          "orderNo": {
+            "type": "string"
+          },
+          "contractNo": {
+            "type": "string"
+          },
+          "poNo": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "salesChannel": {
+            "enum": [
+              "STORE",
+              "ONLINE",
+              "WHOLESALE"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateDebtItemDto"
+            }
+          },
+          "originalAmount": {
+            "type": "string"
+          },
+          "issueDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "nextFollowUpAt": {
+            "type": "string"
+          },
+          "followUpNote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "partyId",
+          "title",
+          "originalAmount",
+          "issueDate",
+          "dueDate"
+        ]
+      },
+      "UpdateDebtCollectionDto": {
+        "type": "object",
+        "properties": {
+          "assignedToId": {
+            "type": "string"
+          },
+          "collectionStatus": {
+            "enum": [
+              "NEW",
+              "CONTACTED",
+              "PROMISED",
+              "DISPUTED",
+              "ESCALATED"
+            ],
+            "type": "string"
+          },
+          "nextFollowUpAt": {
+            "type": "string"
+          },
+          "followUpNote": {
+            "type": "string"
+          },
+          "invoiceNo": {
+            "type": "string"
+          },
+          "orderNo": {
+            "type": "string"
+          },
+          "contractNo": {
+            "type": "string"
+          },
+          "poNo": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "paidAt": {
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "paidAt"
+        ]
+      },
+      "CreateAllocatedPaymentDto": {
+        "type": "object",
+        "properties": {
+          "partyId": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "RECEIVABLE",
+              "PAYABLE"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "paidAt": {
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "partyId",
+          "type",
+          "amount",
+          "paidAt"
+        ]
+      }
+    }
+  }
+}
