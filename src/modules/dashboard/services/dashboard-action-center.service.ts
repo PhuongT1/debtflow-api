@@ -5,10 +5,11 @@ import {
   addBusinessDays,
   formatBusinessDate,
   getBusinessDayRange,
-  getBusinessDayRangeForDate,
 } from '@common/utils/business-date.util';
 import { DebtStatus, DebtType, Prisma } from '@generated/prisma';
 import { PrismaService } from '@database/prisma.service';
+import { requireOrganizationId } from '@common/validation/require-organization-id';
+import { getDashboardPeriod } from '../queries/dashboard.query';
 
 const ACTIVE_DEBT_STATUSES = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 const QUEUE_LIMIT = 6;
@@ -20,11 +21,11 @@ export class DashboardActionCenterService {
   constructor(private readonly prisma: PrismaService) {}
 
   async get(period: DashboardQueryDto | undefined, organizationId: string) {
+    requireOrganizationId(organizationId);
     const { end: endOfToday, start: startOfToday } = getBusinessDayRange();
-    const periodStart = period?.dateFrom
-      ? getBusinessDayRangeForDate(period.dateFrom).start
-      : startOfToday;
-    const periodEnd = period?.dateTo ? getBusinessDayRangeForDate(period.dateTo).end : endOfToday;
+    const range = getDashboardPeriod(period);
+    const periodStart = range.start ?? startOfToday;
+    const periodEnd = range.end ?? endOfToday;
 
     if (periodStart > periodEnd) {
       throw badRequest('parties.INVALID_DATE_RANGE');
@@ -82,7 +83,8 @@ export class DashboardActionCenterService {
   }
 
   private async getCategorySales(start: Date, end: Date, organizationId: string) {
-    const items = await this.prisma.debtItem.findMany({
+    const items = await this.prisma.debtItem.groupBy({
+      by: ['categoryName'],
       where: {
         debt: {
           organizationId,
@@ -91,13 +93,16 @@ export class DashboardActionCenterService {
           issueDate: { gte: start, lte: end },
         },
       },
-      select: { categoryName: true, lineAmount: true },
+      _sum: { lineAmount: true },
     });
     const totals = new Map<string, Prisma.Decimal>();
 
     items.forEach((item) => {
       const category = item.categoryName ?? 'Chưa phân loại';
-      totals.set(category, (totals.get(category) ?? new Prisma.Decimal(0)).plus(item.lineAmount));
+      totals.set(
+        category,
+        (totals.get(category) ?? new Prisma.Decimal(0)).plus(item._sum.lineAmount ?? 0),
+      );
     });
 
     return Array.from(totals, ([category, amount]) => ({ category, amount }))
