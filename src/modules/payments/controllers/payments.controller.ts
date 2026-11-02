@@ -1,3 +1,6 @@
+import { HttpStatus } from '@nestjs/common';
+import { ApiEnvelope } from '@common/http/api-envelope.decorator';
+import { PaymentResponseDto, PaymentReversalResponseDto } from '../dto/payment-response.dto';
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
@@ -22,6 +25,7 @@ export class PaymentsController {
   })
   @ApiListQuery(PAYMENT_LIST_QUERY)
   @Get()
+  @ApiEnvelope(PaymentResponseDto, { paginated: true })
   list(
     @CurrentUser() u: JwtAuthPayload,
     @Query() q: QueryPaymentsDto,
@@ -38,6 +42,7 @@ export class PaymentsController {
   })
   @Post('auto-allocate')
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
+  @ApiEnvelope(PaymentResponseDto, { status: HttpStatus.CREATED })
   create(@CurrentUser() u: JwtAuthPayload, @Body() b: CreateAllocatedPaymentDto) {
     return this.service.createAutoAllocated(b, u.organizationId, u.sub);
   }
@@ -49,6 +54,7 @@ export class PaymentsController {
   })
   @Delete(':id')
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
+  @ApiEnvelope(PaymentReversalResponseDto)
   remove(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
     return this.service.remove(id, u.organizationId, u.sub);
   }

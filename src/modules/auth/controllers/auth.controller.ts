@@ -1,3 +1,5 @@
+import { ApiEnvelope } from '@common/http/api-envelope.decorator';
+import { SessionResponseDto } from '../dto/auth-response.dto';
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
@@ -32,6 +34,7 @@ export class AuthController {
   @PublicApi()
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @ApiEnvelope(SessionResponseDto)
   login(@Body() body: LoginDto) {
     return this.authService.login(body);
   }
@@ -42,6 +45,7 @@ export class AuthController {
   })
   @ProtectedApi()
   @Post('switch-organization')
+  @ApiEnvelope(SessionResponseDto, { status: HttpStatus.CREATED })
   switchOrganization(@CurrentUser() user: JwtAuthPayload, @Body() body: SwitchOrganizationDto) {
     return this.authService.switchOrganization(user.sub, body.organizationId);
   }
@@ -52,6 +56,7 @@ export class AuthController {
   @PublicApi()
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
+  @ApiEnvelope(SessionResponseDto)
   refresh(@Body() body: RefreshTokenDto) {
     return this.authService.refresh(body.refreshToken);
   }

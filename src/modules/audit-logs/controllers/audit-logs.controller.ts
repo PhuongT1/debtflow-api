@@ -1,3 +1,5 @@
+import { ApiEnvelope } from '@common/http/api-envelope.decorator';
+import { AuditLogResponseDto } from '../dto/audit-log-response.dto';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
@@ -20,6 +22,7 @@ export class AuditLogsController {
   @ApiOperation({ summary: 'List audit log entries of the current organization' })
   @ApiListQuery(AUDIT_LOG_LIST_QUERY)
   @Get()
+  @ApiEnvelope(AuditLogResponseDto, { paginated: true })
   list(
     @CurrentUser() user: JwtAuthPayload,
     @Query() query: QueryAuditLogsDto,

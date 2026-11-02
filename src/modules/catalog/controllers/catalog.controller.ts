@@ -1,3 +1,5 @@
+import { ApiEnvelope } from '@common/http/api-envelope.decorator';
+import { CatalogOptionsResponseDto } from '../dto/catalog-response.dto';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
@@ -15,6 +17,7 @@ export class CatalogController {
     description: 'Active categories, brands, products and the provinces that have parties.',
   })
   @Get('options')
+  @ApiEnvelope(CatalogOptionsResponseDto)
   options(@CurrentUser() u: JwtAuthPayload) {
     return this.service.options(u.organizationId);
   }

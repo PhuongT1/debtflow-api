@@ -1,3 +1,13 @@
+import { HttpStatus } from '@nestjs/common';
+import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator';
+import { DebtRecordDto } from '../dto/debt-record.dto';
+import {
+  DebtWithPartyDto,
+  DebtCollectionResponseDto,
+  DebtListResponseDto,
+  DebtDetailResponseDto,
+} from '../dto/debt-response.dto';
+import { PaymentResponseDto } from '@modules/payments/public/payments';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
@@ -15,6 +25,11 @@ import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto';
 import { CreatePaymentDto } from '@modules/payments/public/payments';
 @ApiTags('Debts')
 @ProtectedApi()
+@ApiErrorEnvelopes({
+  badRequest: 'Invalid input or business rule violation.',
+  notFound: 'The tenant-owned resource was not found.',
+  conflict: 'Resource conflict.',
+})
 @Controller('debts')
 export class DebtsController {
   constructor(
@@ -29,6 +44,7 @@ export class DebtsController {
   })
   @ApiListQuery(DEBT_LIST_QUERY)
   @Get()
+  @ApiEnvelope(DebtListResponseDto, { paginated: true })
   list(
     @CurrentUser() u: JwtAuthPayload,
     @Query() q: QueryDebtsDto,
@@ -44,6 +60,7 @@ export class DebtsController {
   })
   @Post()
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
+  @ApiEnvelope(DebtWithPartyDto, { status: HttpStatus.CREATED })
   create(@CurrentUser() u: JwtAuthPayload, @Body() b: CreateDebtDto) {
     return this.debts.create(b, u.organizationId, u.sub);
   }
@@ -53,6 +70,7 @@ export class DebtsController {
     description: 'Includes party, assignee, line items and the payments applied to the debt.',
   })
   @Get(':id')
+  @ApiEnvelope(DebtDetailResponseDto)
   detail(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
     return this.debts.detail(id, u.organizationId);
   }
@@ -64,6 +82,7 @@ export class DebtsController {
   })
   @Patch(':id')
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
+  @ApiEnvelope(DebtCollectionResponseDto)
   update(
     @CurrentUser() u: JwtAuthPayload,
     @Param('id') id: string,
@@ -77,6 +96,7 @@ export class DebtsController {
   })
   @Delete(':id')
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
+  @ApiEnvelope(DebtRecordDto)
   cancel(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
     return this.debts.cancel(id, u.organizationId, u.sub);
   }
@@ -88,6 +108,7 @@ export class DebtsController {
   })
   @Post(':id/payments')
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
+  @ApiEnvelope(PaymentResponseDto, { status: HttpStatus.CREATED })
   payment(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string, @Body() b: CreatePaymentDto) {
     return this.payments.create(id, b, u.organizationId, u.sub);
   }

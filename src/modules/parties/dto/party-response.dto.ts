@@ -1,3 +1,4 @@
+import { DebtRecordDto } from '@modules/debts/public/debt-records';
 import { PartyType } from '@generated/prisma';
 import { UserSummaryDto } from '@modules/users/public/users';
 
@@ -18,6 +19,7 @@ export class PartyResponseDto {
   type!: PartyType;
   code!: string | null;
   name!: string;
+  searchText!: string;
   phone!: string | null;
   email!: string | null;
   taxCode!: string | null;
@@ -43,20 +45,7 @@ export class PartyListItemDto extends PartyResponseDto {
   _count!: PartyDebtCountDto;
 }
 
-export class PartyDebtDto {
-  id!: string;
-  code!: string;
-  type!: string;
-  title!: string;
-  status!: string;
-  collectionStatus!: string;
-  /** Decimal string. */
-  originalAmount!: string;
-  /** Decimal string. */
-  paidAmount!: string;
-  issueDate!: Date;
-  dueDate!: Date;
-}
+export class PartyDebtDto extends DebtRecordDto {}
 
 export class PartyDetailDto extends PartyResponseDto {
   assignedTo!: UserSummaryDto | null;
