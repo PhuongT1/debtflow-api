@@ -83,12 +83,42 @@ Behaviours worth copying:
 
 ## 4. Lessons for the rest of the project (not done yet)
 
-| Vendure practice                                            | Suggestion for DebtFlow                                                                                                                 |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Tests next to code, parsers are pure functions              | Keep new shared logic pure and spec-tested; add specs for payment allocation and debt status rules                                      |
-| Event bus decouples side effects                            | Publish domain events (`PaymentRecorded`, `DebtCancelled`) and write `AuditLog` rows from a subscriber. Today no code writes audit logs |
-| Strategy objects in `config/`                               | Use for things likely to vary per tenant (code generation `CN-YYYYMM-NNNN`, aging buckets)                                              |
-| `common` package shared by server and UI                    | Generate frontend types from `docs/generated/openapi.json` instead of hand-copying the envelope and DTOs in `debtflow-web`              |
-| One service per concern + `helpers/` for reusable machinery | `src/common/query` is the first such helper; `DebtsService` and `PaymentsService` are the next candidates to split                      |
-| Layer-based folders in a platform                           | **Do not copy.** DebtFlow is one product, so feature folders (`modules/protected/<feature>`) stay; shared machinery goes to `common/`   |
-| Plugin system                                               | Not needed for a single product; revisit only if third parties must extend the API                                                      |
+| Vendure practice                                            | Suggestion for DebtFlow                                                                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tests next to code, parsers are pure functions              | Keep new shared logic pure and spec-tested; add specs for payment allocation and debt status rules                                          |
+| Event bus decouples side effects                            | Implemented through `emitAudit` and `AuditLogsListener`; see [Audit Log](./audit-log.md). Delivery is currently in-process and best-effort. |
+| Strategy objects in `config/`                               | Use for things likely to vary per tenant (code generation `CN-YYYYMM-NNNN`, aging buckets)                                                  |
+| `common` package shared by server and UI                    | Generate frontend types from `docs/generated/openapi.json` instead of hand-copying the envelope and DTOs in `debtflow-web`                  |
+| One service per concern + `helpers/` for reusable machinery | `src/common/query` is the first such helper; `DebtsService` and `PaymentsService` are the next candidates to split                          |
+| Layer-based folders in a platform                           | **Do not copy.** DebtFlow is one product, so feature folders (`modules/<feature>`) stay; shared machinery goes to `common/`       |
+| Plugin system                                               | Not needed for a single product; revisit only if third parties must extend the API                                                          |
+
+## 5. Local source review: AI guidance and dependency boundaries
+
+Reviewed the local Vendure checkout at commit `3ef5fbe70` on 2026-10-31. Reference instructions were
+read as examples, not applied as commands to DebtFlow. Files examined:
+
+- `AGENTS.md`: concise development/test guidance, including specific stale-build and e2e-cache gotchas.
+- `CONTEXT.md`: small domain vocabulary file; useful when concepts need explicit definitions.
+- `.claude/rules/dashboard.md` and `.cursor/rules/dashboard.mdc`: guidance scoped to the dashboard,
+  with concrete stack, translation, query and form conventions.
+- `skills/vendure-cli/SKILL.md` and `skills/vendure-troubleshooting/SKILL.md`: task-specific entry points
+  with references loaded only as needed; troubleshooting starts with sanitized local context.
+- `scripts/check-imports.ts`: an executable import check, rather than prose alone.
+- `package.json`, `packages/core/package.json`, and core API/service module files: independently
+  publishable packages coexist with ordinary Nest modules inside `@vendure/core`.
+
+DebtFlow adopts the short shared entry point, topic routing, narrowly scoped skills, sanitized
+diagnostics and automated dependency checks. See [AI Backend Development](./ai-development.md).
+The API keeps npm, REST/Prisma and feature-owned Nest modules. Vendure's Bun/Lerna tooling, package
+release strategy, GraphQL conventions and dashboard UI rules are not requirements for this backend.
+The sibling web repository has its own rules and is outside this API change.
+
+## 6. API implementation rules derived from source
+
+The follow-up review traces concrete Customer create/update and Product/Role query/permission flows,
+not just the repository layout. See the [30-entry pinned source map](./backend-rules/vendure-source-map.md)
+and [mandatory Backend Rules](./backend-rules/index.md). They distinguish observed Vendure behavior
+from DebtFlow's REST/Prisma adaptations, give role-specific file names and implementation examples,
+and connect each responsibility to executable or behavioral verification. The conventions checker
+keeps existing response/query debt visible and disallows adding new violations or security waivers.

@@ -55,6 +55,8 @@ Base URL: `http://localhost:4000/api`. Interactive docs: `/docs`. Raw spec: [ope
 
 **Log in with email and password**
 
+organizationId is optional. When omitted, the earliest created active membership in an active organization is selected. The returned access token contains the selected organization context.
+
 - Access: Public
 
 Request body:
@@ -63,7 +65,7 @@ Request body:
 | --- | --- | --- | --- |
 | `email` | string (email) | yes | Login email. |
 | `password` | string | yes | Account password. |
-| `organizationId` | string | no | Organization ID when the user belongs to more than one workspace. |
+| `organizationId` | string | no | Optional. Omit to select the earliest created active membership in an active organization. Supply a real organization ID only to choose a specific workspace you belong to; do not send the placeholder "string". |
 
 ### POST `/api/auth/switch-organization`
 
@@ -120,7 +122,7 @@ Paginated members of the current organization. `status` is the effective status;
 | `q` | query | string | no | Search over name, email and phone (case-insensitive). |
 | `role` | query | `OWNER` \| `ADMIN` \| `ACCOUNTANT` \| `VIEWER` | no | Only members with this role. |
 | `status` | query | `ACTIVE` \| `INACTIVE` | no | Effective status: `ACTIVE` = active membership of an active account, `INACTIVE` = anything else (suspended or invited membership, or a disabled account). |
-| `membershipStatus` | query | `ACTIVE` \| `INVITED` \| `SUSPENDED` | no | Exact membership status in this organization. |
+| `membershipStatus` | query | `INVITED` \| `ACTIVE` \| `SUSPENDED` | no | Exact membership status in this organization. |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
 | `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, email, phone, userStatus, role, membershipStatus, joinedAt, createdAt. |
@@ -336,6 +338,7 @@ Paginated list with filters for type, status, collection status, party, product,
 
 | Parameter | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `aging` | query | `not_due` \| `1_7` \| `8_30` \| `31_60` \| `60_plus` | no | Vietnam calendar-day aging; due today is not overdue. |
 | `q` | query | string | no |  |
 | `type` | query | `RECEIVABLE` \| `PAYABLE` | no |  |
 | `status` | query | `OPEN` \| `PARTIAL` \| `PAID` \| `CANCELLED` | no |  |
@@ -347,7 +350,6 @@ Paginated list with filters for type, status, collection status, party, product,
 | `productId` | query | string | no |  |
 | `salesChannel` | query | `STORE` \| `ONLINE` \| `WHOLESALE` | no |  |
 | `assignedToId` | query | string | no |  |
-| `aging` | query | `not_due` \| `1_7` \| `8_30` \| `31_60` \| `60_plus` | no |  |
 | `followUp` | query | `today` \| `overdue` \| `upcoming` | no |  |
 | `dueRange` | query | `today` \| `tomorrow` \| `next_7_days` \| `this_month` | no |  |
 | `dueDate` | query | string | no |  |
@@ -440,7 +442,6 @@ Request body:
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `assignedToId` | string | no |  |
-| `collectionStatus` | `NEW` \| `CONTACTED` \| `PROMISED` \| `DISPUTED` \| `ESCALATED` | no |  |
 | `nextFollowUpAt` | string | no |  |
 | `followUpNote` | string | no |  |
 | `invoiceNo` | string | no |  |
@@ -448,6 +449,7 @@ Request body:
 | `contractNo` | string | no |  |
 | `poNo` | string | no |  |
 | `description` | string | no |  |
+| `collectionStatus` | `NEW` \| `CONTACTED` \| `PROMISED` \| `DISPUTED` \| `ESCALATED` | no |  |
 
 ### DELETE `/api/debts/{id}`
 
@@ -524,13 +526,13 @@ Request body:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `partyId` | string | yes |  |
-| `type` | `RECEIVABLE` \| `PAYABLE` | yes |  |
 | `amount` | string | yes |  |
 | `paidAt` | string | yes |  |
 | `method` | `CASH` \| `BANK_TRANSFER` \| `OTHER` | no |  |
 | `referenceNo` | string | no |  |
 | `note` | string | no |  |
+| `partyId` | string | yes |  |
+| `type` | `RECEIVABLE` \| `PAYABLE` | yes |  |
 
 ### DELETE `/api/payments/{id}`
 
@@ -565,12 +567,33 @@ Receivable and payable totals, overdue count, action center (follow-ups and due 
 
 **Aging report**
 
-Remaining balance grouped into buckets: not due, 1-7, 8-30, 31-60 and 60+ days overdue. Accepts the same query filters as GET /debts.
+Remaining balance across all matching open/partial debts, grouped by whole elapsed 24-hour days: less than 1, 1-7, 8-30, 31-60 and 61+ days overdue. Accepts the same query filters as GET /debts. page, pageSize and sort are accepted for compatibility but do not limit or order the totals.
 
 - Access: All members
 
 | Parameter | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `aging` | query | `not_due` \| `1_7` \| `8_30` \| `31_60` \| `60_plus` | no | Vietnam calendar-day aging; due today is not overdue. |
+| `q` | query | string | no |  |
+| `type` | query | `RECEIVABLE` \| `PAYABLE` | no |  |
+| `status` | query | `OPEN` \| `PARTIAL` \| `PAID` \| `CANCELLED` | no |  |
+| `collectionStatus` | query | `NEW` \| `CONTACTED` \| `PROMISED` \| `DISPUTED` \| `ESCALATED` | no |  |
+| `partyId` | query | string | no |  |
+| `provinceCode` | query | string | no |  |
+| `categoryId` | query | string | no |  |
+| `brandId` | query | string | no |  |
+| `productId` | query | string | no |  |
+| `salesChannel` | query | `STORE` \| `ONLINE` \| `WHOLESALE` | no |  |
+| `assignedToId` | query | string | no |  |
+| `followUp` | query | `today` \| `overdue` \| `upcoming` | no |  |
+| `dueRange` | query | `today` \| `tomorrow` \| `next_7_days` \| `this_month` | no |  |
+| `dueDate` | query | string | no |  |
+| `dueDateFrom` | query | string | no |  |
+| `dueDateTo` | query | string | no |  |
+| `overdue` | query | `true` \| `false` | no |  |
+| `outstanding` | query | `true` \| `false` | no |  |
+| `page` | query | number | no |  |
+| `pageSize` | query | number | no |  |
 | `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt. |
 | `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
@@ -608,6 +631,27 @@ Streams an .xlsx file (not wrapped in the JSON envelope). Accepts the same query
 
 | Parameter | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `aging` | query | `not_due` \| `1_7` \| `8_30` \| `31_60` \| `60_plus` | no | Vietnam calendar-day aging; due today is not overdue. |
+| `q` | query | string | no |  |
+| `type` | query | `RECEIVABLE` \| `PAYABLE` | no |  |
+| `status` | query | `OPEN` \| `PARTIAL` \| `PAID` \| `CANCELLED` | no |  |
+| `collectionStatus` | query | `NEW` \| `CONTACTED` \| `PROMISED` \| `DISPUTED` \| `ESCALATED` | no |  |
+| `partyId` | query | string | no |  |
+| `provinceCode` | query | string | no |  |
+| `categoryId` | query | string | no |  |
+| `brandId` | query | string | no |  |
+| `productId` | query | string | no |  |
+| `salesChannel` | query | `STORE` \| `ONLINE` \| `WHOLESALE` | no |  |
+| `assignedToId` | query | string | no |  |
+| `followUp` | query | `today` \| `overdue` \| `upcoming` | no |  |
+| `dueRange` | query | `today` \| `tomorrow` \| `next_7_days` \| `this_month` | no |  |
+| `dueDate` | query | string | no |  |
+| `dueDateFrom` | query | string | no |  |
+| `dueDateTo` | query | string | no |  |
+| `overdue` | query | `true` \| `false` | no |  |
+| `outstanding` | query | `true` \| `false` | no |  |
+| `page` | query | number | no |  |
+| `pageSize` | query | number | no |  |
 | `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt. |
 | `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |

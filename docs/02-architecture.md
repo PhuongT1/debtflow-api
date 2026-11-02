@@ -53,17 +53,17 @@ flowchart TB
     AppModule --> I18nModule
     AppModule --> DatabaseModule
     AppModule --> AuthModule
-    AppModule --> PublicModule
-    AppModule --> ProtectedModule
-    PublicModule --> AuthController["AuthController<br/>login, refresh, switch-organization"]
-    ProtectedModule --> Account & Users & Parties & Catalog & Debts & Payments
-    ProtectedModule --> Dashboard & Reports & Exports & Imports & AuditLogs
+    AppModule --> AuthApiModule
+    AuthApiModule --> AuthController["AuthController<br/>login, refresh, switch-organization"]
+    AuthApiModule --> AuthModule
+    AppModule --> Account & Users & Parties & Catalog & Debts & Payments
+    AppModule --> Dashboard & Reports & Exports & Imports & AuditLogs
     Debts --> Payments
-    Reports --> Debts
+    Reports --> DebtQuery["Shared debt query builder"]
     Exports --> Debts
 ```
 
-Modules are split by **auth boundary first, then by business domain**:
+Modules are owned by **business domain**; public/protected access is declared on each route:
 
 ```text
 src/
@@ -74,16 +74,17 @@ src/
   database/        PrismaService (PrismaClient + pg adapter)
   generated/prisma Generated client (do not edit)
   modules/
-    public/auth/   login, refresh, switch-organization (no token required)
-    protected/     account, users, parties, catalog, debts, payments,
-                   dashboard, reports, exports, imports, audit-logs
+    auth/          login/refresh (public), switch-organization (authenticated)
+    account/, users/, parties/, catalog/, debts/, payments/
+    dashboard/, reports/, exports/, imports/, audit-logs/
 prisma/            schema.prisma, models/*.prisma, migrations/, seed.ts
 scripts/           import-parties.ts, generate-api-docs.ts
 docs/              this documentation
 ```
 
-Inside a feature module the layering is: **Controller** (HTTP, role policy, DTO binding) -> **Service**
-(business rules, Prisma) -> **DTO** (`class-validator` input contracts).
+Inside a feature module, DTOs validate HTTP input and controllers bind context/policy before calling
+services for business rules and persistence. Jobs and other adapters reuse the same owned services.
+`AppModule` composes the HTTP application; reusable domain modules do not import it.
 
 ## Request lifecycle
 

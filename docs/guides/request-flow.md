@@ -36,8 +36,10 @@ const app = await NestFactory.create(AppModule);
 ConfigModule
 DatabaseModule
 AuthModule
-PublicModule
-ProtectedModule
+AuthApiModule
+AccountModule, UsersModule, PartiesModule, CatalogModule
+DebtsModule, PaymentsModule, DashboardModule, ReportsModule
+ExportsModule, ImportsModule, AuditLogsModule
 ```
 
 4. `src/configure-app.ts`
@@ -61,15 +63,15 @@ ProtectedModule
 
 ## Public vs Protected APIs
 
-Folders are split by auth boundary first, then by business domain:
+Folders are owned by business domain. A domain can have different route policies or background adapters:
 
 ```txt
-src/modules/public/auth       -> login API
-src/modules/protected/account   -> current user API
-src/modules/protected/dashboard -> dashboard API
-src/modules/protected/debts     -> debts API
-src/modules/protected/parties   -> parties API
-src/modules/protected/payments  -> payments API
+src/modules/auth       -> login API
+src/modules/account   -> current user API
+src/modules/dashboard -> dashboard API
+src/modules/debts     -> debts API
+src/modules/parties   -> parties API
+src/modules/payments  -> payments API
 ```
 
 Authentication is visible in each controller:
@@ -85,13 +87,11 @@ Files:
 
 ```txt
 src/auth/auth.module.ts
-src/auth/jwt-auth.guard.ts
-src/auth/auth-api.decorator.ts
-src/auth/public.decorator.ts
-src/modules/public/public.module.ts
-src/modules/public/auth/auth.module.ts
-src/modules/protected/protected.module.ts
-src/modules/protected/account/account.module.ts
+src/auth/guards/jwt-auth.guard.ts
+src/auth/decorators/auth-api.decorator.ts
+src/auth/decorators/public.decorator.ts
+src/modules/auth/auth.module.ts
+src/modules/auth/controllers/account.controller.ts
 ```
 
 Current split:
@@ -125,9 +125,9 @@ HTTP request
   -> src/main.ts
   -> src/configure-app.ts global prefix /api
   -> src/app.module.ts imports DashboardModule
-  -> src/modules/protected/dashboard/dashboard.module.ts
-  -> src/modules/protected/dashboard/dashboard.controller.ts
-  -> src/modules/protected/dashboard/dashboard.service.ts
+  -> src/modules/dashboard/dashboard.module.ts
+  -> src/modules/dashboard/controllers/dashboard.controller.ts
+  -> src/modules/dashboard/services/dashboard.service.ts
   -> src/database/prisma.service.ts
   -> PostgreSQL / Neon database
   -> response JSON
@@ -152,7 +152,7 @@ This makes the dashboard controller and service available.
 File:
 
 ```txt
-src/modules/protected/dashboard/dashboard.module.ts
+src/modules/dashboard/dashboard.module.ts
 ```
 
 ```ts
@@ -173,7 +173,7 @@ Meaning:
 File:
 
 ```txt
-src/modules/protected/dashboard/dashboard.controller.ts
+src/modules/dashboard/controllers/dashboard.controller.ts
 ```
 
 ```ts
@@ -208,7 +208,7 @@ this.dashboardService.get();
 File:
 
 ```txt
-src/modules/protected/dashboard/dashboard.service.ts
+src/modules/dashboard/services/dashboard.service.ts
 ```
 
 ```ts
@@ -328,9 +328,9 @@ Flow:
 
 ```txt
 HTTP request
-  -> src/modules/public/auth/auth.controller.ts
+  -> src/modules/auth/controllers/auth.controller.ts
   -> LoginDto validation
-  -> src/auth/auth.service.ts
+  -> src/modules/auth/services/auth.service.ts
   -> Prisma user lookup
   -> bcrypt password compare
   -> JWT access token created
@@ -342,7 +342,7 @@ HTTP request
 File:
 
 ```txt
-src/modules/protected/account/account.controller.ts
+src/modules/auth/controllers/account.controller.ts
 ```
 
 ```ts
@@ -364,7 +364,7 @@ POST /api/auth/login
 File:
 
 ```txt
-src/modules/public/auth/dto/login.dto.ts
+src/modules/auth/dto/login.dto.ts
 ```
 
 Only these fields are allowed:
@@ -388,7 +388,7 @@ Unknown fields are rejected.
 File:
 
 ```txt
-src/auth/auth.service.ts
+src/modules/auth/services/auth.service.ts
 ```
 
 Steps:
@@ -426,7 +426,7 @@ GET /api/auth/me
 File:
 
 ```txt
-src/modules/protected/account/account.controller.ts
+src/modules/auth/controllers/account.controller.ts
 ```
 
 ```ts
@@ -456,7 +456,7 @@ HTTP request
 File:
 
 ```txt
-src/auth/jwt-auth.guard.ts
+src/auth/guards/jwt-auth.guard.ts
 ```
 
 The guard checks:
@@ -482,7 +482,7 @@ If token is invalid or expired:
 File:
 
 ```txt
-src/auth/current-user.decorator.ts
+src/auth/decorators/current-user.decorator.ts
 ```
 
 It reads:

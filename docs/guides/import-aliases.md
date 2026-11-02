@@ -10,8 +10,8 @@ import { UserStatus } from '@generated/prisma';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { ProtectedApi } from '@auth/auth-api.decorator';
 import { AuthModule } from '@auth/auth.module';
-import { PublicModule } from '@modules/public/public.module';
-import { ProtectedModule } from '@modules/protected/protected.module';
+import { AuthApiModule } from '@modules/auth/auth.module';
+import { PaymentsModule } from '@modules/payments/payments.module';
 ```
 
 Aliases are defined in:

@@ -4,6 +4,23 @@ NestJS backend API for Debt Flow / Sales Debt Management: multi-tenant tracking 
 payables, payments with automatic allocation, collection follow-up, dashboard, aging report and Excel export.
 Start with the [documentation](docs/README.md).
 
+AI coding agents start at [AGENTS.md](AGENTS.md). Backend contribution rules and verification are in
+[AI Backend Development](docs/guides/ai-development.md). Run `npm run check` for the local quality checks.
+
+## AI setup for every member
+
+After cloning or pulling updated rules/skills, run:
+
+```bash
+npm run ai:setup
+npm run ai:check
+```
+
+This installs shared rules/skills for Codex, Claude Code and Cursor, plus Copilot instructions.
+It runs offline without database access. Restart the AI session after setup.
+The reusable NestJS core lives in [.ai/core](.ai/core/index.md); DebtFlow rules specialize it.
+See [team setup and copying to another project](docs/guides/ai-setup.md).
+
 ## Important: After Changing A Prisma Model
 
 Whenever you add, remove, rename, or change a field in `prisma/models/*.prisma`, follow this
@@ -102,6 +119,9 @@ Role:     ADMIN
 | Command                  | Purpose                                                       |
 | ------------------------ | ------------------------------------------------------------- |
 | `npm run dev`            | Start backend in watch mode.                                  |
+| `npm run ai:setup`       | Install shared AI rules and skills locally for team clients. |
+| `npm run ai:check`       | Verify AI installation without writing files. |
+| `npm run test:ai`        | Test setup portability, conflicts and Git ignore behavior. |
 | `npm run setup:dev`      | Migrate, generate Prisma Client, seed, and start development. |
 | `npm run build`          | Generate Prisma Client and build backend.                     |
 | `npm run db:migrate`     | Create and apply migrations in development.                   |

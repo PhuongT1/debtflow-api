@@ -4,10 +4,18 @@ Every list endpoint (`GET /debts`, `/parties`, `/payments`, `/users`, `/audit-lo
 `/reports/aging` and `/exports/debts`) understands the **same** query convention. A resource only
 declares which fields are allowed; sorting and filtering are not written per endpoint.
 
+`GET /reports/aging` uses the same filters across the complete matching tenant dataset. It accepts
+validated pagination/sort parameters for compatibility, but they do not limit or order aggregate
+totals. `GET /exports/debts` remains an explicitly capped export of up to 1000 rows.
+
 The design follows Vendure's `ListQueryBuilder` (see [Vendure reference](./vendure-reference.md) and
 [ADR 0003](../adr/0003-list-query-modeled-on-vendure.md)).
 
 ## Syntax
+
+Named and dynamic filters are additive. Multiple constraints on status or due date intersect; one
+does not replace another. Contradictory filters yield no rows. Named `dueDate`, `dueDateFrom` and
+`dueDateTo` use valid `YYYY-MM-DD` Vietnam dates; impossible or reversed dates return 400.
 
 | Purpose        | Query string                                     | Meaning                                                                                                |
 | -------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -74,11 +82,11 @@ Each endpoint's allowed fields, their type and whether they can be sorted are li
 
 | Endpoint                                         | Definition                                                  |
 | ------------------------------------------------ | ----------------------------------------------------------- |
-| `GET /debts`, `/reports/aging`, `/exports/debts` | `src/modules/protected/debts/debts.list-query.ts`           |
-| `GET /parties`                                   | `src/modules/protected/parties/parties.list-query.ts`       |
-| `GET /payments`                                  | `src/modules/protected/payments/payments.list-query.ts`     |
-| `GET /users`                                     | `src/modules/protected/users/users.list-query.ts`           |
-| `GET /audit-logs`                                | `src/modules/protected/audit-logs/audit-logs.list-query.ts` |
+| `GET /debts`, `/reports/aging`, `/exports/debts` | `src/modules/debts/queries/debts.list-query.ts`           |
+| `GET /parties`                                   | `src/modules/parties/queries/parties.list-query.ts`       |
+| `GET /payments`                                  | `src/modules/payments/queries/payments.list-query.ts`     |
+| `GET /users`                                     | `src/modules/users/queries/users.list-query.ts`           |
+| `GET /audit-logs`                                | `src/modules/audit-logs/queries/audit-logs.list-query.ts` |
 
 ## Extending it
 

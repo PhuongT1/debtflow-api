@@ -6,7 +6,7 @@ change in behaviour should be reflected here in the same pull request.
 ## Roles and permissions
 
 Authorization is declared on controllers with `@Roles(...)` and enforced by `RolesGuard`
-([src/auth/roles.guard.ts](../src/auth/roles.guard.ts)). The check is an **exact role match, not a hierarchy**:
+([src/auth/guards/roles.guard.ts](../src/auth/guards/roles.guard.ts)). The check is an **exact role match, not a hierarchy**:
 a role not listed on an endpoint is rejected, even if it looks "higher" than the listed ones.
 An endpoint without `@Roles` is open to every authenticated, active member.
 
@@ -57,23 +57,26 @@ stateDiagram-v2
     end note
 ```
 
-### Rules ([debts.service.ts](../src/modules/protected/debts/debts.service.ts))
+### Rules ([debts.service.ts](../src/modules/debts/services/debts.service.ts))
 
 1. **Code**: generated per organization as `CN-YYYYMM-NNNN` (count of codes with the same month prefix + 1).
 2. **Dates**: `dueDate` must not be earlier than `issueDate`.
 3. **Items (optional)**: when `items` are sent, the sum of `lineAmount` must equal `originalAmount`.
    Product code, name, category and brand are copied onto the line so history survives catalog edits
-   ([debt-line-item.service.ts](../src/modules/protected/debts/debt-line-item.service.ts)).
+   ([debt-line-item.service.ts](../src/modules/debts/services/debt-line-item.service.ts)).
 4. **Editing**: `PATCH /debts/{id}` only changes collection data (assignee, collection status, follow-up
-   date and note) and reference numbers/description. Amount, dates, party and type cannot be edited after creation.
-5. **Cancelling** (`DELETE /debts/{id}`) sets `status = CANCELLED`. It is rejected if the debt already has any payment allocation.
-6. **Creator and tenant**: `createdById` is the token subject; `organizationId` always comes from the token, never from the body.
+   date and note) and reference numbers/description. Omitted fields stay unchanged; explicit null clears
+   nullable fields, but collection status cannot be null. Amount, dates, party and type cannot be edited after creation.
+5. **Related resources**: creation requires an active party in the current organization. An assignee,
+   when supplied on create or PATCH, must have an active membership and user in the active organization.
+6. **Cancelling** (`DELETE /debts/{id}`) sets `status = CANCELLED`. It is rejected if the debt already has any payment allocation.
+7. **Creator and tenant**: `createdById` is the token subject; `organizationId` always comes from the token, never from the body.
 
 ## Payments and allocation
 
 A **Payment** is one voucher for one party and one direction (`type`: RECEIVABLE = money in, PAYABLE = money out).
 It is split into **PaymentAllocation** rows, one per debt it settles
-([payments.service.ts](../src/modules/protected/payments/payments.service.ts)). Everything runs in a single database transaction.
+([payments.service.ts](../src/modules/payments/services/payments.service.ts)). Everything runs in a single database transaction.
 
 ```mermaid
 flowchart TD
@@ -99,7 +102,7 @@ flowchart TD
 
 ## Parties
 
-([parties.service.ts](../src/modules/protected/parties/parties.service.ts))
+([parties.service.ts](../src/modules/parties/services/parties.service.ts))
 
 - `type` is `CUSTOMER`, `SUPPLIER` or `BOTH`; `code` is optional but unique per organization.
 - The list returns an outstanding **balance** per party: remaining receivable and remaining payable
@@ -124,11 +127,16 @@ Every list endpoint also supports the generic `sort` and `filter[field][operator
 
 - **Dashboard** (`GET /dashboard`): original, paid and remaining totals per direction (cancelled debts excluded),
   overdue count, recent payments, the eight nearest unsettled debts, and an **action center**
-  ([dashboard-action-center.service.ts](../src/modules/protected/dashboard/dashboard-action-center.service.ts)) with
+  ([dashboard-action-center.service.ts](../src/modules/dashboard/services/dashboard-action-center.service.ts)) with
   collect/pay/follow-up queues and period trade totals. `dateFrom`/`dateTo` bound the period (business days use `+07:00`);
   `dateFrom` after `dateTo` is a 400.
-- **Aging report** (`GET /reports/aging`): remaining balance of unsettled debts in five buckets - not due,
-  1-7, 8-30, 31-60 and over 60 days overdue - using the same filters as the debt list (first page of up to 1000 rows).
+- **Aging report** (`GET /reports/aging`): remaining balance and count across all matching OPEN/PARTIAL
+  debts, aggregated in the database with the same tenant and debt filters as the list. It is not capped
+  at 1000 rows. Pagination and sort parameters are accepted for compatibility but do not affect totals.
+  Lists and reports share Vietnam calendar-day buckets: due today or later (`notDue`),
+  1-7, 8-30, 31-60 and 61+ calendar days overdue. Yesterday is day 1; server timezone does not change
+  the boundaries. A fixed report timestamp and a Repeatable Read transaction
+  keep the five aggregate queries on one consistent database snapshot. Amounts are decimal strings.
 - **Export** (`GET /exports/debts`): the same filters, up to 1000 rows, as an `.xlsx` file named `debtflow-debts.xlsx`.
 
 ## Audit trail
@@ -141,7 +149,7 @@ Services publish a domain event after each successful change and `AuditLogsListe
 
 ## Members
 
-([users.service.ts](../src/modules/protected/users/users.service.ts))
+([users.service.ts](../src/modules/users/services/users.service.ts))
 
 - Members are listed through memberships of the current organization.
 - `POST /users` creates a new global account and an ACTIVE membership in the current organization.
@@ -160,8 +168,7 @@ Services publish a domain event after each successful change and `AuditLogsListe
 
 These are facts observed while writing this documentation, not planned work:
 
-| #   | Observation                                                                                                                                     | Where                                   |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| 1   | Party balance sorting loads matching parties into memory before pagination. Large tenants will need database-side aggregate sorting.        | `parties.service.ts`                    |
-| 2   | Several services still default `organizationId` to the literal `'org_legacy_debtflow'` when it is not passed. Controllers always pass it today. | `payments`, `debts`, `reports` services |
-| 3   | `POST /imports/debts` is a scaffold and imports nothing.                                                                                        | `imports.controller.ts`                 |
+| #   | Observation                                                                                                                          | Where                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| 1   | Party balance sorting loads matching parties into memory before pagination. Large tenants will need database-side aggregate sorting. | `parties.service.ts`    |
+| 2   | `POST /imports/debts` is a scaffold and imports nothing.                                                                             | `imports.controller.ts` |

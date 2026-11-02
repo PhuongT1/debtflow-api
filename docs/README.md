@@ -21,6 +21,17 @@ Start here. Pages are ordered from "what is this" to "how is it built".
 
 ## Guides (how-to)
 
+AI-assisted backend work starts at the root `AGENTS.md` and the
+[AI Backend Development guide](./guides/ai-development.md).
+
+New members: run `npm run ai:setup` and `npm run ai:check`. See
+[team AI setup and portable NestJS core](./guides/ai-setup.md) for client support and reuse in another repo.
+Implementation requirements are in [Backend Rules](./guides/backend-rules/index.md), with
+[Vendure source evidence](./guides/backend-rules/vendure-source-map.md).
+
+[Maintainability and reuse](./guides/backend-rules/maintainability.md) defines responsibility folders,
+type/DTO ownership, query reuse and the limits of the automated duplication checks.
+
 | Guide                                                         | Topic                                                                           |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | [Run Source](./guides/run-source.md)                          | install, environment, run, seed                                                 |
