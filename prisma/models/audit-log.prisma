@@ -1,3 +1,4 @@
+/// Change history of business entities. Written by AuditLogsListener from domain events; read-only through the API.
 model AuditLog {
   id         String   @id @default(cuid())
   organizationId String
@@ -5,7 +6,9 @@ model AuditLog {
   entityType String
   entityId   String
   action     String
+  /// Snapshot of the entity before the change.
   before     Json?
+  /// Snapshot of the entity after the change.
   after      Json?
   createdAt  DateTime @default(now())
 

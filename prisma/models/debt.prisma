@@ -18,12 +18,15 @@ enum CollectionStatus {
   ESCALATED
 }
 
+/// A receivable (customer owes us) or payable (we owe a supplier) document. Remaining = originalAmount - paidAmount.
 model Debt {
   id               String           @id @default(cuid())
   organizationId   String
+  /// Generated per organization as CN-YYYYMM-NNNN.
   code             String
   type             DebtType
   partyId          String
+  /// Staff member responsible for collecting this debt.
   assignedToId     String?
   title            String
   invoiceNo        String?
@@ -32,12 +35,16 @@ model Debt {
   poNo             String?
   description      String?
   originalAmount   Decimal          @db.Decimal(18, 2)
+  /// Sum of payment allocations. Maintained by the payment workflow, never edited directly.
   paidAmount       Decimal          @default(0) @db.Decimal(18, 2)
   currency         String           @default("VND")
   salesChannel     SalesChannel?
   issueDate        DateTime
+  /// Must not be earlier than issueDate. Drives overdue and aging calculations.
   dueDate          DateTime
+  /// Payment lifecycle: OPEN -> PARTIAL -> PAID, or CANCELLED (only when no payment exists).
   status           DebtStatus       @default(OPEN)
+  /// Collection workflow stage, independent from the payment status.
   collectionStatus CollectionStatus @default(NEW)
   nextFollowUpAt   DateTime?
   followUpNote     String?

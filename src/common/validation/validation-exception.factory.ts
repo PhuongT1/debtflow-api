@@ -9,6 +9,8 @@ type ApiValidationError = {
   field: string;
   message: string;
   code: string;
+  /** Translation key resolved by ApiExceptionFilter; removed before the response is sent. */
+  key: string;
 };
 
 const DEFAULT_VALIDATION_CODE = 'VALIDATION_ERROR';
@@ -23,7 +25,7 @@ export function createValidationException(errors: ValidationError[]) {
     {
       success: false,
       code: firstError?.code ?? DEFAULT_VALIDATION_CODE,
-      message: firstError?.message ?? 'Dữ liệu không hợp lệ.',
+      message: firstError?.message ?? DEFAULT_VALIDATION_CODE,
       errors: validationErrors,
       statusCode,
     },
@@ -36,11 +38,17 @@ function formatValidationErrors(errors: ValidationError[], parentPath = ''): Api
     const field = parentPath ? `${parentPath}.${error.property}` : error.property;
     const ownErrors = Object.entries(error.constraints ?? {}).map(([constraintName, message]) => {
       const context = getConstraintContext(error, constraintName);
+      // A message that is already a key (validation.XXX) is kept; class-validator's default
+      // English text is replaced by the key of the failed constraint so it can be localized.
+      const key = message.startsWith('validation.') ? message : `validation.${constraintName}`;
 
       return {
         field,
         message,
-        code: context?.code ?? DEFAULT_VALIDATION_CODE,
+        key,
+        code:
+          context?.code ??
+          (message.startsWith('validation.') ? key.split('.').pop()! : DEFAULT_VALIDATION_CODE),
       };
     });
     const childErrors = error.children?.length ? formatValidationErrors(error.children, field) : [];

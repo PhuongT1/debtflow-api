@@ -13,6 +13,7 @@ import {
 import { PrismaPg } from '@prisma/adapter-pg';
 import { loadEnvFile } from 'node:process';
 import * as bcrypt from 'bcryptjs';
+import { partySearchText } from '../src/common/utils/search-normalization.util';
 loadEnvFile('.env');
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required to seed the database.');
@@ -114,11 +115,16 @@ async function main() {
   });
   const customer = await prisma.party.upsert({
     where: { organizationId_code: { organizationId: shopA.id, code: 'CUS-MOC-LAN' } },
-    update: { name: 'Cửa hàng Mộc Lan Wholesale', type: PartyType.CUSTOMER },
+    update: {
+      name: 'Cửa hàng Mộc Lan Wholesale',
+      searchText: partySearchText('Cửa hàng Mộc Lan Wholesale', 'CUS-MOC-LAN', '0908123456'),
+      type: PartyType.CUSTOMER,
+    },
     create: {
       organizationId: shopA.id,
       code: 'CUS-MOC-LAN',
       name: 'Cửa hàng Mộc Lan Wholesale',
+      searchText: partySearchText('Cửa hàng Mộc Lan Wholesale', 'CUS-MOC-LAN', '0908123456'),
       type: PartyType.CUSTOMER,
       phone: '0908123456',
       provinceCode: 'HCM',
@@ -129,11 +135,16 @@ async function main() {
   });
   const supplier = await prisma.party.upsert({
     where: { organizationId_code: { organizationId: shopA.id, code: 'SUP-MINH-AN' } },
-    update: { name: 'Nhà phân phối Minh An', type: PartyType.SUPPLIER },
+    update: {
+      name: 'Nhà phân phối Minh An',
+      searchText: partySearchText('Nhà phân phối Minh An', 'SUP-MINH-AN', '02873001234'),
+      type: PartyType.SUPPLIER,
+    },
     create: {
       organizationId: shopA.id,
       code: 'SUP-MINH-AN',
       name: 'Nhà phân phối Minh An',
+      searchText: partySearchText('Nhà phân phối Minh An', 'SUP-MINH-AN', '02873001234'),
       type: PartyType.SUPPLIER,
       phone: '02873001234',
       provinceCode: 'HCM',
@@ -249,10 +260,123 @@ async function main() {
     where: { id: created[1].id },
     data: { paidAmount: new Prisma.Decimal('2000000'), status: DebtStatus.PARTIAL },
   });
+
+  // The debt overview uses these 28 partners plus the two core fixtures above.
+  // Keep this data in An Phú Fashion because that is the default demo workspace.
+  const shopAPartnerDebtFixtures = [
+    ...[
+      'Cửa hàng Ánh Dương',
+      'Boutique Lụa Việt',
+      'Hệ thống Mặc Đẹp',
+      'Thời trang Nam Phong',
+      'Cửa hàng Denim House',
+      'Urban Wardrobe',
+      'May mặc Sông Hồng',
+      'Thời trang Mộc Miên',
+      'Cửa hàng Linen & Co.',
+      'Thời trang Phố Mới',
+      'Cửa hàng Ngà Fashion',
+      'Boutique An Nhiên',
+      'Cửa hàng Forme',
+      'Nhà bán lẻ Nét Việt',
+    ].map((name, index) => ({
+      amount: 4200000 + index * 375000,
+      code: 'CUS-A-APPAREL-' + String(index + 1).padStart(2, '0'),
+      debtType: DebtType.RECEIVABLE,
+      name,
+      type: PartyType.CUSTOMER,
+    })),
+    ...[
+      'Nhà phân phối Giày Việt',
+      'Kho giày Sài Thành',
+      'Công ty Da giày Đông Nam',
+      'Nhà cung cấp Step Up',
+      'Xưởng giày Bình An',
+      'Phân phối Sneaker Hub',
+      'Công ty Giày dép Thành Công',
+      'Kho hàng Footwear Pro',
+      'Nhà cung cấp Urban Steps',
+      'Xưởng sản xuất Lạc Việt',
+      'Phân phối Sole & Lace',
+      'Công ty Giày thể thao Phương Nam',
+      'Kho dép Sandal Việt',
+      'Nhà phân phối Ngã Bảy',
+    ].map((name, index) => ({
+      amount: 7800000 + index * 525000,
+      code: 'SUP-A-FOOTWEAR-' + String(index + 1).padStart(2, '0'),
+      debtType: DebtType.PAYABLE,
+      name,
+      type: PartyType.SUPPLIER,
+    })),
+  ];
+
+  for (const [index, fixture] of shopAPartnerDebtFixtures.entries()) {
+    const phone = '0283' + String(910000 + index).padStart(6, '0');
+    const party = await prisma.party.upsert({
+      where: { organizationId_code: { organizationId: shopA.id, code: fixture.code } },
+      update: {
+        name: fixture.name,
+        phone,
+        searchText: partySearchText(fixture.name, fixture.code, phone),
+        type: fixture.type,
+      },
+      create: {
+        organizationId: shopA.id,
+        code: fixture.code,
+        name: fixture.name,
+        phone,
+        provinceCode: 'HCM',
+        provinceName: 'TP. Hồ Chí Minh',
+        searchText: partySearchText(fixture.name, fixture.code, phone),
+        type: fixture.type,
+        createdById: ownerA.id,
+        assignedToId: accountantA.id,
+      },
+    });
+    const amount = new Prisma.Decimal(fixture.amount);
+    const debtCode =
+      (fixture.debtType === DebtType.RECEIVABLE ? 'INV' : 'BILL') +
+      '-A-PARTNER-' +
+      String(index + 1).padStart(3, '0');
+
+    await prisma.debt.upsert({
+      where: { organizationId_code: { organizationId: shopA.id, code: debtCode } },
+      update: {
+        dueDate: new Date('2026-10-' + String((index % 20) + 1).padStart(2, '0')),
+        issueDate: new Date('2026-09-' + String((index % 20) + 1).padStart(2, '0')),
+        originalAmount: amount,
+        paidAmount: new Prisma.Decimal(0),
+        partyId: party.id,
+        status: DebtStatus.OPEN,
+        title:
+          (fixture.debtType === DebtType.RECEIVABLE ? 'Bán sỉ thời trang' : 'Nhập hàng') +
+          ' - ' +
+          fixture.name,
+        type: fixture.debtType,
+      },
+      create: {
+        organizationId: shopA.id,
+        code: debtCode,
+        dueDate: new Date('2026-10-' + String((index % 20) + 1).padStart(2, '0')),
+        issueDate: new Date('2026-09-' + String((index % 20) + 1).padStart(2, '0')),
+        originalAmount: amount,
+        partyId: party.id,
+        status: DebtStatus.OPEN,
+        title:
+          (fixture.debtType === DebtType.RECEIVABLE ? 'Bán sỉ thời trang' : 'Nhập hàng') +
+          ' - ' +
+          fixture.name,
+        type: fixture.debtType,
+        createdById: ownerA.id,
+        assignedToId: accountantA.id,
+      },
+    });
+  }
   const bParty = await prisma.party.upsert({
     where: { organizationId_code: { organizationId: shopB.id, code: 'CUS-B-MINIMAL' } },
     update: {
       name: 'Coolmate',
+      searchText: partySearchText('Coolmate', 'CUS-B-MINIMAL', '02839998899'),
       type: PartyType.BOTH,
       phone: '02839998899',
       provinceCode: 'HCM',
@@ -263,6 +387,7 @@ async function main() {
       organizationId: shopB.id,
       code: 'CUS-B-MINIMAL',
       name: 'Coolmate',
+      searchText: partySearchText('Coolmate', 'CUS-B-MINIMAL', '02839998899'),
       type: PartyType.BOTH,
       phone: '02839998899',
       provinceCode: 'HCM',
@@ -530,22 +655,25 @@ async function main() {
   ];
 
   for (const [index, fixture] of shopBPartnerDebtFixtures.entries()) {
+    const phone = '0283' + String(900000 + index).padStart(6, '0');
     const party = await prisma.party.upsert({
       where: { organizationId_code: { organizationId: shopB.id, code: fixture.code } },
       update: {
         name: fixture.name,
         type: fixture.type,
         isActive: true,
-        phone: '0283' + String(900000 + index).padStart(6, '0'),
+        phone,
+        searchText: partySearchText(fixture.name, fixture.code, phone),
       },
       create: {
         organizationId: shopB.id,
         code: fixture.code,
         name: fixture.name,
         type: fixture.type,
-        phone: '0283' + String(900000 + index).padStart(6, '0'),
+        phone,
         provinceCode: 'HCM',
         provinceName: 'TP. Hồ Chí Minh',
+        searchText: partySearchText(fixture.name, fixture.code, phone),
         createdById: ownerB.id,
       },
     });

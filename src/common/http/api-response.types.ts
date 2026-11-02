@@ -1,11 +1,8 @@
-export type PaginationMeta = {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-};
+import type { PaginationMetaDto, ApiErrorDetailDto, ApiErrorResponseDto } from './api-envelope.dto';
+
+export type PaginationMeta = PaginationMetaDto;
+export type ApiErrorDetail = ApiErrorDetailDto;
+export type ApiErrorResponse = ApiErrorResponseDto;
 
 export type ApiSuccessResponse<T> = {
   success: true;
@@ -16,22 +13,6 @@ export type ApiSuccessResponse<T> = {
   meta?: {
     pagination: PaginationMeta;
   };
-  timestamp: string;
-  path: string;
-};
-
-export type ApiErrorDetail = {
-  field?: string;
-  code: string;
-  message: string;
-};
-
-export type ApiErrorResponse = {
-  success: false;
-  statusCode: number;
-  code: string;
-  message: string;
-  errors?: ApiErrorDetail[];
   timestamp: string;
   path: string;
 };

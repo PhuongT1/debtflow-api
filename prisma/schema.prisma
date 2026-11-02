@@ -3,6 +3,13 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+generator markdown {
+  provider = "prisma-markdown"
+  output   = "../docs/generated/database.md"
+  title    = "DebtFlow Database"
+  root     = "."
+}
+
 datasource db {
   provider = "postgresql"
 }

@@ -65,15 +65,15 @@ export class I18nService {
     return this.translate(key, locale, params);
   }
 
-  private lookup(obj: Record<string, any>, path: string): string | undefined {
+  private lookup(obj: object, path: string): string | undefined {
     const parts = path.split('.');
-    let current: any = obj;
+    let current: unknown = obj;
 
     for (const part of parts) {
       if (current === null || current === undefined || typeof current !== 'object') {
         return undefined;
       }
-      current = current[part];
+      current = (current as Record<string, unknown>)[part];
     }
 
     return typeof current === 'string' ? current : undefined;

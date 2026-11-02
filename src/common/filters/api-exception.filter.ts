@@ -17,6 +17,7 @@ type ExceptionPayload = {
   code?: unknown;
   message?: unknown;
   errors?: unknown;
+  params?: unknown;
 };
 
 type NormalizedError = {
@@ -83,8 +84,13 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
     // Attempt to translate by key or standard code
     let localizedMessage = rawMessage;
-    if (rawMessage.includes('.')) {
-      localizedMessage = this.i18n.t(rawMessage, locale);
+    const errors = this.extractErrors(payload?.errors, locale);
+    // Validation failures: the summary message is the first localized field error.
+    if (errors?.length) {
+      localizedMessage = errors[0].message;
+    } else if (rawMessage.includes('.')) {
+      const params = this.extractParams(payload?.params);
+      localizedMessage = this.i18n.t(rawMessage, locale, params);
     } else {
       const byCode = this.i18n.t(`errors.${rawCode}`, locale);
       if (byCode !== `errors.${rawCode}`) {
@@ -101,8 +107,26 @@ export class ApiExceptionFilter implements ExceptionFilter {
       statusCode,
       code: rawCode,
       message: localizedMessage,
-      errors: this.extractErrors(payload?.errors),
+      errors,
     };
+  }
+
+  /**
+   * Columns of a unique violation. Prisma puts them in `meta.target` with the native engine, but with
+   * a driver adapter (pg) they are in `meta.driverAdapterError.cause.constraint.fields`, quoted.
+   */
+  private uniqueViolationFields(error: Prisma.PrismaClientKnownRequestError): string[] {
+    const meta = error.meta as
+      | {
+          target?: unknown;
+          driverAdapterError?: { cause?: { constraint?: { fields?: unknown } } };
+        }
+      | undefined;
+    const raw = Array.isArray(meta?.target)
+      ? meta.target
+      : meta?.driverAdapterError?.cause?.constraint?.fields;
+
+    return Array.isArray(raw) ? raw.map((field) => String(field).replace(/"/g, '')) : [];
   }
 
   private normalizePrismaError(
@@ -110,12 +134,14 @@ export class ApiExceptionFilter implements ExceptionFilter {
     locale: AppLocale,
   ): NormalizedError {
     if (error.code === 'P2002') {
-      const fields = Array.isArray(error.meta?.target) ? error.meta.target.map(String) : [];
+      const fields = this.uniqueViolationFields(error);
       const message = fields.includes('code')
         ? this.i18n.t('errors.CODE_EXISTS', locale)
         : fields.includes('email')
           ? this.i18n.t('errors.EMAIL_EXISTS', locale)
-          : this.i18n.t('errors.RESOURCE_CONFLICT', locale);
+          : fields.includes('phone')
+            ? this.i18n.t('errors.PHONE_EXISTS', locale)
+            : this.i18n.t('errors.RESOURCE_CONFLICT', locale);
 
       return {
         statusCode: HttpStatus.CONFLICT,
@@ -160,16 +186,34 @@ export class ApiExceptionFilter implements ExceptionFilter {
     return fallback;
   }
 
-  private extractErrors(value: unknown): ApiErrorDetail[] | undefined {
+  private extractParams(value: unknown): Record<string, string | number> | undefined {
+    if (!value || typeof value !== 'object') return undefined;
+
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        (entry): entry is [string, string | number] =>
+          typeof entry[1] === 'string' || typeof entry[1] === 'number',
+      ),
+    );
+  }
+
+  private extractErrors(value: unknown, locale: AppLocale): ApiErrorDetail[] | undefined {
     if (!Array.isArray(value)) {
       return undefined;
     }
 
-    return value.filter((item): item is ApiErrorDetail => {
-      if (!item || typeof item !== 'object') return false;
-      const error = item as Partial<ApiErrorDetail>;
-      return typeof error.code === 'string' && typeof error.message === 'string';
-    });
+    return value
+      .filter((item): item is ApiErrorDetail & { key?: string } => {
+        if (!item || typeof item !== 'object') return false;
+        const error = item as Partial<ApiErrorDetail>;
+        return typeof error.code === 'string' && typeof error.message === 'string';
+      })
+      .map(({ key, ...error }) => {
+        if (!key) return error;
+        const translated = this.i18n.t(key, locale, { field: error.field ?? '' });
+
+        return { ...error, message: translated === key ? error.message : translated };
+      });
   }
 
   private defaultCode(statusCode: number): string {

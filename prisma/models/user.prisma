@@ -34,13 +34,18 @@ enum OrganizationMembershipStatus {
   SUSPENDED
 }
 
+/// Login identity. A user is global and gets business access only through an OrganizationMembership.
 model User {
   id           String     @id @default(cuid())
   name         String
+  /// Login identifier. Stored lower-cased and unique across all organizations.
   email        String     @unique
   phone        String?    @unique
+  /// bcrypt hash. Never returned by the API.
   passwordHash String?
+  /// Platform-level role. Tenant permissions come from OrganizationMembership.role instead.
   systemRole   SystemRole @default(USER)
+  /// INACTIVE users cannot log in or refresh tokens.
   status       UserStatus @default(ACTIVE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -55,11 +60,14 @@ model User {
   auditLogs            AuditLog[] @relation("AuditActor")
 }
 
+/// Tenant. Every business table (Party, Debt, Payment, Category, Brand, Product, AuditLog) carries organizationId.
 model Organization {
   id          String             @id @default(cuid())
   name        String
   slug        String             @unique
+  /// PERSONAL (single user) or BUSINESS (team).
   kind        OrganizationKind
+  /// Only ACTIVE organizations can be used to log in or switch context.
   status      OrganizationStatus @default(ACTIVE)
   taxCode     String?
   address     String?
@@ -81,11 +89,14 @@ model Organization {
   @@index([kind])
 }
 
+/// Links a User to an Organization with a role. The JWT carries organizationId, membershipId and role.
 model OrganizationMembership {
   id             String                       @id @default(cuid())
   organizationId String
   userId         String
+  /// Authorization role inside this organization (see docs/03-business-rules.md).
   role           OrganizationRole             @default(VIEWER)
+  /// Only ACTIVE memberships can authenticate.
   status         OrganizationMembershipStatus @default(INVITED)
   invitedAt      DateTime?
   joinedAt       DateTime?

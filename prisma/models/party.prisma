@@ -4,12 +4,16 @@ enum PartyType {
   BOTH
 }
 
+/// Counterparty of a debt: a customer, a supplier, or both.
 model Party {
   id           String   @id @default(cuid())
   organizationId String
   type         PartyType
+  /// Optional business code, unique per organization.
   code         String?
   name         String
+  /// Normalized text used by the party search (name, code, phone, ...).
+  searchText   String   @default("")
   phone        String?
   email        String?
   taxCode      String?
@@ -18,7 +22,9 @@ model Party {
   provinceName String?
   address2     String?
   note         String?
+  /// Maximum allowed outstanding receivable for this party.
   creditLimit  Decimal? @db.Decimal(18, 2)
+  /// Soft delete flag. A party with unsettled debts cannot be deactivated.
   isActive     Boolean  @default(true)
   createdById  String?
   assignedToId String?
@@ -34,6 +40,7 @@ model Party {
 
   @@unique([organizationId, code])
   @@index([organizationId, name])
+  @@index([organizationId, searchText])
   @@index([type])
   @@index([isActive])
   @@index([assignedToId])

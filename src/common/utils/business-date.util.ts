@@ -25,6 +25,15 @@ export function getBusinessDayRange(value = new Date()) {
 }
 
 export function getBusinessDayRangeForDate(value: string) {
+  // Date silently rolls February 30 into March; reject impossible calendar dates explicitly.
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== value
+  ) {
+    throw new RangeError('Invalid business date');
+  }
   return getBusinessDayRange(new Date(value + 'T12:00:00+07:00'));
 }
 

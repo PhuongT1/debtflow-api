@@ -1,0 +1,21 @@
+{
+  "publicHandlers": [
+    {
+      "file": "src/modules/auth/controllers/auth.controller.ts",
+      "symbol": "AuthController.login",
+      "reason": "Credential login establishes identity and verifies active membership before token issuance."
+    },
+    {
+      "file": "src/modules/auth/controllers/auth.controller.ts",
+      "symbol": "AuthController.refresh",
+      "reason": "Refresh validates the refresh token and current account/membership before issuing tokens."
+    }
+  ],
+  "memberMutations": [
+    {
+      "file": "src/modules/auth/controllers/auth.controller.ts",
+      "symbol": "AuthController.switchOrganization",
+      "reason": "An authenticated member may switch their own organization after the service verifies target membership; no administrator role is required."
+    }
+  ]
+}

@@ -1,7 +1,40 @@
-node_modules
-dist
-.env*
+node_modules/
+dist/
+
+# Real environment values are private; sanitized examples remain versioned.
+.env
+.env.*
 !.env.example
-!.env.production.example
+!.env.*.example
 .DS_Store
-src/generated/prisma
+/src/generated/prisma/
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/.vitepress/.temp/
+.playwright-mcp/
+
+# Local build/test/editor artifacts; maintained team AI sources remain versioned.
+coverage/
+*.tsbuildinfo
+*.log
+.idea/
+/.claude/settings.local.json
+/.claude/sessions/
+/.codex/sessions/
+.ai/scratch/
+
+# Existing unrelated, one-off document scripts are not repository automation.
+/scripts/add_ai_tools_to_cv.py
+/scripts/refine_ai_assisted_cv_wording.py
+
+# Do not ignore whole .claude/.cursor/.codex/.github directories: team policy is source.
+# BEGIN team AI generated files
+/.ai/generated/
+/.ai/local-state.json
+/.agents/skills/
+/.claude/skills/
+/.cursor/skills/
+/CLAUDE.md
+/.cursor/rules/team-nestjs.mdc
+/.github/copilot-instructions.md
+# END team AI generated files
