@@ -1,6 +1,18 @@
 # Review Checklist
 
-Use this checklist only when relevant to the changed files.
+Use this checklist only when relevant to the changed files. For implementation contracts, consult
+`docs/guides/backend-rules/index.md` and its matching sections. Do not apply an unrelated rule set.
+
+## Naming, Wiring And API Contract
+
+- File/class/DTO names and owner follow the documented role-specific convention.
+- A provider has one owning Nest module; consumers import exports rather than redeclaring instances.
+- Whole-object body/query uses an actual runtime DTO class, not a type-only import, interface or Record.
+- Request validation proves shape/type/null/blank/nested bounds; decorators are not business authorization.
+- Every handler documents the actual response shape/status and has deliberate auth classification.
+- POST action runtime status and envelope metadata agree; binary/204 exceptions are explicit.
+- New/changed handlers pass `check:conventions`; no security/naming exceptions or broadened legacy waivers.
+
 
 ## NestJS API
 
@@ -34,6 +46,20 @@ Use this checklist only when relevant to the changed files.
 - Check decimal handling for money.
 - Check state transitions such as debt paid/cancelled/partial.
 - Avoid destructive updates without explicit intent.
+
+## Tenant And Authorization Boundaries
+
+- Trace controller identity into every affected read/count/aggregate/write/export. The client cannot
+  authorize an organization, role or actor merely by supplying it in the request.
+- Check related resource IDs and assignees against the current tenant and required active states.
+- Preserve active membership/user/organization lookup and current-role checks, including tokens issued
+  before a suspension or role change.
+- Query filter OR groups must remain inside the service tenant scope; per-resource allow-lists must
+  exclude sensitive/internal fields.
+- Check concrete forbidden-role and foreign-tenant scenarios where the change affects authorization.
+- For money/state changes, inspect transaction and concurrency boundaries; audit events follow commit.
+- Infrastructure must not import feature/auth code. Controllers delegate persistence to services.
+  `npm run check:architecture` detects literal import violations, not arbitrary runtime data access.
 
 ## Security
 

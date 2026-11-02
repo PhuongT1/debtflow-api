@@ -40,12 +40,13 @@ If a command cannot run, report that clearly and do not pretend it passed.
 
 ## Commit Message Style
 
-Use concise imperative messages:
+Match the repository history with concise Conventional Commits (`type(scope): imperative summary`).
+Use `feat`, `fix`, `refactor`, `docs`, `test` or `chore` for the actual change. Examples:
 
 ```txt
-Split Prisma schema by domain
-Add project code review skill
-Fix auth login validation response
+refactor(prisma): split schema by domain
+chore(ai): add backend contribution rules
+fix(auth): preserve localized login errors
 ```
 
 Avoid vague messages:
