@@ -1,3 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { DEBT_AGING_VALUES } from '../rules/debt-aging.rules';
+import type { DebtAging } from '../types/debt-aging.types';
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { CollectionStatus, DebtStatus, DebtType, SalesChannel } from '@generated/prisma';
@@ -48,8 +51,13 @@ export class QueryDebtsDto extends PaginationQueryDto {
   assignedToId?: string;
 
   @IsOptional()
-  @IsIn(['not_due', '1_7', '8_30', '31_60', '60_plus'])
-  aging?: 'not_due' | '1_7' | '8_30' | '31_60' | '60_plus';
+  @ApiProperty({
+    required: false,
+    enum: DEBT_AGING_VALUES,
+    description: 'Vietnam calendar-day aging; due today is not overdue.',
+  })
+  @IsIn(DEBT_AGING_VALUES)
+  aging?: DebtAging;
 
   @IsOptional()
   @IsIn(['today', 'overdue', 'upcoming'])

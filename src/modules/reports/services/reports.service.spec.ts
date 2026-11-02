@@ -6,7 +6,7 @@ import { ReportsService } from './reports.service';
 
 const now = new Date('2026-11-01T05:00:00Z');
 const day = 86_400_000;
-const due = (days: number) => new Date(now.getTime() - days * day);
+const due = (days: number) => new Date(new Date('2026-10-31T17:00:00Z').getTime() - days * day);
 type Row = {
   organizationId: string;
   status: DebtStatus;
@@ -26,6 +26,8 @@ function setup(rows: Row[] = []) {
       (row) =>
         row.organizationId === scope.organizationId &&
         (active.in as DebtStatus[]).includes(row.status) &&
+        (!dates.gte || row.dueDate >= new Date(dates.gte as Date)) &&
+        (!dates.lt || row.dueDate < new Date(dates.lt as Date)) &&
         (!dates.gt || row.dueDate > new Date(dates.gt as Date)) &&
         (!dates.lte || row.dueDate <= new Date(dates.lte as Date)),
     );
@@ -81,17 +83,17 @@ describe('full-dataset aging report', () => {
     });
   });
 
-  it('preserves every whole-day boundary, future dates and exact Decimal amounts', async () => {
+  it('uses Vietnam calendar-day boundaries, future dates and exact Decimal amounts', async () => {
     const dates = [
       due(-2),
       due(0),
-      new Date(due(1).getTime() + 1),
+      new Date(due(0).getTime() + 1),
       due(1),
-      new Date(due(8).getTime() + 1),
+      due(7),
       due(8),
-      new Date(due(31).getTime() + 1),
+      due(30),
       due(31),
-      new Date(due(61).getTime() + 1),
+      due(60),
       due(61),
     ];
     const s = setup(

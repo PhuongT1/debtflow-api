@@ -1,3 +1,4 @@
+import { getDebtAgingRanges } from '../rules/debt-aging.rules';
 import { badRequest } from '@common/errors/app-errors';
 import {
   addBusinessDays,
@@ -12,7 +13,7 @@ import type { QueryDebtsDto } from '../dto/query-debts.dto';
 export function buildDebtDateFilters(query: QueryDebtsDto, now: Date): Prisma.DebtWhereInput[] {
   const conditions: Prisma.DebtWhereInput[] = [];
   const { start, end } = getBusinessDayRange(now);
-  const aging = agingRange(query.aging, now);
+  const aging = query.aging ? getDebtAgingRanges(now)[query.aging] : undefined;
   const followUp = followUpRange(query.followUp, start, end);
   const due = dueRange(query.dueRange, start, end);
 
@@ -35,22 +36,6 @@ export function buildDebtDateFilters(query: QueryDebtsDto, now: Date): Prisma.De
     conditions.push({ dueDate: range });
   }
   return conditions;
-}
-
-function agingRange(value: QueryDebtsDto['aging'], now: Date): Prisma.DateTimeFilter | undefined {
-  const ago = (days: number) => addBusinessDays(now, -days);
-  switch (value) {
-    case 'not_due':
-      return { gte: now };
-    case '1_7':
-      return { lt: now, gte: ago(7) };
-    case '8_30':
-      return { lt: ago(7), gte: ago(30) };
-    case '31_60':
-      return { lt: ago(30), gte: ago(60) };
-    case '60_plus':
-      return { lt: ago(60) };
-  }
 }
 
 function followUpRange(

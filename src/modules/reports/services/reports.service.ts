@@ -1,3 +1,4 @@
+import { getDebtAgingRanges, DEBT_AGING_VALUES } from '@modules/debts/public/debts';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { DebtStatus, Prisma } from '@generated/prisma';
@@ -17,20 +18,16 @@ export class ReportsService {
   ): Promise<AgingReportResponseDto> {
     const now = new Date();
     const { where } = buildDebtQuery(organizationId, query, listQuery, now);
-    const daysAgo = (days: number) => new Date(now.getTime() - days * 86_400_000);
-    // Preserve the existing floor(elapsed / 24h) bucket semantics, including exact boundaries.
-    const ranges = [
-      { gt: daysAgo(1) },
-      { lte: daysAgo(1), gt: daysAgo(8) },
-      { lte: daysAgo(8), gt: daysAgo(31) },
-      { lte: daysAgo(31), gt: daysAgo(61) },
-      { lte: daysAgo(61) },
-    ] satisfies Prisma.DateTimeFilter[];
+    const ranges = getDebtAgingRanges(now);
     const totals = await this.prisma.$transaction(
-      ranges.map((dueDate) =>
+      DEBT_AGING_VALUES.map((key) =>
         this.prisma.debt.aggregate({
           where: {
-            AND: [where, { status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] } }, { dueDate }],
+            AND: [
+              where,
+              { status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] } },
+              { dueDate: ranges[key] },
+            ],
           },
           _sum: { originalAmount: true, paidAmount: true },
           _count: { _all: true },
