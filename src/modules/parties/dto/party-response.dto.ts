@@ -1,5 +1,5 @@
 import { PartyType } from '@generated/prisma';
-import { UserSummaryDto } from '@modules/users/dto/user-response.dto';
+import { UserSummaryDto } from '@modules/users/public/users';
 
 export class PartyBalanceDto {
   /** Remaining amount customers owe the organization (open and partial receivables). @example "8325000" */

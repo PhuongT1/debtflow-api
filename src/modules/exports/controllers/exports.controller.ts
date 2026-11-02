@@ -7,8 +7,8 @@ import type { JwtAuthPayload } from '@auth/types/auth-context.types';
 import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
 import { SkipApiResponse } from '@common/decorators/api-response.decorator';
 import { DebtExportService } from '../services/debt-export.service';
-import { QueryDebtsDto } from '@modules/debts/dto/query-debts.dto';
-import { DEBT_LIST_QUERY } from '@modules/debts/queries/debts.list-query';
+import { QueryDebtsDto } from '@modules/debts/public/debts';
+import { DEBT_LIST_QUERY } from '@modules/debts/public/debts';
 import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
 
 @ApiTags('Exports')

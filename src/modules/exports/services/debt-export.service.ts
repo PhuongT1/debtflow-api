@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { DEFAULT_PAGE, MAX_PAGE_SIZE } from '@common/constants/pagination.constants';
 import type { ListQueryResult } from '@common/query';
-import { DebtsService } from '@modules/debts/services/debts.service';
-import type { QueryDebtsDto } from '@modules/debts/dto/query-debts.dto';
+import { DebtsService } from '@modules/debts/public/debts';
+import type { QueryDebtsDto } from '@modules/debts/public/debts';
 
 /** Owns the documented capped export; transport headers and response handling stay in the controller. */
 @Injectable()

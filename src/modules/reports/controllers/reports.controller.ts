@@ -4,10 +4,10 @@ import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import type { JwtAuthPayload } from '@auth/types/auth-context.types';
 import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
 import { ReportsService } from '../services/reports.service';
-import { DEBT_LIST_QUERY } from '@modules/debts/queries/debts.list-query';
+import { DEBT_LIST_QUERY } from '@modules/debts/public/debts';
 import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
 import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator';
-import { QueryDebtsDto } from '@modules/debts/dto/query-debts.dto';
+import { QueryDebtsDto } from '@modules/debts/public/debts';
 import { AgingReportResponseDto } from '../dto/aging-report-response.dto';
 
 @ApiTags('Reports')

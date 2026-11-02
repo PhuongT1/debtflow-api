@@ -8,11 +8,11 @@ import type { JwtAuthPayload } from '@auth/types/auth-context.types';
 import { Roles } from '@auth/decorators/roles.decorator';
 import { OrganizationRole } from '@generated/prisma';
 import { DebtsService } from '../services/debts.service';
-import { PaymentsService } from '@modules/payments/services/payments.service';
+import { PaymentsService } from '@modules/payments/public/payments';
 import { CreateDebtDto } from '../dto/create-debt.dto';
 import { QueryDebtsDto } from '../dto/query-debts.dto';
 import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto';
-import { CreatePaymentDto } from '@modules/payments/dto/create-payment.dto';
+import { CreatePaymentDto } from '@modules/payments/public/payments';
 @ApiTags('Debts')
 @ProtectedApi()
 @Controller('debts')

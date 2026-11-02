@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { DebtStatus, Prisma } from '@generated/prisma';
-import { buildDebtQuery } from '@modules/debts/queries/debt-query';
-import type { QueryDebtsDto } from '@modules/debts/dto/query-debts.dto';
+import { buildDebtQuery } from '@modules/debts/public/debts';
+import type { QueryDebtsDto } from '@modules/debts/public/debts';
 import type { AgingReportResponseDto } from '../dto/aging-report-response.dto';
 import type { ListQueryResult } from '@common/query';
 
