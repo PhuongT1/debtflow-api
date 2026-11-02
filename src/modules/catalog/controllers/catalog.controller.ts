@@ -1,0 +1,21 @@
+import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '@auth/decorators/current-user.decorator';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types';
+import { CatalogService } from '../services/catalog.service';
+@ApiTags('Catalog')
+@ProtectedApi()
+@Controller('catalog')
+export class CatalogController {
+  constructor(private readonly service: CatalogService) {}
+
+  @ApiOperation({
+    summary: 'Get filter options',
+    description: 'Active categories, brands, products and the provinces that have parties.',
+  })
+  @Get('options')
+  options(@CurrentUser() u: JwtAuthPayload) {
+    return this.service.options(u.organizationId);
+  }
+}

@@ -1,4 +1,4 @@
-/** Documentation models of the standard envelope. The runtime types live in `api-response.types.ts`. */
+/** Documentation models of the standard envelope. Runtime type aliases reuse these classes through type-only imports. */
 
 export class ApiErrorDetailDto {
   /** Name of the invalid input field. */
