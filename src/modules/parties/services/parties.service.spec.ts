@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma';
 import { parseListQuery } from '@common/query';
 import { PartiesService } from './parties.service';
+import { OrganizationMembersService } from '@modules/users/services/organization-members.service';
 import { PARTY_LIST_QUERY } from '../queries/parties.list-query';
 
 function setup() {
@@ -37,6 +38,7 @@ function setup() {
       organizationMembership: { findFirst },
     } as never,
     events as never,
+    new OrganizationMembersService({ organizationMembership: { findFirst } } as never),
   );
   return { service, findMany, groupBy, findFirst, create, events };
 }
@@ -44,6 +46,21 @@ function setup() {
 afterEach(() => vi.useRealTimers());
 
 describe('PartiesService', () => {
+  it('checks an active party in the caller tenant using the supplied transaction', async () => {
+    const s = setup();
+    const findFirst = vi.fn().mockResolvedValue({ id: 'p1' });
+    const tx = { party: { findFirst } };
+    await s.service.assertActive('org-1', 'p1', tx as never);
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: 'p1', organizationId: 'org-1', isActive: true },
+      select: { id: true },
+    });
+    findFirst.mockResolvedValue(null);
+    await expect(
+      s.service.assertActive('org-1', 'foreign-or-inactive', tx as never),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(s.create).not.toHaveBeenCalled();
+  });
   it('applies secondary sort keys before paginating computed balances', async () => {
     const s = setup();
     const result = await s.service.list(
@@ -136,6 +153,7 @@ describe('PartiesService', () => {
       userId: 'foreign-user',
       status: 'ACTIVE',
       user: { status: 'ACTIVE' },
+      organization: { status: 'ACTIVE' },
     });
     expect(s.create).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();

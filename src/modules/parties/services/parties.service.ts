@@ -3,12 +3,13 @@ import { buildPartyQuery } from '../queries/parties.query';
 import type { PartyBalance, PartyListRecord, PartyWithBalance } from '../types/party.types';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { badRequest } from '@common/errors/app-errors';
+import { badRequest, notFound } from '@common/errors/app-errors';
 import { requireOrganizationId } from '@common/validation/require-organization-id';
 import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
 import type { ListQueryResult } from '@common/query';
 import { getPagination, paginate } from '@common/utils/pagination.util';
-import { DebtStatus, DebtType, OrganizationMembershipStatus, Prisma } from '@generated/prisma';
+import { DebtStatus, DebtType, Prisma } from '@generated/prisma';
+import { OrganizationMembersService } from '@modules/users/public/users';
 import { PrismaService } from '@database/prisma.service';
 import { CreatePartyDto } from '../dto/create-party.dto';
 import { QueryPartiesDto } from '../dto/query-parties.dto';
@@ -23,6 +24,7 @@ export class PartiesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventEmitter2,
+    private readonly members: OrganizationMembersService,
   ) {}
 
   async list(organizationId: string, query: QueryPartiesDto, listQuery?: ListQueryResult) {
@@ -85,6 +87,19 @@ export class PartiesService {
         debts: { orderBy: { dueDate: 'asc' } },
       },
     });
+  }
+
+  async assertActive(
+    organizationId: string,
+    id: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ) {
+    requireOrganizationId(organizationId);
+    const party = await db.party.findFirst({
+      where: { id, organizationId, isActive: true },
+      select: { id: true },
+    });
+    if (!party) throw notFound('parties.PARTY_NOT_FOUND');
   }
 
   async create(organizationId: string, userId: string, input: CreatePartyDto) {
@@ -190,16 +205,7 @@ export class PartiesService {
   private async assertAssignee(organizationId: string, userId?: string | null) {
     if (!userId) return;
 
-    const member = await this.prisma.organizationMembership.findFirst({
-      where: {
-        organizationId,
-        userId,
-        status: OrganizationMembershipStatus.ACTIVE,
-        user: { status: 'ACTIVE' },
-      },
-      select: { id: true },
-    });
-
-    if (!member) throw badRequest('parties.ASSIGNEE_NOT_FOUND');
+    if (!(await this.members.isActive(organizationId, userId)))
+      throw badRequest('parties.ASSIGNEE_NOT_FOUND');
   }
 }

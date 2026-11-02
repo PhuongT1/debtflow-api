@@ -33,6 +33,7 @@ export const enTranslations: typeof viTranslations = {
     NO_ACTIVE_ORGANIZATION: 'The account does not belong to an active organization.',
   },
   debts: {
+    ASSIGNEE_NOT_FOUND: 'The assignee must be an active member of the organization.',
     DUE_DATE_BEFORE_ISSUE: 'Due date cannot be earlier than issue date.',
     CANNOT_CANCEL_PAID_DEBT: 'Cannot cancel debt that has recorded payments.',
     DEBT_NOT_FOUND: 'Debt record not found.',

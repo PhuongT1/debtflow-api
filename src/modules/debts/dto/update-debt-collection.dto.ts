@@ -1,5 +1,5 @@
 import { PickType } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, ValidateIf } from 'class-validator';
 import { CollectionStatus } from '@generated/prisma';
 import { CreateDebtDto } from './create-debt.dto';
 
@@ -13,7 +13,7 @@ export class UpdateDebtCollectionDto extends PickType(CreateDebtDto, [
   'poNo',
   'description',
 ] as const) {
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(CollectionStatus)
   collectionStatus?: CollectionStatus;
 }

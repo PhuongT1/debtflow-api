@@ -31,6 +31,7 @@ export const viTranslations = {
     NO_ACTIVE_ORGANIZATION: 'Tài khoản chưa thuộc tổ chức đang hoạt động.',
   },
   debts: {
+    ASSIGNEE_NOT_FOUND: 'Người phụ trách phải là thành viên đang hoạt động trong tổ chức.',
     DUE_DATE_BEFORE_ISSUE: 'Ngày đến hạn không được trước ngày phát sinh.',
     CANNOT_CANCEL_PAID_DEBT: 'Không thể hủy công nợ đã có lịch sử thanh toán.',
     DEBT_NOT_FOUND: 'Không tìm thấy khoản công nợ yêu cầu.',

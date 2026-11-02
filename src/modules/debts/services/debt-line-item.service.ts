@@ -14,12 +14,13 @@ export class DebtLineItemService {
     items: CreateDebtItemDto[] | undefined,
     originalAmount: Prisma.Decimal,
     organizationId: string,
+    db: Prisma.TransactionClient = this.prisma,
   ) {
     if (!items?.length) return [];
 
     const productIds = items.flatMap((item) => (item.productId ? [item.productId] : []));
-    const products = await this.prisma.product.findMany({
-      where: { organizationId, id: { in: productIds } },
+    const products = await db.product.findMany({
+      where: { organizationId, id: { in: productIds }, isActive: true },
       include: { brand: true, category: true },
     });
     const productById = new Map(products.map((product) => [product.id, product]));

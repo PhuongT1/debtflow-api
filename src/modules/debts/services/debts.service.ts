@@ -1,3 +1,6 @@
+import { PartiesService } from '@modules/parties/public/parties';
+import { OrganizationMembersService } from '@modules/users/public/users';
+import { buildDebtCollectionData } from '../mappers/debt-collection.mapper';
 import { normalizeOptionalText } from '@common/utils/optional-text.util';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -20,6 +23,8 @@ export class DebtsService {
     private readonly prisma: PrismaService,
     private readonly debtLineItems: DebtLineItemService,
     private readonly events: EventEmitter2,
+    private readonly parties: PartiesService,
+    private readonly members: OrganizationMembersService,
   ) {}
 
   async list(organizationId: string, query: QueryDebtsDto, listQuery?: ListQueryResult) {
@@ -83,38 +88,47 @@ export class DebtsService {
     const issueDate = new Date(input.issueDate);
     const dueDate = new Date(input.dueDate);
     const originalAmount = new Prisma.Decimal(String(input.originalAmount));
-    const items = await this.debtLineItems.prepare(input.items, originalAmount, organizationId);
 
     if (dueDate < issueDate) {
       throw badRequest('debts.DUE_DATE_BEFORE_ISSUE');
     }
 
-    const debt = await this.prisma.debt.create({
-      data: {
-        organizationId,
-        code: await this.nextDebtCode(organizationId),
-        type: input.type,
-        partyId: input.partyId,
-        assignedToId: normalizeOptionalText(input.assignedToId),
-        title: input.title.trim(),
-        invoiceNo: normalizeOptionalText(input.invoiceNo),
-        orderNo: normalizeOptionalText(input.orderNo),
-        contractNo: normalizeOptionalText(input.contractNo),
-        poNo: normalizeOptionalText(input.poNo),
-        description: normalizeOptionalText(input.description),
+    const debt = await this.prisma.$transaction(async (tx) => {
+      await this.parties.assertActive(organizationId, input.partyId, tx);
+      await this.assertAssignee(organizationId, input.assignedToId, tx);
+      const items = await this.debtLineItems.prepare(
+        input.items,
         originalAmount,
-        paidAmount: new Prisma.Decimal(0),
-        issueDate,
-        dueDate,
-        status: DebtStatus.OPEN,
-        collectionStatus: CollectionStatus.NEW,
-        nextFollowUpAt: input.nextFollowUpAt ? new Date(String(input.nextFollowUpAt)) : null,
-        followUpNote: normalizeOptionalText(input.followUpNote),
-        salesChannel: input.salesChannel,
-        createdById: userId,
-        ...(items.length > 0 ? { items: { create: items } } : {}),
-      },
-      include: { party: true },
+        organizationId,
+        tx,
+      );
+      return tx.debt.create({
+        data: {
+          organizationId,
+          code: await this.nextDebtCode(organizationId, tx),
+          type: input.type,
+          partyId: input.partyId,
+          assignedToId: normalizeOptionalText(input.assignedToId),
+          title: input.title.trim(),
+          invoiceNo: normalizeOptionalText(input.invoiceNo),
+          orderNo: normalizeOptionalText(input.orderNo),
+          contractNo: normalizeOptionalText(input.contractNo),
+          poNo: normalizeOptionalText(input.poNo),
+          description: normalizeOptionalText(input.description),
+          originalAmount,
+          paidAmount: new Prisma.Decimal(0),
+          issueDate,
+          dueDate,
+          status: DebtStatus.OPEN,
+          collectionStatus: CollectionStatus.NEW,
+          nextFollowUpAt: input.nextFollowUpAt ? new Date(String(input.nextFollowUpAt)) : null,
+          followUpNote: normalizeOptionalText(input.followUpNote),
+          salesChannel: input.salesChannel,
+          createdById: userId,
+          ...(items.length > 0 ? { items: { create: items } } : {}),
+        },
+        include: { party: true },
+      });
     });
 
     emitAudit(this.events, {
@@ -136,20 +150,14 @@ export class DebtsService {
     actorId?: string,
   ) {
     const before = await this.detail(id, organizationId);
-    const debt = await this.prisma.debt.update({
-      where: { id },
-      data: {
-        assignedToId: normalizeOptionalText(input.assignedToId),
-        collectionStatus: input.collectionStatus,
-        nextFollowUpAt: input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null,
-        followUpNote: normalizeOptionalText(input.followUpNote),
-        invoiceNo: normalizeOptionalText(input.invoiceNo),
-        orderNo: normalizeOptionalText(input.orderNo),
-        contractNo: normalizeOptionalText(input.contractNo),
-        poNo: normalizeOptionalText(input.poNo),
-        description: normalizeOptionalText(input.description),
-      },
-      include: { party: true, assignedTo: { select: { id: true, name: true, email: true } } },
+    const data = buildDebtCollectionData(input);
+    const debt = await this.prisma.$transaction(async (tx) => {
+      await this.assertAssignee(organizationId, input.assignedToId, tx);
+      return tx.debt.update({
+        where: { id, organizationId },
+        data,
+        include: { party: true, assignedTo: { select: { id: true, name: true, email: true } } },
+      });
     });
 
     emitAudit(this.events, {
@@ -194,10 +202,20 @@ export class DebtsService {
     return cancelled;
   }
 
-  private async nextDebtCode(organizationId: string) {
+  private async assertAssignee(
+    organizationId: string,
+    userId: string | null | undefined,
+    db: Prisma.TransactionClient,
+  ) {
+    const id = normalizeOptionalText(userId);
+    if (id && !(await this.members.isActive(organizationId, id, db)))
+      throw badRequest('debts.ASSIGNEE_NOT_FOUND');
+  }
+
+  private async nextDebtCode(organizationId: string, db: Prisma.TransactionClient) {
     const now = new Date();
     const prefix = `CN-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const count = await this.prisma.debt.count({
+    const count = await db.debt.count({
       where: { organizationId, code: { startsWith: prefix } },
     });
     return `${prefix}-${String(count + 1).padStart(4, '0')}`;

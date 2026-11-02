@@ -20,6 +20,9 @@ describe('derived debt request DTOs', () => {
     await expect(pipe.transform({ invoiceNo: 123 }, metadata)).rejects.toMatchObject({
       status: 400,
     });
+    await expect(pipe.transform({ collectionStatus: null }, metadata)).rejects.toMatchObject({
+      status: 400,
+    });
     await expect(
       pipe.transform({ nextFollowUpAt: 'invalid', collectionStatus: 'invalid' }, metadata),
     ).rejects.toMatchObject({ status: 400 });

@@ -22,7 +22,7 @@ export class CreateDebtDto {
 
   @IsOptional()
   @IsString()
-  assignedToId?: string;
+  assignedToId?: string | null;
 
   @IsString()
   @IsNotEmpty()
@@ -30,23 +30,23 @@ export class CreateDebtDto {
 
   @IsOptional()
   @IsString()
-  invoiceNo?: string;
+  invoiceNo?: string | null;
 
   @IsOptional()
   @IsString()
-  orderNo?: string;
+  orderNo?: string | null;
 
   @IsOptional()
   @IsString()
-  contractNo?: string;
+  contractNo?: string | null;
 
   @IsOptional()
   @IsString()
-  poNo?: string;
+  poNo?: string | null;
 
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string | null;
 
   @IsOptional()
   @IsEnum(SalesChannel)
@@ -69,9 +69,9 @@ export class CreateDebtDto {
 
   @IsOptional()
   @IsDateString()
-  nextFollowUpAt?: string;
+  nextFollowUpAt?: string | null;
 
   @IsOptional()
   @IsString()
-  followUpNote?: string;
+  followUpNote?: string | null;
 }
