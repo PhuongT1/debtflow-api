@@ -10,7 +10,7 @@ local copies. Same-named project skills replace the complete core skill, includi
 | --- | --- | --- |
 | `$backend-change` or `/backend-change` | Implement or fix a NestJS API feature, DTO, service, query or persistence workflow | Work within the requested change; database writes, commit and deployment need their own authorization |
 | `$review` or `/review` | Review diffs for correctness, tenancy, permissions, money, migrations and test gaps | Read-only; no fixes, commits or pushes during a review request |
-| `$commit` or `/commit` | Inspect scope, validate and create coherent commits | Commit only when asked; never push unless asked |
+| `$commit` or `/commit` | Inspect scope, validate and create coherent commits | Local commits only; pull/push/deploy require a separate explicit request |
 
 Examples:
 
