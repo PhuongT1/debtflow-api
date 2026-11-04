@@ -58,7 +58,7 @@ scripts/
 | `prisma/migrations`    | Database migration history.                                                                          |
 | `.ai/core`             | Portable NestJS rules and default skills.                                                            |
 | `.ai/project.json`     | Project rules, skill sources and reference commands.                                                 |
-| `.codex/skills`        | Authored DebtFlow skills installed across clients by `npm run ai:setup`.                             |
+| `.ai/skills`        | Authored DebtFlow skills installed across clients by `npm run ai:setup`.                             |
 
 ## Current Modules
 

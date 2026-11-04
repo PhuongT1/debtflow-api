@@ -206,7 +206,7 @@ Full documentation lives in [docs/](docs/README.md):
   [Database Workflow](docs/guides/database-workflow.md), [Project Structure](docs/guides/project-structure.md),
   [Authentication And Authorization](docs/guides/authorization.md),
   [Validation And Errors](docs/guides/validation-and-errors.md), [Import Aliases](docs/guides/import-aliases.md)
-- [Project Codex Skills](.codex/skills/SKILLS.md)
+- [Project AI Skills](.ai/skills/SKILLS.md)
 
 After changing an endpoint, DTO or Prisma model, run `npm run docs:generate` and commit
 `docs/generated/`. `npm run docs:check` fails if the committed files are out of date.

@@ -106,11 +106,11 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 
 ## Project skills and Git
 
-Read [.codex/skills/SKILLS.md](.codex/skills/SKILLS.md) when asked about project skills.
+Read [.ai/skills/SKILLS.md](.ai/skills/SKILLS.md) when asked about project skills.
 Portable skill defaults live in `.ai/core/skills/`. DebtFlow-specific skill sources live in
-`.codex/skills/` and replace same-named defaults as configured in `.ai/project.json`.
-`ai:setup` installs local copies into `.agents/skills/`, `.claude/skills/` and `.cursor/skills/`.
-Edit the versioned sources, never the ignored installations. Do not create discovery symlinks.
+`.ai/skills/` and replace same-named defaults as configured in `.ai/project.json`.
+`ai:setup` installs local copies into `.codex/skills/`, `.agents/skills/`, `.claude/skills/` and `.cursor/skills/`.
+Edit only `.ai/core/skills/` or `.ai/skills/`, never generated client copies. Do not create discovery symlinks.
 
 - `$backend-change` / `/backend-change`: implement or fix a NestJS backend feature using the project workflow.
 - `$review` / `/review`: read-only code review; do not edit, commit or push during a review request.
