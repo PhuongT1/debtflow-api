@@ -2,13 +2,19 @@
 
 ## Local URLs
 
-Open these after starting the backend:
+Set `PORT` in `.env` and start the backend. The terminal prints the actual Swagger URL
+after the server starts; `<PORT>` below denotes that configured port (default 4000):
 
 ```txt
-API base URL:  http://localhost:4000/api
-Swagger UI:    http://localhost:4000/docs
-OpenAPI JSON:  http://localhost:4000/docs-json
+API base URL:  http://localhost:<PORT>/api
+Swagger UI:    http://localhost:<PORT>/docs
+OpenAPI JSON:  http://localhost:<PORT>/docs-json
 ```
+
+Swagger loads `/docs-json` and sends API requests relative to the backend origin, so a port change
+requires no browser-script change. On Vercel, use the deployment origin plus `/docs`; no localhost
+URL is embedded in the OpenAPI document. The standalone startup log uses the bound address and
+actual port, including an OS-assigned port when `PORT=0`.
 
 ## Where to make changes
 
@@ -104,7 +110,7 @@ Only successful responses from the same origin's three auth endpoints may automa
 The frontend `.env` should use:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_API_URL=http://localhost:<PORT>/api
 ```
 
 

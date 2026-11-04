@@ -115,7 +115,7 @@ function renderMarkdown(document: OpenApi, groups: ReturnType<typeof groupOperat
     '> Fix the controller decorators or DTOs instead, then regenerate.',
     '',
     `**${document.info.title}** v${document.info.version} - ${total} endpoints.`,
-    'Base URL: `http://localhost:4000/api`. Interactive docs: `/docs`. Raw spec: [openapi.json](./openapi.json).',
+    'Paths are relative to the backend origin. Local port comes from `PORT`; startup logs print the Swagger URL. Interactive docs: `/docs`. Raw spec: [openapi.json](./openapi.json).',
     '',
     '## Conventions',
     '',

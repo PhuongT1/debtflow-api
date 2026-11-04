@@ -23,7 +23,7 @@ flowchart LR
 ```
 
 The browser only talks to the shell's same-origin `/api/*` route. The BFF reads the access token from the
-encrypted NextAuth session cookie and calls `API_BASE_URL` (`http://localhost:4000/api`) with
+encrypted NextAuth session cookie and calls `API_BASE_URL` (`http://localhost:<PORT>/api`) with
 `Authorization: Bearer ...`. The backend URL is never exposed through a `NEXT_PUBLIC_*` variable.
 
 ## Containers and deployment (C4 level 2)

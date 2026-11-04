@@ -88,6 +88,13 @@ for (const target of ['standalone', 'vercel']) {
           assert.equal(response.status, 200, output);
           assert.match(await response.text(), /swagger-ui/);
         }
+        if (target === 'standalone') {
+          const advertised = output.split('Swagger UI: ')[1]?.split(/[\s\u001b]/)[0];
+          assert.ok(advertised, 'Startup must print the actual Swagger URL');
+          assert.equal(new URL(advertised).port, String(port));
+          assert.equal(new URL(advertised).pathname, '/docs');
+          assert.equal((await fetch(advertised)).status, 200);
+        }
         const document = await (await request('/docs-json')).json();
         assert.ok(document.paths['/api/parties']);
         assert.ok(document.paths['/api/auth/login']);

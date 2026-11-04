@@ -88,18 +88,18 @@ mode.
 
 ## Important Links
 
-Open these after the backend starts:
+Use the Swagger URL printed at startup. `<PORT>` below is the value from `.env`; the default is 4000:
 
 ```txt
-API base URL:  http://localhost:4000/api
-Swagger UI:    http://localhost:4000/docs
-OpenAPI JSON:  http://localhost:4000/docs-json
+API base URL:  http://localhost:<PORT>/api
+Swagger UI:    http://localhost:<PORT>/docs
+OpenAPI JSON:  http://localhost:<PORT>/docs-json
 ```
 
 DebtFlow Shell server-side API env:
 
 ```env
-API_BASE_URL=http://localhost:4000/api
+API_BASE_URL=http://localhost:<PORT>/api
 ```
 
 The browser calls the shell's same-origin BFF. Do not expose the backend URL with a
