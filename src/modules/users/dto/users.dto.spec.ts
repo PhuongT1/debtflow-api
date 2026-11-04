@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { I18nService } from '#common/i18n/i18n.service.js';
+import { I18nService } from '@common/i18n/i18n.service.js';
 import { CreateUserDto } from './create-user.dto.js';
 import { UpdateUserDto } from './update-user.dto.js';
 

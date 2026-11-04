@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseListQuery } from '#common/query/index.js';
+import { parseListQuery } from '@common/query/index.js';
 import { buildDebtQuery } from './debt-query.js';
 import { DEBT_LIST_QUERY } from './debts.list-query.js';
 

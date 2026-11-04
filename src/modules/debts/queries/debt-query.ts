@@ -1,6 +1,6 @@
-import { applyListQuery, type ListQueryResult } from '#common/query/index.js';
-import { requireOrganizationId } from '#common/validation/require-organization-id.js';
-import { DebtStatus, Prisma } from '#generated/prisma/client.js';
+import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
+import { requireOrganizationId } from '@common/validation/require-organization-id.js';
+import { DebtStatus, Prisma } from '@generated/prisma/client.js';
 import type { QueryDebtsDto } from '../dto/query-debts.dto.js';
 import { buildDebtDateFilters } from './debt-date-filters.js';
 

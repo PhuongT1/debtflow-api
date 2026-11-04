@@ -49,7 +49,8 @@ Use explicit `.js` suffixes for application imports (including `/index.js` for b
 `import.meta.dirname` for file paths and `import.meta.url` when a module URL is needed.
 Tests that require emitted Nest constructor metadata load the compiled graph via
 `createRequire(import.meta.url)`; Node 24 supports synchronous ESM interop for this graph.
-Build before those tests. Do not suppress editor errors or reintroduce CommonJS output/alias rewriting.
+Build before those tests. Do not suppress editor errors or reintroduce CommonJS output. Use `npm run build` so the required
+short-alias rewrite completes before compiled-runtime tests.
 See [Import Aliases](../import-aliases.md) and [Run Source](../run-source.md).
 
 `npm run check` combines these and builds first to generate Prisma Client on a fresh checkout. Prisma

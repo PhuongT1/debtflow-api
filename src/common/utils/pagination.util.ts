@@ -1,4 +1,4 @@
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '#common/constants/pagination.constants.js';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@common/constants/pagination.constants.js';
 
 type PaginationInput = {
   page?: number;

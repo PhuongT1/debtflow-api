@@ -1,6 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationQueryDto } from '#common/dto/pagination-query.dto.js';
-import { OrganizationMembershipStatus, OrganizationRole, UserStatus } from '#generated/prisma/client.js';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto.js';
+import { OrganizationMembershipStatus, OrganizationRole, UserStatus } from '@generated/prisma/client.js';
 
 export class QueryUsersDto extends PaginationQueryDto {
   /** Search over name, email and phone (case-insensitive). */

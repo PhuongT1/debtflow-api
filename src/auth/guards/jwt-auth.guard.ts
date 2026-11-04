@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { unauthorized } from '#common/errors/app-errors.js';
+import { unauthorized } from '@common/errors/app-errors.js';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '#database/prisma.service.js';
+import { PrismaService } from '@database/prisma.service.js';
 import type { JwtAuthPayload, AuthenticatedRequest } from '../types/auth-context.types.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Prisma } from '#generated/prisma/client.js';
+import { Prisma } from '@generated/prisma/client.js';
 import { PaymentsService } from './payments.service.js';
 
 function setup() {

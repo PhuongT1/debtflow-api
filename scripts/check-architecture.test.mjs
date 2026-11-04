@@ -151,29 +151,30 @@ test('keeps auth infrastructure independent of feature sessions while allowing i
   );
 });
 
-test('resolves native ESM package imports and permits generated enums but rejects a client', () => {
+test('resolves short ESM aliases and permits generated enums but rejects a client', () => {
   fixture(
     {
       'package.json': JSON.stringify({
         type: 'module',
-        imports: {
-          '#generated/*': { types: './src/generated/*', default: './dist/src/generated/*' },
-        },
       }),
       'tsconfig.json': JSON.stringify({
-        compilerOptions: { module: 'NodeNext', moduleResolution: 'NodeNext' },
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          paths: { '@generated/*': ['./src/generated/*'] },
+        },
         include: ['src/**/*.ts'],
       }),
       'src/generated/prisma/client.ts':
         'export class PrismaClient {}; export enum PartyType { CUSTOMER }',
       'src/modules/parties/good.controller.ts':
-        "import { PartyType } from '#generated/prisma/client.js';",
+        "import { PartyType } from '@generated/prisma/client.js';",
       'src/modules/parties/bad.controller.ts':
-        "import { PrismaClient as Client } from '#generated/prisma/client.js';",
+        "import { PrismaClient as Client } from '@generated/prisma/client.js';",
       'src/modules/parties/namespace.controller.ts':
-        "import * as Database from '#generated/prisma/client.js';",
+        "import * as Database from '@generated/prisma/client.js';",
       'src/modules/parties/dynamic.controller.ts':
-        "const db = import('#generated/prisma/client.js');",
+        "const db = import('@generated/prisma/client.js');",
     },
     (result) => {
       assert.equal(result.violations.length, 3);

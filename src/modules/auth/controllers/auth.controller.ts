@@ -1,11 +1,11 @@
-import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
 import { SessionResponseDto } from '../dto/auth-response.dto.js';
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import { PublicApi, ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { AuthService } from '#modules/auth/services/auth.service.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import { PublicApi, ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { AuthService } from '@modules/auth/services/auth.service.js';
 import { LoginDto } from '../dto/login.dto.js';
 import { RefreshTokenDto } from '../dto/refresh-token.dto.js';
 import { SwitchOrganizationDto } from '../dto/switch-organization.dto.js';

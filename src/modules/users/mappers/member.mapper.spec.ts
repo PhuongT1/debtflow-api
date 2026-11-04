@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OrganizationMembershipStatus, OrganizationRole, UserStatus } from '#generated/prisma/client.js';
+import { OrganizationMembershipStatus, OrganizationRole, UserStatus } from '@generated/prisma/client.js';
 import { toMemberDto } from './member.mapper.js';
 
 describe('toMemberDto', () => {

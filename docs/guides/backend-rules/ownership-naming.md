@@ -65,8 +65,8 @@ its provider module; the worker imports the latter. Do not create those extra mo
 Prefer established service method names (`list`, `detail`, `create`, `update`, `deactivate`) when their
 meaning fits. A domain operation such as `reactivate`, `cancel` or `createAutoAllocated` should name
 its business action. Do not rename compatible existing public methods solely to mimic Vendure's
-`findAll`/`findOne`. Local import aliases must follow `tsconfig.json`; same-feature relative imports
-are fine. Public DTO classes may share a response file when they describe one resource contract.
+`findAll`/`findOne`. Local imports follow the short `@auth/*`, `@common/*`, `@config/*`, `@database/*`, `@generated/*` and `@modules/*` aliases declared in `tsconfig.json` and the ESM import guide; same-feature relative
+imports use explicit `.js` suffixes. Public DTO classes may share a response file when they describe one resource contract.
 
 ## OWN-03 — wire exactly one provider owner
 

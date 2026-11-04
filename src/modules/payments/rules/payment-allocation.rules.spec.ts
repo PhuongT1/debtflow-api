@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Prisma } from '#generated/prisma/client.js';
+import { Prisma } from '@generated/prisma/client.js';
 import type { PayableDebt } from '../types/payment.types.js';
 import { allocatePayment, assertPayableDebt, paymentAmount } from './payment-allocation.rules.js';
 

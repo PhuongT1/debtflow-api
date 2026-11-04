@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuditAction } from '#common/events/audit-event.js';
+import { AuditAction } from '@common/events/audit-event.js';
 import { AuditLogsListener } from './audit-logs.listener.js';
 
 const entry = {

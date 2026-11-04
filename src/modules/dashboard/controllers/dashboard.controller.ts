@@ -1,10 +1,10 @@
-import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
+import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
 import { DashboardResponseDto } from '../dto/dashboard-response.dto.js';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
 import { DashboardService } from '../services/dashboard.service.js';
 import { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
 

@@ -1,6 +1,6 @@
 import { PickType } from '@nestjs/swagger';
 import { IsEnum, ValidateIf } from 'class-validator';
-import { CollectionStatus } from '#generated/prisma/client.js';
+import { CollectionStatus } from '@generated/prisma/client.js';
 import { CreateDebtDto } from './create-debt.dto.js';
 
 export class UpdateDebtCollectionDto extends PickType(CreateDebtDto, [

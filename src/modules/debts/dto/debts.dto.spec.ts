@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
-import { ListQueryAwareValidationPipe } from '#common/query/index.js';
+import { ListQueryAwareValidationPipe } from '@common/query/index.js';
 import { CreateDebtDto } from './create-debt.dto.js';
 import { UpdateDebtCollectionDto } from './update-debt-collection.dto.js';
 

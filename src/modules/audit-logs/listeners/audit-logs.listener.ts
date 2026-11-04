@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AUDIT_EVENT, type AuditEntry } from '#common/events/audit-event.js';
-import { PrismaService } from '#database/prisma.service.js';
-import type { Prisma } from '#generated/prisma/client.js';
+import { AUDIT_EVENT, type AuditEntry } from '@common/events/audit-event.js';
+import { PrismaService } from '@database/prisma.service.js';
+import type { Prisma } from '@generated/prisma/client.js';
 
 /** Stores every published audit entry. A failure is logged and never reaches the request. */
 @Injectable()

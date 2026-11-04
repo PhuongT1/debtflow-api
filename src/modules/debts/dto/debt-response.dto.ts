@@ -1,11 +1,11 @@
 import { PickType } from '@nestjs/swagger';
-import { PartyResponseDto } from '#modules/parties/public/parties.js';
-import { UserSummaryDto } from '#modules/users/public/users.js';
-import { ProductResponseDto } from '#modules/catalog/public/catalog.js';
+import { PartyResponseDto } from '@modules/parties/public/parties.js';
+import { UserSummaryDto } from '@modules/users/public/users.js';
+import { ProductResponseDto } from '@modules/catalog/public/catalog.js';
 import {
   PaymentWithCreatorDto,
   PaymentAllocationRecordDto,
-} from '#modules/payments/public/payment-records.js';
+} from '@modules/payments/public/payment-records.js';
 import { DebtRecordDto, DebtItemRecordDto } from './debt-record.dto.js';
 
 export class DebtWithPartyDto extends DebtRecordDto {

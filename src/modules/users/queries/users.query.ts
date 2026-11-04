@@ -1,5 +1,5 @@
-import { applyListQuery, type ListQueryResult } from '#common/query/index.js';
-import { OrganizationMembershipStatus, UserStatus, Prisma } from '#generated/prisma/client.js';
+import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
+import { OrganizationMembershipStatus, UserStatus, Prisma } from '@generated/prisma/client.js';
 import type { QueryUsersDto } from '../dto/query-users.dto.js';
 
 export function buildUsersQuery(

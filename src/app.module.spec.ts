@@ -7,8 +7,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
-import { Prisma } from '#generated/prisma/client.js';
-import { SWAGGER_PATHS } from '#common/swagger/swagger-ui.js';
+import { Prisma } from '@generated/prisma/client.js';
+import { SWAGGER_PATHS } from '@common/swagger/swagger-ui.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Exercise the real compiled graph: Nest build emits constructor metadata and Swagger factories.

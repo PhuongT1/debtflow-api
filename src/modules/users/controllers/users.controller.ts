@@ -11,13 +11,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { Roles } from '#auth/decorators/roles.decorator.js';
-import { ApiErrorEnvelopes, ApiEnvelope } from '#common/http/api-envelope.decorator.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
-import { OrganizationRole } from '#generated/prisma/client.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { Roles } from '@auth/decorators/roles.decorator.js';
+import { ApiErrorEnvelopes, ApiEnvelope } from '@common/http/api-envelope.decorator.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import { OrganizationRole } from '@generated/prisma/client.js';
 import { CreateUserDto } from '../dto/create-user.dto.js';
 import { QueryUsersDto } from '../dto/query-users.dto.js';
 import { UpdateUserDto } from '../dto/update-user.dto.js';

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AUDIT_EVENT } from '#common/events/audit-event.js';
+import { AUDIT_EVENT } from '@common/events/audit-event.js';
 import { UsersService } from './users.service.js';
 
 const actor = { userId: 'owner', role: 'OWNER' as const };

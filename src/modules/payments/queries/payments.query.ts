@@ -1,6 +1,6 @@
-import { applyListQuery, type ListQueryResult } from '#common/query/index.js';
-import { requireOrganizationId } from '#common/validation/require-organization-id.js';
-import type { Prisma } from '#generated/prisma/client.js';
+import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
+import { requireOrganizationId } from '@common/validation/require-organization-id.js';
+import type { Prisma } from '@generated/prisma/client.js';
 import type { QueryPaymentsDto } from '../dto/query-payments.dto.js';
 
 export function buildPaymentsQuery(

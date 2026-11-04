@@ -8,10 +8,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { Prisma } from '#generated/prisma/client.js';
-import type { ApiErrorDetail, ApiErrorResponse } from '#common/http/api-response.types.js';
-import { I18nService } from '#common/i18n/i18n.service.js';
-import type { AppLocale } from '#common/i18n/i18n.types.js';
+import { Prisma } from '@generated/prisma/client.js';
+import type { ApiErrorDetail, ApiErrorResponse } from '@common/http/api-response.types.js';
+import { I18nService } from '@common/i18n/i18n.service.js';
+import type { AppLocale } from '@common/i18n/i18n.types.js';
 
 type ExceptionPayload = {
   code?: unknown;

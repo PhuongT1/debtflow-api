@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PartyType } from '#generated/prisma/client.js';
+import { PartyType } from '@generated/prisma/client.js';
 import { buildPartyCreateData, buildPartyUpdateData } from './party.mapper.js';
 
 const current = {

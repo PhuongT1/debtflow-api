@@ -10,13 +10,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { Roles } from '#auth/decorators/roles.decorator.js';
-import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
-import { OrganizationRole } from '#generated/prisma/client.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { Roles } from '@auth/decorators/roles.decorator.js';
+import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import { OrganizationRole } from '@generated/prisma/client.js';
 import { CreatePartyDto } from '../dto/create-party.dto.js';
 import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from '../dto/party-response.dto.js';
 import { QueryPartiesDto } from '../dto/query-parties.dto.js';

@@ -16,7 +16,15 @@
     "strictPropertyInitialization": false,
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
-    "rewriteRelativeImportExtensions": true
+    "rewriteRelativeImportExtensions": true,
+    "paths": {
+      "@auth/*": ["./src/auth/*"],
+      "@common/*": ["./src/common/*"],
+      "@config/*": ["./src/config/*"],
+      "@database/*": ["./src/database/*"],
+      "@generated/*": ["./src/generated/*"],
+      "@modules/*": ["./src/modules/*"]
+    }
   },
   "include": ["src/**/*.ts", "prisma/**/*.ts"],
   "exclude": ["node_modules", "dist"]

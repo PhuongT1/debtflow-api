@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Prisma } from '#generated/prisma/client.js';
-import { parseListQuery, validFieldsOf } from '#common/query/index.js';
+import { Prisma } from '@generated/prisma/client.js';
+import { parseListQuery, validFieldsOf } from '@common/query/index.js';
 import { PartiesService } from './parties.service.js';
-import { OrganizationMembersService } from '#modules/users/services/organization-members.service.js';
+import { OrganizationMembersService } from '@modules/users/services/organization-members.service.js';
 import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
 
 function setup() {

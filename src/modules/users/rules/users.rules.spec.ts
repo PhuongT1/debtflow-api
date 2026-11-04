@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OrganizationMembershipStatus, OrganizationRole } from '#generated/prisma/client.js';
+import { OrganizationMembershipStatus, OrganizationRole } from '@generated/prisma/client.js';
 import {
   assertCanChangeAccess,
   assertCanEditProfile,

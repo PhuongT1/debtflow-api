@@ -1,11 +1,11 @@
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
 import { ImportScaffoldResponseDto } from '../dto/import-scaffold-response.dto.js';
 import { Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
-import { Roles } from '#auth/decorators/roles.decorator.js';
-import { OrganizationRole } from '#generated/prisma/client.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
+import { Roles } from '@auth/decorators/roles.decorator.js';
+import { OrganizationRole } from '@generated/prisma/client.js';
 
 @ApiTags('Imports')
 @ProtectedApi()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseListQuery } from '#common/query/index.js';
+import { parseListQuery } from '@common/query/index.js';
 import { buildPaymentsQuery } from './payments.query.js';
 import { PAYMENT_LIST_QUERY } from './payments.list-query.js';
 

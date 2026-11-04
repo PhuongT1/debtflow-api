@@ -1,5 +1,5 @@
-import { OrganizationMembershipStatus, OrganizationRole, UserStatus } from '#generated/prisma/client.js';
-import { defineListQuery } from '#common/query/index.js';
+import { OrganizationMembershipStatus, OrganizationRole, UserStatus } from '@generated/prisma/client.js';
+import { defineListQuery } from '@common/query/index.js';
 
 /** Fields clients may filter and sort on for `GET /users`. The list is built from memberships. */
 export const USER_LIST_QUERY = defineListQuery({

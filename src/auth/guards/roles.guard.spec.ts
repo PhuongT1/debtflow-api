@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import type { ExecutionContext, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { OrganizationRole } from '#generated/prisma/client.js';
+import { OrganizationRole } from '@generated/prisma/client.js';
 import { describe, expect, it } from 'vitest';
 import { Roles } from '../decorators/roles.decorator.js';
 import { RolesGuard } from './roles.guard.js';
