@@ -22,5 +22,6 @@
       }
     ],
     "watchAssets": false
-  }
+  },
+  "exec": "node --import ./scripts/rewrite-build-aliases.mjs"
 }

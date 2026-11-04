@@ -27,7 +27,7 @@ export function checkMaintainability(root = projectRoot) {
   const files = ts.sys.readDirectory(
     resolve(root, 'src'),
     ['.ts'],
-    ['**/generated/**', '**/*.spec.ts', '**/*.d.ts'],
+    ['**/generated/**', '**/*.spec.ts', '**/_test/**', '**/*.d.ts'],
   );
   const violations = [];
   const clones = new Map();

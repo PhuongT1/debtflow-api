@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { forbidden, unauthorized } from '#common/errors/app-errors.js';
+import { forbidden, unauthorized } from '@common/errors/app-errors.js';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { PrismaService } from '#database/prisma.service.js';
-import { OrganizationMembershipStatus, UserStatus } from '#generated/prisma/client.js';
-import { LoginDto } from '#modules/auth/dto/login.dto.js';
+import { PrismaService } from '@database/prisma.service.js';
+import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma/client.js';
+import { LoginDto } from '@modules/auth/dto/login.dto.js';
 
 import type {
   JwtAuthPayload as AccessTokenPayload,
   RefreshTokenPayload,
-} from '#auth/types/auth-context.types.js';
+} from '@auth/types/auth-context.types.js';
 import type { AuthUser, MembershipContext } from '../types/auth.types.js';
 import { AUTH_USER_SELECT, MEMBERSHIP_CONTEXT_SELECT } from '../queries/auth.select.js';
 

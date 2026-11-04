@@ -18,7 +18,7 @@ the access token (see [Architecture](./02-architecture.md#how-the-frontend-talks
 | Auth           | JWT access + refresh tokens, organization role based access     |
 | API docs       | OpenAPI 3 (Swagger UI at `/docs`, JSON at `/docs-json`)         |
 | Hosting        | Vercel serverless (`api/index.js` -> `src/vercel.ts`)           |
-| Base URL (dev) | `http://localhost:4000/api`                                     |
+| Base URL (dev) | `http://localhost:<PORT>/api`                                     |
 
 ## Who uses it
 

@@ -1,4 +1,4 @@
-import { defineListQuery } from '#common/query/index.js';
+import { defineListQuery } from '@common/query/index.js';
 
 /** Fields clients may filter and sort on for `GET /audit-logs`. */
 export const AUDIT_LOG_LIST_QUERY = defineListQuery({

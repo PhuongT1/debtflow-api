@@ -1,4 +1,4 @@
-import { Prisma } from '#generated/prisma/client.js';
+import { Prisma } from '@generated/prisma/client.js';
 
 // Only this feature's canonical PartyWhereInput subset is supported. Values are always bound.
 const COLUMNS = {

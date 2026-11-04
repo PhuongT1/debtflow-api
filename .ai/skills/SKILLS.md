@@ -28,3 +28,6 @@ All maintained skill sources live under `.ai/`. Client folders are generated ins
 Keep each skill focused. Put always-applicable rules in `AGENTS.md`, detailed engineering guidance in
 `docs/guides/ai-development.md`, and substantial task-specific details in skill references. Do not
 copy another project's stack, commands or credentials into a skill for this API.
+
+The `.ai/` workspace includes rules, skills and project configuration. Keep this name as the shared
+source root; generated client folders are installation targets.

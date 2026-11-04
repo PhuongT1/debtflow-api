@@ -84,7 +84,7 @@ test('allows service persistence and controller enum imports; ignores generated 
     `,
       'src/modules/parties/parties.service.ts': `import { PrismaService } from '@database/prisma.service';`,
       'src/common/allowed.ts': `const sample = "import x from '@modules/parties/parties.service'";`,
-      'src/common/example.spec.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
+      'src/common/_test/example.spec.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
       'src/generated/ignored.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
     },
     (result) => assert.deepEqual(result.violations, []),
@@ -151,33 +151,49 @@ test('keeps auth infrastructure independent of feature sessions while allowing i
   );
 });
 
-test('resolves native ESM package imports and permits generated enums but rejects a client', () => {
+test('resolves short ESM aliases and permits generated enums but rejects a client', () => {
   fixture(
     {
       'package.json': JSON.stringify({
         type: 'module',
-        imports: {
-          '#generated/*': { types: './src/generated/*', default: './dist/src/generated/*' },
-        },
       }),
       'tsconfig.json': JSON.stringify({
-        compilerOptions: { module: 'NodeNext', moduleResolution: 'NodeNext' },
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          paths: { '@generated/*': ['./src/generated/*'] },
+        },
         include: ['src/**/*.ts'],
       }),
       'src/generated/prisma/client.ts':
         'export class PrismaClient {}; export enum PartyType { CUSTOMER }',
       'src/modules/parties/good.controller.ts':
-        "import { PartyType } from '#generated/prisma/client.js';",
+        "import { PartyType } from '@generated/prisma/client.js';",
       'src/modules/parties/bad.controller.ts':
-        "import { PrismaClient as Client } from '#generated/prisma/client.js';",
+        "import { PrismaClient as Client } from '@generated/prisma/client.js';",
       'src/modules/parties/namespace.controller.ts':
-        "import * as Database from '#generated/prisma/client.js';",
+        "import * as Database from '@generated/prisma/client.js';",
       'src/modules/parties/dynamic.controller.ts':
-        "const db = import('#generated/prisma/client.js');",
+        "const db = import('@generated/prisma/client.js');",
     },
     (result) => {
       assert.equal(result.violations.length, 3);
       assert.equal(result.violations[0].rule, 'controller-persistence');
+    },
+  );
+});
+
+test('keeps feature tests in their own _test folder and out of production imports', () => {
+  fixture(
+    {
+      'src/modules/parties/queries/bad.spec.ts': 'export {};',
+      'src/modules/parties/_test/good.spec.ts': 'export {};',
+      'src/modules/parties/_test/fixture.ts': 'export const fixture = 1;',
+      'src/modules/parties/parties.service.ts': "import { fixture } from './_test/fixture';",
+    },
+    (result) => {
+      assert.equal(result.violations.filter((v) => v.rule === 'test-layout').length, 1);
+      assert.equal(result.violations.filter((v) => v.rule === 'test-dependency').length, 1);
     },
   );
 });

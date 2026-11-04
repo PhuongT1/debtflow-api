@@ -1,7 +1,7 @@
 import type { PartyWriteData, PartySearchSource } from '../types/party.types.js';
-import { normalizeOptionalText } from '#common/utils/optional-text.util.js';
-import { Prisma } from '#generated/prisma/client.js';
-import { partySearchText } from '#common/utils/search-normalization.util.js';
+import { normalizeOptionalText } from '@common/utils/optional-text.util.js';
+import { Prisma } from '@generated/prisma/client.js';
+import { partySearchText } from '@common/utils/search-normalization.util.js';
 import type { CreatePartyDto } from '../dto/create-party.dto.js';
 import type { UpdatePartyDto } from '../dto/update-party.dto.js';
 

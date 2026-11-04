@@ -1,4 +1,4 @@
-import { OrganizationMembershipStatus, UserStatus } from '#generated/prisma/client.js';
+import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma/client.js';
 import type { MemberDto } from '../dto/user-response.dto.js';
 import type { MembershipWithUser } from '../types/member.types.js';
 

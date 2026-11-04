@@ -115,7 +115,7 @@ Current split:
 The request URL:
 
 ```txt
-GET http://localhost:4000/api/dashboard
+GET http://localhost:<PORT>/api/dashboard
 ```
 
 Flow:

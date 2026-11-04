@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { DebtStatus, DebtType, Prisma } from '#generated/prisma/client.js';
-import { PrismaService } from '#database/prisma.service.js';
+import { DebtStatus, DebtType, Prisma } from '@generated/prisma/client.js';
+import { PrismaService } from '@database/prisma.service.js';
 import { DashboardActionCenterService } from './dashboard-action-center.service.js';
 import { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
-import { requireOrganizationId } from '#common/validation/require-organization-id.js';
-import { getBusinessDayRange } from '#common/utils/business-date.util.js';
+import { requireOrganizationId } from '@common/validation/require-organization-id.js';
+import { getBusinessDayRange } from '@common/utils/business-date.util.js';
 import { getDashboardPeriod } from '../queries/dashboard.query.js';
 
 @Injectable()

@@ -7,7 +7,7 @@
     "debug": "nest start --debug --watch",
     "setup:dev": "npm run db:migrate && npm run db:generate && npm run db:seed && npm run dev",
     "start": "node dist/src/main.js",
-    "build": "npm run db:generate && nest build",
+    "build": "npm run db:generate && nest build && node scripts/rewrite-build-aliases.mjs",
     "build:prod": "npm run build",
     "lint": "eslint \"src/**/*.{ts,js}\"",
     "check:architecture": "node scripts/check-architecture.mjs",
@@ -38,7 +38,7 @@
     "ai:check": "node scripts/ai-setup.mjs --check",
     "test:ai": "node --test scripts/ai-setup.test.mjs",
     "check:maintainability": "node scripts/check-maintainability.mjs",
-    "test:parties:postgres": "vitest run src/modules/parties/queries/party-balance-page.postgres.spec.ts",
+    "test:parties:postgres": "vitest run src/modules/parties/_test/party-balance-page.postgres.spec.ts",
     "test:runtime": "node --test scripts/runtime-smoke.test.mjs"
   },
   "dependencies": {
@@ -79,6 +79,7 @@
     "prettier": "^3.9.6",
     "prisma": "^7.9.1",
     "prisma-markdown": "^4.0.0",
+    "tsc-alias": "^1.9.10",
     "tsx": "^4.20.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0",
@@ -89,31 +90,5 @@
   "type": "module",
   "engines": {
     "node": "24.x"
-  },
-  "imports": {
-    "#auth/*": {
-      "types": "./src/auth/*",
-      "default": "./dist/src/auth/*"
-    },
-    "#common/*": {
-      "types": "./src/common/*",
-      "default": "./dist/src/common/*"
-    },
-    "#config/*": {
-      "types": "./src/config/*",
-      "default": "./dist/src/config/*"
-    },
-    "#database/*": {
-      "types": "./src/database/*",
-      "default": "./dist/src/database/*"
-    },
-    "#generated/*": {
-      "types": "./src/generated/*",
-      "default": "./dist/src/generated/*"
-    },
-    "#modules/*": {
-      "types": "./src/modules/*",
-      "default": "./dist/src/modules/*"
-    }
   }
 }

@@ -1,5 +1,5 @@
-import { DebtType, PaymentMethod } from '#generated/prisma/client.js';
-import { UserSummaryDto } from '#modules/users/public/users.js';
+import { DebtType, PaymentMethod } from '@generated/prisma/client.js';
+import { UserSummaryDto } from '@modules/users/public/users.js';
 
 export class PaymentRecordDto {
   id!: string;

@@ -1,4 +1,4 @@
-import type { Debt, PaymentAllocation, Prisma } from '#generated/prisma/client.js';
+import type { Debt, PaymentAllocation, Prisma } from '@generated/prisma/client.js';
 import type { CreatePaymentDto } from '../dto/create-payment.dto.js';
 import type { PAYMENT_DETAILS_INCLUDE } from '../queries/payment.select.js';
 

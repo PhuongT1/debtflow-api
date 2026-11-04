@@ -4,7 +4,7 @@
 > Fix the controller decorators or DTOs instead, then regenerate.
 
 **Sales Debt Management API** v0.1.0 - 30 endpoints.
-Base URL: `http://localhost:4000/api`. Interactive docs: `/docs`. Raw spec: [openapi.json](./openapi.json).
+Paths are relative to the backend origin. Local port comes from `PORT`; startup logs print the Swagger URL. Interactive docs: `/docs`. Raw spec: [openapi.json](./openapi.json).
 
 ## Conventions
 

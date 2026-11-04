@@ -1,14 +1,15 @@
 import { INestApplication, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ListQueryAwareValidationPipe } from '#common/query/index.js';
-import { createValidationException } from '#common/validation/validation-exception.factory.js';
-import { configureSwagger } from '#common/swagger/swagger.setup.js';
-import { SWAGGER_PATHS } from '#common/swagger/swagger-ui.js';
+import { ListQueryAwareValidationPipe } from '@common/query/index.js';
+import { createValidationException } from '@common/validation/validation-exception.factory.js';
+import { configureSwagger } from '@common/swagger/swagger.setup.js';
+import { API_PREFIX } from '@common/constants/api-routes.constants.js';
+import { SWAGGER_PATHS } from '@common/swagger/swagger-ui.js';
 
 export function configureApp(app: INestApplication) {
   const config = app.get(ConfigService);
 
-  app.setGlobalPrefix('api', {
+  app.setGlobalPrefix(API_PREFIX, {
     exclude: Object.values(SWAGGER_PATHS).map((path) => ({
       path: path.slice(1),
       method: RequestMethod.GET,

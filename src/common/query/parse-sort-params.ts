@@ -1,4 +1,4 @@
-import { badRequest } from '#common/errors/app-errors.js';
+import { badRequest } from '@common/errors/app-errors.js';
 import {
   validFieldsOf,
   type ListQueryConfig,

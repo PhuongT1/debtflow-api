@@ -1,5 +1,5 @@
-import { PartyType } from '#generated/prisma/client.js';
-import { defineListQuery } from '#common/query/index.js';
+import { PartyType } from '@generated/prisma/client.js';
+import { defineListQuery } from '@common/query/index.js';
 
 /**
  * Fields clients may filter and sort on for `GET /parties`.

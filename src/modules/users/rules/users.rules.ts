@@ -1,5 +1,5 @@
-import { OrganizationMembershipStatus, OrganizationRole } from '#generated/prisma/client.js';
-import { badRequest, forbidden } from '#common/errors/app-errors.js';
+import { OrganizationMembershipStatus, OrganizationRole } from '@generated/prisma/client.js';
+import { badRequest, forbidden } from '@common/errors/app-errors.js';
 
 import type { Actor, Target, AccessChange } from '../types/member.types.js';
 

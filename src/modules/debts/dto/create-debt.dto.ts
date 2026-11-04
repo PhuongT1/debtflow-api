@@ -8,7 +8,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { DebtType, SalesChannel } from '#generated/prisma/client.js';
+import { DebtType, SalesChannel } from '@generated/prisma/client.js';
 import { Type } from 'class-transformer';
 import { CreateDebtItemDto } from './items/create-debt-item.dto.js';
 

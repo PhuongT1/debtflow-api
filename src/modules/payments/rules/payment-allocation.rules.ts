@@ -1,5 +1,5 @@
-import { badRequest } from '#common/errors/app-errors.js';
-import { DebtStatus, Prisma } from '#generated/prisma/client.js';
+import { badRequest } from '@common/errors/app-errors.js';
+import { DebtStatus, Prisma } from '@generated/prisma/client.js';
 import type { PayableDebt, VoucherInput } from '../types/payment.types.js';
 
 export function paymentAmount(value: string): Prisma.Decimal {

@@ -1,5 +1,5 @@
-import { normalizeOptionalText } from '#common/utils/optional-text.util.js';
-import type { Prisma } from '#generated/prisma/client.js';
+import { normalizeOptionalText } from '@common/utils/optional-text.util.js';
+import type { Prisma } from '@generated/prisma/client.js';
 import type { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto.js';
 
 /** PATCH omission preserves state; explicit null/blank clears nullable text. */

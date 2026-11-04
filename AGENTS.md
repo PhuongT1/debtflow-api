@@ -92,6 +92,8 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
   and `npm run lint` for TypeScript. The conventions baseline contains only reviewed pre-existing response/
   query debt, locked per handler fingerprint. A changed/new handler must comply; remove stale entries.
   Do not broaden exemptions or put security/naming violations in that baseline to make checks pass.
+- Put every `src` spec/fixture in the owner's `_test/` folder; follow `.ai/core/testing.md` and
+  [test placement](docs/guides/backend-rules/testing-completion.md#test-placement).
 - Run meaningful targeted tests for changed behavior, especially tenant isolation, permissions,
   money, status transitions and failure paths. Extend existing suites when they own the scenario.
 - Run `npm run typecheck` to check TypeScript including specs; Vitest alone only transpiles them.

@@ -16,7 +16,8 @@ changes. Read only the relevant topics below; a new endpoint usually needs every
 | Controllers, DTOs, validation, serialization, errors | [API and validation](api-validation.md)         |
 | Identity, access policy, resource scope, secrets     | [Security](security.md)                         |
 | Services, queries, transactions, events, migrations  | [Persistence](persistence.md)                   |
-| Tests, commands, Git and completion                  | [Verification](verification.md)                 |
+| Test requests and test organization | [Testing](testing.md) |
+| Commands, Git and completion                  | [Verification](verification.md)                 |
 
 MUST rules apply to changed/new code. Existing violations do not authorize new ones. Use the current
 project contract where compatibility matters; do not rewrite unrelated legacy code as part of a task.
