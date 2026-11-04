@@ -1,6 +1,7 @@
 import { runInNewContext } from 'node:vm';
-import { describe, expect, it, vi } from 'vitest';
-import { renderSwaggerHtml } from './swagger-ui';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 type Response = { url: string; status: number; obj?: unknown; data?: unknown; text?: string };
 type AuthPayload = Record<string, { value: string }>;
@@ -18,33 +19,6 @@ const storageKey = 'debtflow.swagger.access-token';
 
 function setup(savedToken?: string, blockedStorage = false) {
   const storage = new Map(savedToken ? [[storageKey, savedToken]] : []);
-  const elements = new Map<
-    string,
-    {
-      value: string;
-      textContent: string;
-      type: string;
-      listeners: Record<string, (event: unknown) => void>;
-      addEventListener: (name: string, listener: (event: unknown) => void) => void;
-    }
-  >();
-  const document = {
-    getElementById: (id: string) => {
-      if (!elements.has(id)) {
-        const listeners = {};
-        elements.set(id, {
-          value: '',
-          textContent: '',
-          type: 'password',
-          listeners,
-          addEventListener: (name, listener) => {
-            elements.get(id)!.listeners[name] = listener;
-          },
-        });
-      }
-      return elements.get(id)!;
-    },
-  };
   let config: Config;
   let applied = '';
   const authorizeOriginal = vi.fn((payload: AuthPayload) => {
@@ -60,15 +34,22 @@ function setup(savedToken?: string, blockedStorage = false) {
       const authorize = wrappers.authorize(authorizeOriginal);
       const logout = wrappers.logout(logoutOriginal);
       return {
-        preauthorizeApiKey: (_name: string, value: string) => authorize({ bearer: { value } }),
+        // Match Swagger 5.17: the root helper captures the action before custom wrappers.
+        preauthorizeApiKey: (_name: string, value: string) =>
+          authorizeOriginal({ bearer: { value } }),
+        authSelectors: { authorized: () => ({ getIn: () => applied }) },
         authActions: { authorize, logout },
       };
     },
     { presets: { apis: {} } },
   );
+  const listeners: Record<string, (event: Record<string, unknown>) => void> = {};
   const window = {
+    addEventListener: (name: string, callback: (event: Record<string, unknown>) => void) => {
+      listeners[name] = callback;
+    },
     location: { href: 'http://localhost:4000/docs', origin: 'http://localhost:4000' },
-    sessionStorage: {
+    localStorage: {
       getItem: (key: string) => {
         if (blockedStorage) throw Error('blocked');
         return storage.get(key);
@@ -85,23 +66,24 @@ function setup(savedToken?: string, blockedStorage = false) {
     onload: () => {},
     ui: undefined as unknown as ReturnType<typeof bundle>,
   };
-  const script = renderSwaggerHtml().match(/<script>([\s\S]*?)<\/script>/)![1];
+  const script = readFileSync(join(__dirname, 'swagger-auth.js'), 'utf8');
   runInNewContext(script, {
     window,
-    document,
+    document: { getElementById: () => ({ dataset: { specUrl: '/docs-json' } }) },
     SwaggerUIBundle: bundle,
     SwaggerUIStandalonePreset: {},
     URL,
     atob,
+    Date,
+    setTimeout,
+    clearTimeout,
   });
   window.onload();
   return {
     config: config!,
     window,
     storage,
-    document,
-    input: document.getElementById('swagger-access-token'),
-    status: document.getElementById('swagger-token-status'),
+    listeners,
     applied: () => applied,
     respond: (path = '/api/auth/login', token = 'login-token') =>
       config.responseInterceptor({
@@ -109,54 +91,52 @@ function setup(savedToken?: string, blockedStorage = false) {
         status: 200,
         obj: { success: true, data: { accessToken: token, refreshToken: 'never-store-this' } },
       }),
-    submit: () =>
-      document.getElementById('swagger-token-form').listeners.submit({ preventDefault: () => {} }),
   };
 }
 
-describe('Swagger token field and authorization', () => {
-  it('fills the editable input and applies tokens from login, refresh and organization switching', () => {
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-11-03T00:00:00Z'));
+});
+afterEach(() => vi.useRealTimers());
+
+function jwt(secondsFromNow: number) {
+  const claims = Buffer.from(JSON.stringify({ exp: Date.now() / 1000 + secondsFromNow })).toString(
+    'base64url',
+  );
+  return `fixture.${claims}.signature`;
+}
+
+describe('Swagger authorization', () => {
+  it('applies tokens through Swagger authorization from login, refresh and organization switching', () => {
     const s = setup();
     for (const path of ['/api/auth/login', '/api/auth/refresh', '/api/auth/switch-organization']) {
       s.respond(path, path);
-      expect(s.input.value).toBe(path);
       expect(s.applied()).toBe(path);
       expect(s.storage.get(storageKey)).toBe(path);
     }
     expect([...s.storage.values()]).not.toContain('never-store-this');
   });
 
-  it('lets users edit or replace the auto-filled token and apply it explicitly', () => {
-    const s = setup();
-    s.respond();
-    s.input.value = ' Bearer edited-token ';
-    s.input.listeners.input({});
-    expect(s.applied()).toBe('login-token');
-    s.submit();
-    expect(s.input.value).toBe('edited-token');
-    expect(s.applied()).toBe('edited-token');
-    expect(s.storage.get(storageKey)).toBe('edited-token');
-  });
-
-  it('synchronizes the standard Authorize dialog and Logout', () => {
+  it('uses the standard Authorize dialog and Logout for manual token replacement', () => {
     const s = setup();
     s.window.ui.authActions.authorize({ bearer: { value: 'Bearer dialog-token' } });
-    expect(s.input.value).toBe('dialog-token');
+    expect(s.storage.get(storageKey)).toBe('dialog-token');
     expect(s.applied()).toBe('dialog-token');
     s.window.ui.authActions.logout(['bearer']);
-    expect(s.input.value).toBe('');
     expect(s.applied()).toBe('');
     expect(s.storage.has(storageKey)).toBe(false);
+    s.window.ui.authActions.authorize({ bearer: { value: 'replacement-token' } });
+    expect(s.applied()).toBe('replacement-token');
+    expect(s.storage.get(storageKey)).toBe('replacement-token');
   });
 
-  it('restores the applied token after reloading and clears it with Clear', () => {
+  it('restores the applied token after reloading and removes persistence on Logout', () => {
     const s = setup('saved-token');
     s.config.onComplete();
-    expect(s.input.value).toBe('saved-token');
     expect(s.applied()).toBe('saved-token');
-    s.document.getElementById('swagger-token-clear').listeners.click({});
+    s.window.ui.authActions.logout(['bearer']);
     expect(s.applied()).toBe('');
-    expect(s.input.value).toBe('');
     expect(s.storage.has(storageKey)).toBe(false);
   });
 
@@ -166,7 +146,6 @@ describe('Swagger token field and authorization', () => {
     s.config.onComplete();
     expect(s.applied()).toBe('');
     expect(s.storage.has(storageKey)).toBe(false);
-    expect(s.status.textContent).toContain('expired');
   });
 
   it('does not replace authorization on failed, unrelated, foreign or malformed responses', () => {
@@ -186,7 +165,7 @@ describe('Swagger token field and authorization', () => {
     }
   });
 
-  it('reads JSON response text and still authorizes when session storage is blocked', () => {
+  it('reads JSON response text and still authorizes when browser storage is blocked', () => {
     const s = setup(undefined, true);
     expect(() => s.config.onComplete()).not.toThrow();
     s.config.responseInterceptor({
@@ -194,25 +173,77 @@ describe('Swagger token field and authorization', () => {
       status: 200,
       text: JSON.stringify({ success: true, data: { accessToken: 'new-token' } }),
     });
-    expect(s.input.value).toBe('new-token');
     expect(s.applied()).toBe('new-token');
   });
 
-  it('rejects tokens containing whitespace without changing existing authorization', () => {
+  it('does not overwrite authorization with malformed tokens from auth responses', () => {
     const s = setup();
     s.respond();
-    s.input.value = 'invalid token';
-    s.submit();
+    s.respond('/api/auth/login', 'invalid token');
     expect(s.applied()).toBe('login-token');
-    expect(s.status.textContent).toContain('spaces');
+    expect(s.storage.get(storageKey)).toBe('login-token');
+  });
+  it('restores a login token across a new page instance even when preauthorization bypasses wrappers', () => {
+    const token = jwt(3600);
+    const first = setup();
+    first.respond('/api/auth/login', token);
+    expect(first.storage.get(storageKey)).toBe(token);
+    const reloaded = setup(first.storage.get(storageKey));
+    reloaded.config.onComplete();
+    expect(reloaded.applied()).toBe(token);
+    expect(reloaded.storage.get(storageKey)).toBe(token);
   });
 
-  it('lets users reveal and hide the editable token', () => {
+  it('logs out and removes persistence at JWT expiry without a reload', () => {
     const s = setup();
-    const checkbox = s.document.getElementById('swagger-token-show');
-    checkbox.listeners.change({ target: { checked: true } });
-    expect(s.input.type).toBe('text');
-    checkbox.listeners.change({ target: { checked: false } });
-    expect(s.input.type).toBe('password');
+    s.respond('/api/auth/login', jwt(60));
+    vi.advanceTimersByTime(59_999);
+    expect(s.applied()).not.toBe('');
+    vi.advanceTimersByTime(1);
+    expect(s.applied()).toBe('');
+    expect(s.storage.has(storageKey)).toBe(false);
+  });
+
+  it('replaces the old expiry timer when refreshing or entering a new token', () => {
+    const s = setup();
+    s.respond('/api/auth/login', jwt(10));
+    const replacement = jwt(120);
+    s.window.ui.authActions.authorize({ bearer: { value: replacement } });
+    vi.advanceTimersByTime(10_000);
+    expect(s.applied()).toBe(replacement);
+    vi.advanceTimersByTime(110_000);
+    expect(s.applied()).toBe('');
+    expect(s.storage.has(storageKey)).toBe(false);
+  });
+
+  it('does not overflow timers for tokens expiring more than 24.8 days later', () => {
+    const s = setup();
+    const token = jwt(40 * 86400);
+    s.respond('/api/auth/login', token);
+    vi.advanceTimersByTime(2147483647);
+    expect(s.applied()).toBe(token);
+    vi.advanceTimersByTime(40 * 86400 * 1000 - 2147483647);
+    expect(s.applied()).toBe('');
+  });
+
+  it('synchronizes logout and token replacement from another tab', () => {
+    const s = setup();
+    s.respond('/api/auth/login', jwt(3600));
+    s.listeners.storage({ storageArea: s.window.localStorage, key: storageKey, newValue: null });
+    expect(s.applied()).toBe('');
+    expect(s.storage.has(storageKey)).toBe(false);
+    const token = jwt(7200);
+    s.listeners.storage({ storageArea: s.window.localStorage, key: storageKey, newValue: token });
+    expect(s.applied()).toBe(token);
+    s.listeners.storage({ storageArea: s.window.localStorage, key: 'unrelated', newValue: null });
+    expect(s.applied()).toBe(token);
+  });
+
+  it('rejects an expired manually entered JWT and clears persisted authorization', () => {
+    const s = setup('older-token');
+    s.config.onComplete();
+    s.window.ui.authActions.authorize({ bearer: { value: jwt(-1) } });
+    expect(s.applied()).toBe('');
+    expect(s.storage.has(storageKey)).toBe(false);
   });
 });

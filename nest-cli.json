@@ -7,13 +7,21 @@
     "plugins": [
       {
         "name": "@nestjs/swagger",
-        "options": { "classValidatorShim": true, "introspectComments": true }
+        "options": {
+          "classValidatorShim": true,
+          "introspectComments": true
+        }
       }
     ],
     "assets": [
       {
         "include": "generated/prisma/**/*",
         "outDir": "dist/src"
+      },
+      {
+        "include": "common/swagger/swagger-auth.js",
+        "outDir": "dist/src",
+        "watchAssets": true
       }
     ],
     "watchAssets": false

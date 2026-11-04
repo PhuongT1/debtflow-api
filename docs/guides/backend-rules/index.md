@@ -75,8 +75,8 @@ file alone does not configure branch protection.
   explicitly rather than assuming `PartialType` rejects null.
 - Account/member rules and payment transactions do not by themselves prove race safety. Do not claim
   that two concurrent writes are safe because unit tests of a pure guard pass.
-- The audit listener is best-effort in-process, and computed Party balance sorting loads matching
-  rows into memory. Neither pattern establishes durable delivery or unlimited scalability.
+- The audit listener is best-effort in-process. Party aggregate sorting runs in PostgreSQL and
+  hydrates one page; it still needs matching-debt aggregation and does not establish unlimited scale.
 
 The code must satisfy the requested behavior, these rules and the actual response/schema contract.
 When they conflict, investigate the concrete case and report it instead of silently weakening a rule.

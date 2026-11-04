@@ -37,9 +37,17 @@ npm run check:conventions   # naming and declarative API rules + exact legacy ra
 npm run check:maintainability # responsibility folders, shared contracts and exact helper clones
 npm run test:architecture   # executable checker regression tests
 npm run lint
+npm run typecheck        # full TypeScript project, including test files
 npm test
 npm run build
 ```
+
+Vitest executes transpiled tests; it does not establish that TypeScript accepts them. The Nest build
+excludes `*.spec.ts`. `npm run typecheck` checks those files with the actual root configuration and
+writes no output. DebtFlow's `.ts` files use CommonJS: use `__dirname`/`__filename` for test paths and
+`createRequire(__filename)` when loading compiled Nest modules. `import.meta` belongs only in an
+explicit ESM file/config such as `vitest.config.mts`; do not change the backend module system or
+suppress editor errors to make a test pass.
 
 `npm run check` combines these and builds first to generate Prisma Client on a fresh checkout. Prisma
 schema changes additionally require `npm run db:check`. Changes to API/schema descriptions or response

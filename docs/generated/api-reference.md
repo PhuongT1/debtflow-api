@@ -12,7 +12,7 @@ Base URL: `http://localhost:4000/api`. Interactive docs: `/docs`. Raw spec: [ope
 - "Roles" lists the organization roles allowed. `All members` means any authenticated active member (including `VIEWER`).
 - JSON responses use the envelope described in [api-response-format](../guides/api-response-format.md).
 - Send `Accept-Language: en` or `vi` (default `vi`) to localize messages: [localization](../guides/localization.md).
-- List endpoints accept `sort` and `filter[field][op]=value`: [list query](../guides/list-query.md).
+- List endpoints accept single-field `sortBy`/`sortOrder` and `filter[field][op]=value`: [list query](../guides/list-query.md).
 
 ## Endpoint index
 

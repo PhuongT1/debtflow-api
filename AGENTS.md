@@ -81,6 +81,7 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 | Prisma schema or migration | [Database Workflow](docs/guides/database-workflow.md) and the affected models/migrations |
 | Audit events | [Audit Log](docs/guides/audit-log.md) and existing emit/listener code |
 | Response or validation | [API Response Format](docs/guides/api-response-format.md) and [Localization](docs/guides/localization.md) |
+| Swagger UI, OpenAPI or generated API documentation | [API and Swagger](docs/guides/api-and-swagger.md), especially its task-to-file owner table |
 | Architecture or new file placement | [Project Structure](docs/guides/project-structure.md) and [Vendure Reference](docs/guides/vendure-reference.md) |
 
 ## Verification and completion
@@ -91,6 +92,7 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
   Do not broaden exemptions or put security/naming violations in that baseline to make checks pass.
 - Run meaningful targeted tests for changed behavior, especially tenant isolation, permissions,
   money, status transitions and failure paths. Extend existing suites when they own the scenario.
+- Run `npm run typecheck` to check TypeScript including specs; Vitest alone only transpiles them.
 - Run `npm run build` for backend changes; add `npm run db:check` for Prisma changes. These commands
   validate/generate/compile; they do not prove a migration is safe against a real database.
 - For API/schema changes, regenerate references with `npm run docs:generate`; run `npm run docs:build`

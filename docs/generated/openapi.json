@@ -5409,19 +5409,19 @@
         "type": "object",
         "properties": {
           "systemRole": {
+            "type": "string",
             "enum": [
               "USER",
               "PLATFORM_OWNER",
               "PLATFORM_SUPPORT"
-            ],
-            "type": "string"
+            ]
           },
           "status": {
+            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ],
-            "type": "string"
+            ]
           },
           "id": {
             "type": "string"
@@ -5448,13 +5448,13 @@
             "type": "string"
           },
           "role": {
+            "type": "string",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           },
           "id": {
             "type": "string"
@@ -5466,20 +5466,20 @@
             "type": "string"
           },
           "kind": {
+            "type": "string",
             "enum": [
               "PERSONAL",
               "BUSINESS"
-            ],
-            "type": "string"
+            ]
           },
           "status": {
+            "type": "string",
             "enum": [
               "ACTIVE",
               "SUSPENDED",
               "PENDING",
               "CLOSED"
-            ],
-            "type": "string"
+            ]
           }
         },
         "required": [
@@ -5658,20 +5658,20 @@
         "type": "object",
         "properties": {
           "status": {
+            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ],
-            "type": "string"
+            ]
           },
           "role": {
+            "type": "string",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           },
           "id": {
             "type": "string"
@@ -5876,14 +5876,14 @@
             "description": "Initial password, hashed before storage. 8-72 characters with a letter and a digit."
           },
           "role": {
+            "type": "string",
             "description": "Role in this organization. Only an OWNER can create another OWNER.",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           }
         },
         "required": [
@@ -5910,14 +5910,14 @@
             "example": "0901234567"
           },
           "role": {
+            "type": "string",
             "description": "New role in this organization. Granting or removing OWNER requires an OWNER, and you cannot change your own role.",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           }
         }
       },
@@ -5995,12 +5995,12 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "CUSTOMER",
               "SUPPLIER",
               "BOTH"
-            ],
-            "type": "string"
+            ]
           },
           "code": {
             "type": "string",
@@ -6218,13 +6218,13 @@
         "type": "object",
         "properties": {
           "type": {
+            "type": "string",
             "description": "Customer, supplier, or both.",
             "enum": [
               "CUSTOMER",
               "SUPPLIER",
               "BOTH"
-            ],
-            "type": "string"
+            ]
           },
           "code": {
             "type": "string",
@@ -6301,11 +6301,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -6349,13 +6349,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -6366,23 +6366,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -6912,11 +6912,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -6960,13 +6960,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -6977,23 +6977,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -7065,11 +7065,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -7113,13 +7113,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -7130,23 +7130,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -7227,11 +7227,11 @@
         "type": "object",
         "properties": {
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -7264,12 +7264,12 @@
             "nullable": true
           },
           "salesChannel": {
+            "type": "string",
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "items": {
             "type": "array",
@@ -7404,11 +7404,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "amount": {
             "type": "string",
@@ -7419,12 +7419,12 @@
             "type": "string"
           },
           "method": {
+            "type": "string",
             "enum": [
               "CASH",
               "BANK_TRANSFER",
               "OTHER"
-            ],
-            "type": "string"
+            ]
           },
           "referenceNo": {
             "type": "string",
@@ -7869,14 +7869,14 @@
             "nullable": true
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           }
         }
       },
@@ -7893,11 +7893,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -7941,13 +7941,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -7958,23 +7958,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -8171,12 +8171,12 @@
             "type": "string"
           },
           "method": {
+            "type": "string",
             "enum": [
               "CASH",
               "BANK_TRANSFER",
               "OTHER"
-            ],
-            "type": "string"
+            ]
           },
           "referenceNo": {
             "type": "string"
@@ -8217,11 +8217,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           }
         },
         "required": [
@@ -8570,11 +8570,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "amount": {
             "type": "string",
@@ -8585,12 +8585,12 @@
             "type": "string"
           },
           "method": {
+            "type": "string",
             "enum": [
               "CASH",
               "BANK_TRANSFER",
               "OTHER"
-            ],
-            "type": "string"
+            ]
           },
           "referenceNo": {
             "type": "string",
