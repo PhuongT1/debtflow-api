@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { Prisma } from '@generated/prisma';
-import { UserSummaryDto } from '@modules/users/public/users';
+import type { Prisma } from '#generated/prisma/client.js';
+import { UserSummaryDto } from '#modules/users/public/users.js';
 
 export class AuditLogResponseDto {
   id!: string;

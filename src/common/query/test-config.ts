@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import type { ListQueryConfig } from './list-query.types';
+import type { ListQueryConfig } from './list-query.types.js';
 
 /** Shared fixture for the list query specs: one field of each type plus the special cases. */
 export const TEST_CONFIG: ListQueryConfig = {

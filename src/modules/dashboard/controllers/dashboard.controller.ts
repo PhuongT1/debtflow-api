@@ -1,12 +1,12 @@
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator';
-import { DashboardResponseDto } from '../dto/dashboard-response.dto';
+import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
+import { DashboardResponseDto } from '../dto/dashboard-response.dto.js';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import { DashboardService } from '../services/dashboard.service';
-import { DashboardQueryDto } from '../dto/query-dashboard.dto';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { DashboardService } from '../services/dashboard.service.js';
+import { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
 
 @ApiTags('Dashboard')
 @ProtectedApi()

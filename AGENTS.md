@@ -18,7 +18,9 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   user changes and keep unrelated work out of the diff and commits.
 - Work in this API repository. Sibling repositories, including Vendure, are references unless the
   user asks to change them. Their package managers, stacks and instruction files are not API policy.
-- Use npm and `package-lock.json`. Do not introduce another lockfile, package layout, framework or
+- Use Node 24 native ESM (`NodeNext`), npm and `package-lock.json`. Read
+  [import aliases](docs/guides/import-aliases.md) before changing imports; use `.js` suffixes and
+  native `#...` package imports. Do not introduce another lockfile, package layout, framework or
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
   routes, not public/protected folder trees. Search for existing helpers and callers before adding files.
@@ -29,7 +31,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   and unrelated document/CV scripts outside the repository, normally in the OS temporary directory
   or the user's explicitly requested destination. Do not move or delete existing unrelated files
   without authorization.
-- Do not hand-edit `src/generated/prisma/`, `dist/` or `docs/generated/`. Change their source and
+- Do not hand-edit `src/generated/prisma/`, `src/generated/list-query/`, `dist/` or `docs/generated/`. Change their source and
   regenerate. Keep browser artifacts and VitePress build/cache/temp output ignored.
 
 ## Security and business invariants
@@ -81,6 +83,7 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 | Prisma schema or migration | [Database Workflow](docs/guides/database-workflow.md) and the affected models/migrations |
 | Audit events | [Audit Log](docs/guides/audit-log.md) and existing emit/listener code |
 | Response or validation | [API Response Format](docs/guides/api-response-format.md) and [Localization](docs/guides/localization.md) |
+| Swagger UI, OpenAPI or generated API documentation | [API and Swagger](docs/guides/api-and-swagger.md), especially its task-to-file owner table |
 | Architecture or new file placement | [Project Structure](docs/guides/project-structure.md) and [Vendure Reference](docs/guides/vendure-reference.md) |
 
 ## Verification and completion
@@ -91,6 +94,7 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
   Do not broaden exemptions or put security/naming violations in that baseline to make checks pass.
 - Run meaningful targeted tests for changed behavior, especially tenant isolation, permissions,
   money, status transitions and failure paths. Extend existing suites when they own the scenario.
+- Run `npm run typecheck` to check TypeScript including specs; Vitest alone only transpiles them.
 - Run `npm run build` for backend changes; add `npm run db:check` for Prisma changes. These commands
   validate/generate/compile; they do not prove a migration is safe against a real database.
 - For API/schema changes, regenerate references with `npm run docs:generate`; run `npm run docs:build`
@@ -102,11 +106,11 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 
 ## Project skills and Git
 
-Read [.codex/skills/SKILLS.md](.codex/skills/SKILLS.md) when asked about project skills.
+Read [.ai/skills/SKILLS.md](.ai/skills/SKILLS.md) when asked about project skills.
 Portable skill defaults live in `.ai/core/skills/`. DebtFlow-specific skill sources live in
-`.codex/skills/` and replace same-named defaults as configured in `.ai/project.json`.
-`ai:setup` installs local copies into `.agents/skills/`, `.claude/skills/` and `.cursor/skills/`.
-Edit the versioned sources, never the ignored installations. Do not create discovery symlinks.
+`.ai/skills/` and replace same-named defaults as configured in `.ai/project.json`.
+`ai:setup` installs local copies into `.codex/skills/`, `.agents/skills/`, `.claude/skills/` and `.cursor/skills/`.
+Edit only `.ai/core/skills/` or `.ai/skills/`, never generated client copies. Do not create discovery symlinks.
 
 - `$backend-change` / `/backend-change`: implement or fix a NestJS backend feature using the project workflow.
 - `$review` / `/review`: read-only code review; do not edit, commit or push during a review request.

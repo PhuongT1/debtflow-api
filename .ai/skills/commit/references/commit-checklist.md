@@ -2,6 +2,8 @@
 
 ## Before Commit
 
+- Confirm this is local commit work. Pull, fetch, push, remote-access checks and deployment need
+  their own explicit request; a future deployment goal does not authorize them.
 - Run `git status --short`.
 - Inspect changed files and diffs. Map independent purposes to separate commits in dependency order.
 - For each commit, stage explicit paths/hunks and inspect only that staged diff.
@@ -13,7 +15,8 @@
   document/CV scripts do not belong in a backend commit.
 - Confirm migrations match Prisma schema changes.
 - Confirm generated client changes are intentional if present.
-- Run relevant validation or explain why it was skipped. Include `npm run check:architecture` for
+- Reuse checks already passed for the unchanged tree; run new validation only for changed or
+  unverified scope. Include `npm run check:architecture` for
   import/placement changes; `npm run check` is the combined backend check. Do not treat a passing
   import check as proof of tenant or transaction safety.
 

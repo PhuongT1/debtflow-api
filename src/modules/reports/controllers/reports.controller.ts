@@ -1,14 +1,14 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import { ReportsService } from '../services/reports.service';
-import { DEBT_LIST_QUERY } from '@modules/debts/public/debts';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator';
-import { QueryDebtsDto } from '@modules/debts/public/debts';
-import { AgingReportResponseDto } from '../dto/aging-report-response.dto';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { ReportsService } from '../services/reports.service.js';
+import { DEBT_LIST_QUERY } from '#modules/debts/public/debts.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
+import { QueryDebtsDto } from '#modules/debts/public/debts.js';
+import { AgingReportResponseDto } from '../dto/aging-report-response.dto.js';
 
 @ApiTags('Reports')
 @ProtectedApi()

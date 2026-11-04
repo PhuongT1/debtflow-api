@@ -8,10 +8,12 @@ dist/
 !.env.*.example
 .DS_Store
 /src/generated/prisma/
+/src/generated/list-query/
 docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp/
 .playwright-mcp/
+/.vercel/
 
 # Local build/test/editor artifacts; maintained team AI sources remain versioned.
 coverage/
@@ -31,6 +33,7 @@ coverage/
 # BEGIN team AI generated files
 /.ai/generated/
 /.ai/local-state.json
+/.codex/skills/
 /.agents/skills/
 /.claude/skills/
 /.cursor/skills/

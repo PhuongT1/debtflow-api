@@ -1,4 +1,4 @@
-import type { PaginationMetaDto, ApiErrorDetailDto, ApiErrorResponseDto } from './api-envelope.dto';
+import type { PaginationMetaDto, ApiErrorDetailDto, ApiErrorResponseDto } from './api-envelope.dto.js';
 
 export type PaginationMeta = PaginationMetaDto;
 export type ApiErrorDetail = ApiErrorDetailDto;

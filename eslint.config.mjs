@@ -13,4 +13,21 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
     },
   },
+  {
+    files: ['src/common/swagger/swagger-auth.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        URL: 'readonly',
+        atob: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        SwaggerUIBundle: 'readonly',
+        SwaggerUIStandalonePreset: 'readonly',
+      },
+    },
+    rules: { 'no-undef': 'error' },
+  },
 );

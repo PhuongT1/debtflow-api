@@ -1,7 +1,7 @@
 import { IsEnum, Matches, ValidateIf, Length } from 'class-validator';
-import { Trim } from '@common/validation/trim.decorator';
-import { PHONE_PATTERN } from '@common/validation/phone.constants';
-import { OrganizationRole } from '@generated/prisma';
+import { Trim } from '#common/validation/trim.decorator.js';
+import { PHONE_PATTERN } from '#common/validation/phone.constants.js';
+import { OrganizationRole } from '#generated/prisma/client.js';
 
 export class UpdateUserDto {
   /**

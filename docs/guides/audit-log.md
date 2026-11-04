@@ -45,7 +45,7 @@ sequenceDiagram
 ## Querying
 
 ```text
-GET /audit-logs?sort=-createdAt
+GET /audit-logs?sortBy=createdAt&sortOrder=desc
 GET /audit-logs?filter[entityType]=Debt&filter[entityId]=<id>
 GET /audit-logs?filter[action][startsWith]=payment&filter[createdAt][between]=2026-10-01,2026-10-31
 ```

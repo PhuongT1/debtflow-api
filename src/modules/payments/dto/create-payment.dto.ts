@@ -1,5 +1,5 @@
 import { IsDateString, IsEnum, IsNumberString, IsOptional, IsString } from 'class-validator';
-import { PaymentMethod } from '@generated/prisma';
+import { PaymentMethod } from '#generated/prisma/client.js';
 
 export class CreatePaymentDto {
   @IsNumberString()

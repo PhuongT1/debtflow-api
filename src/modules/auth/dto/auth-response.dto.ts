@@ -4,8 +4,8 @@ import {
   OrganizationStatus,
   SystemRole,
   UserStatus,
-} from '@generated/prisma';
-import { UserSummaryDto } from '@modules/users/public/users';
+} from '#generated/prisma/client.js';
+import { UserSummaryDto } from '#modules/users/public/users.js';
 
 export class AuthUserResponseDto extends UserSummaryDto {
   systemRole!: SystemRole;

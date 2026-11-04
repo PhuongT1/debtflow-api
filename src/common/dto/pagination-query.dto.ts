@@ -4,7 +4,7 @@ import {
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
-} from '@common/constants/pagination.constants';
+} from '#common/constants/pagination.constants.js';
 
 export class PaginationQueryDto {
   @IsOptional()

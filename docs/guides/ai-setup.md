@@ -20,7 +20,7 @@ hook runs it implicitly. Reload/restart the AI session after installation.
 | Portable workflows    | `.ai/core/skills/`                        | Default backend-change, review and commit skills                                                                                      |
 | Project configuration | `.ai/project.json`                        | Name, project rule entry points, skill source folders and verification commands                                                       |
 | DebtFlow contract     | `AGENTS.md`, `docs/guides/backend-rules/` | Feature paths, REST envelope, Prisma/Decimal, tenant/current-role policy, EN/VI and audit semantics                                   |
-| DebtFlow workflows    | `.codex/skills/`                          | Authored project skills/checklists; the historical folder name does not restrict their clients                                        |
+| DebtFlow workflows    | `.ai/skills/`                          | Authored project skills/checklists shared by every AI client                                        |
 | Local installations   | Client folders and `.ai/generated/`       | Recreated adapters, context and skills; ignored by Git                                                                                |
 
 Core is mandatory for changed code. Project rules specialize it, naming any intentional exception.
@@ -35,7 +35,7 @@ Manifest commands are reference data, never executable setup hooks.
 
 | Client         | Instruction entry                                                         | Task skills                                |
 | -------------- | ------------------------------------------------------------------------- | ------------------------------------------ |
-| Codex          | Root `AGENTS.md` → core/project rules                                     | `.agents/skills/<name>/SKILL.md`           |
+| Codex          | Root `AGENTS.md` → core/project rules                                     | `.agents/skills/<name>/SKILL.md` (also mirrored to `.codex/skills/`)           |
 | Claude Code    | `CLAUDE.md` imports root policy, core index and generated context         | `.claude/skills/<name>/SKILL.md`           |
 | Cursor         | `.cursor/rules/team-nestjs.mdc`, `alwaysApply: true`                      | `.cursor/skills/<name>/SKILL.md`           |
 | GitHub Copilot | `.github/copilot-instructions.md` → shared policy                         | No Copilot skill integration is promised   |
@@ -83,7 +83,9 @@ git check-ignore .agents/skills/review/SKILL.md .ai/local-state.json CLAUDE.md
 
 Ignore rules do not remove tracked files. If a future checkout has tracked local installations,
 review and explicitly untrack just those outputs as a separate Git change. Setup never edits the
-Git index. Never untrack the authored `.codex/skills/` sources in this repository.
+Git index. `.ai/skills/` is authored source; `.codex/skills/` is now a generated, ignored mirror.
+When migrating an older checkout, move authored skills into `.ai/skills/` and untrack only their
+former client paths. Setup itself never edits the index or removes authored sources.
 
 ## Copy to another NestJS project
 
@@ -116,7 +118,8 @@ Then configure the new project's actual rules, for example:
 ```
 
 Only configure existing paths. Keep `skillSources: []` for defaults or supply a folder containing
-project-specific skill directories. Document the actual feature roots, ORM, auth/policy, ownership,
+project-specific skill directories under `.ai/` (normally `.ai/skills/`). Generated client
+folders cannot be used as source. Document the actual feature roots, ORM, auth/policy, ownership,
 envelope/errors, business invariants, events and tests in the project contract. Setup does not infer
 these. If root `AGENTS.md` exists, add the core index to its required reading; it is preserved.
 If absent, setup creates a small root entry that should be committed.

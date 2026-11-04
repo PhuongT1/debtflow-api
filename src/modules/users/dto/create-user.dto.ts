@@ -7,9 +7,9 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { Trim } from '@common/validation/trim.decorator';
-import { PHONE_PATTERN } from '@common/validation/phone.constants';
-import { OrganizationRole } from '@generated/prisma';
+import { Trim } from '#common/validation/trim.decorator.js';
+import { PHONE_PATTERN } from '#common/validation/phone.constants.js';
+import { OrganizationRole } from '#generated/prisma/client.js';
 
 /** At least one letter and one digit, 8 to 72 characters (the bcrypt input limit). */
 export const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;

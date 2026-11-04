@@ -1,5 +1,5 @@
-import type { Party, Prisma } from '@generated/prisma';
-import type { PARTY_LIST_INCLUDE } from '../queries/party.select';
+import type { Party, Prisma } from '#generated/prisma/client.js';
+import type { partyListInclude } from '../queries/party.select.js';
 
 export type PartySearchSource = Pick<Party, 'name' | 'code' | 'phone' | 'taxCode'>;
 export type PartyWriteData = Pick<
@@ -19,5 +19,10 @@ export type PartyWriteData = Pick<
   | 'assignedToId'
 >;
 export type PartyBalance = { receivable: Prisma.Decimal; payable: Prisma.Decimal };
-export type PartyListRecord = Prisma.PartyGetPayload<{ include: typeof PARTY_LIST_INCLUDE }>;
+export type PartyListRecord = Prisma.PartyGetPayload<{
+  include: ReturnType<typeof partyListInclude>;
+}>;
 export type PartyWithBalance = PartyListRecord & { balance: PartyBalance };
+
+/** Numeric columns from the owned aggregate query are returned as Prisma Decimal values. */
+export type PartyBalanceRow = Pick<Party, 'id'> & PartyBalance;

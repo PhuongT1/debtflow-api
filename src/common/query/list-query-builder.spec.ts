@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applyListQuery, parseListQuery } from './list-query-builder';
-import { TEST_CONFIG } from './test-config';
+import { applyListQuery, parseListQuery } from './list-query-builder.js';
+import { TEST_CONFIG } from './test-config.js';
 
 describe('parseListQuery', () => {
   it('returns only what was requested', () => {
@@ -12,7 +12,7 @@ describe('parseListQuery', () => {
 
   it('combines sort and filter', () => {
     const result = parseListQuery(
-      { sort: '-dueDate', 'filter[status][in]': 'OPEN,PAID' },
+      { sortBy: 'dueDate', sortOrder: 'desc', 'filter[status][in]': 'OPEN,PAID' },
       TEST_CONFIG,
     );
 
@@ -49,7 +49,7 @@ describe('applyListQuery', () => {
   });
 
   it('replaces the default order only when the client sorted', () => {
-    const sorted = applyListQuery(parseListQuery({ sort: 'code' }, TEST_CONFIG), base);
+    const sorted = applyListQuery(parseListQuery({ sortBy: 'code' }, TEST_CONFIG), base);
 
     expect(sorted.orderBy).toEqual([{ code: 'asc' }, { id: 'asc' }]);
     expect(

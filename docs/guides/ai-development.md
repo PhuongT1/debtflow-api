@@ -113,8 +113,8 @@ Project configuration is in `.ai/project.json`. Run `npm run ai:setup` after clo
 sources, then `npm run ai:check`. The same reviewed policy is installed for Codex, Claude Code,
 Cursor and Copilot. Restart the client and inspect its loaded instructions.
 
-Core skill defaults live in `.ai/core/skills/`; authored DebtFlow skills remain in `.codex/skills/`
-and override same-named defaults. Setup copies complete skill folders into ignored `.agents/skills/`,
+Core skill defaults live in `.ai/core/skills/`; authored DebtFlow skills remain in `.ai/skills/`
+and override same-named defaults. Setup copies complete skill folders into ignored `.codex/skills/`, `.agents/skills/`,
 `.claude/skills/` and `.cursor/skills/`. Edit the source, never a local installation. `$backend-change`
 handles implementation, `$review` stays read-only, and `$commit` needs an explicit commit request.
 

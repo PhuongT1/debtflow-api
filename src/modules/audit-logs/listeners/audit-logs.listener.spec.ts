@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuditAction } from '@common/events/audit-event';
-import { AuditLogsListener } from './audit-logs.listener';
+import { AuditAction } from '#common/events/audit-event.js';
+import { AuditLogsListener } from './audit-logs.listener.js';
 
 const entry = {
   organizationId: 'org-1',

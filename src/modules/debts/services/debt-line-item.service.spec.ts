@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import { DebtLineItemService } from './debt-line-item.service';
+import { Prisma } from '#generated/prisma/client.js';
+import { DebtLineItemService } from './debt-line-item.service.js';
 
 describe('debt line item catalog access', () => {
   it('requires tenant-owned active products using the write transaction', async () => {

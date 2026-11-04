@@ -69,7 +69,7 @@ export type ListQueryField = {
   description?: string;
   /**
    * Derived value that is not a database column (Vendure: `@Calculated`). The field is accepted by
-   * `sort`, but no `orderBy` is generated: the service reads `ListQueryResult.sort` and sorts itself.
+   * `sortBy`, but no `orderBy` is generated: the feature must apply the complete ordering before paging.
    * Unless a `filter` hook is given, a computed field cannot be filtered.
    */
   computed?: boolean;
@@ -91,6 +91,7 @@ export type FilterGroup = { operator: LogicalOperator; conditions: FilterNode[] 
 export type FilterNode = FilterCondition | FilterGroup;
 
 export type ListQueryOptions = {
+  /** Zero or one client-selected field; database ordering may append an internal ID tie-breaker. */
   sort: SortItem[];
   filter: FilterGroup;
 };
@@ -102,6 +103,7 @@ export type ListQueryResult = {
   /** Prisma `orderBy` list with a stable `id` tie-breaker. Undefined when the client sent no sort. */
   orderBy?: PrismaFragment[];
   /** The requested sort, including computed fields that the service has to apply itself. */
+  /** Zero or one client-selected field; database ordering may append an internal ID tie-breaker. */
   sort: SortItem[];
 };
 

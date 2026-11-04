@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { OrganizationMembersService } from './organization-members.service';
+import { OrganizationMembersService } from './organization-members.service.js';
 
 describe('OrganizationMembersService', () => {
   it('requires matching tenant, active membership, user and organization on the supplied transaction', async () => {

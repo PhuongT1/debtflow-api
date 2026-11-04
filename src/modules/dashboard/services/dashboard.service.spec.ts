@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import { DashboardService } from './dashboard.service';
+import { Prisma } from '#generated/prisma/client.js';
+import { DashboardService } from './dashboard.service.js';
 
 function setup() {
   const prisma = {

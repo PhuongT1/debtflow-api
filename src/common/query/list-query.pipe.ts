@@ -1,9 +1,9 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { ArgumentMetadata } from '@nestjs/common';
-import { isListQueryKey } from './parse-filter-params';
+import { isListQueryKey } from './parse-filter-params.js';
 
 /**
- * ValidationPipe that ignores the list-query keys (`sort`, `sortBy`, `sortOrder`, `filterOperator`,
+ * ValidationPipe that ignores the list-query keys (`sortBy`, `sortOrder`, `filterOperator`,
  * `filter[...]`) when validating query DTOs: they are dynamic, so they are validated against the
  * per-resource allow-list by `@ListQuery` instead.
  */

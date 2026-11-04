@@ -1,18 +1,18 @@
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator';
-import { PaymentResponseDto, PaymentReversalResponseDto } from '../dto/payment-response.dto';
+import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { PaymentResponseDto, PaymentReversalResponseDto } from '../dto/payment-response.dto.js';
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
-import { PAYMENT_LIST_QUERY } from '../queries/payments.list-query';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { Roles } from '@auth/decorators/roles.decorator';
-import { OrganizationRole } from '@generated/prisma';
-import { PaymentsService } from '../services/payments.service';
-import { QueryPaymentsDto } from '../dto/query-payments.dto';
-import { CreateAllocatedPaymentDto } from '../dto/create-allocated-payment.dto';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { PAYMENT_LIST_QUERY } from '../queries/payments.list-query.js';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { Roles } from '#auth/decorators/roles.decorator.js';
+import { OrganizationRole } from '#generated/prisma/client.js';
+import { PaymentsService } from '../services/payments.service.js';
+import { QueryPaymentsDto } from '../dto/query-payments.dto.js';
+import { CreateAllocatedPaymentDto } from '../dto/create-allocated-payment.dto.js';
 @ApiTags('Payments')
 @ProtectedApi()
 @Controller('payments')

@@ -8,11 +8,11 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { map, type Observable } from 'rxjs';
-import { SKIP_API_RESPONSE_KEY } from '@common/decorators/api-response.decorator';
-import type { ApiSuccessResponse, PaginationMeta } from '@common/http/api-response.types';
-import { I18nService } from '@common/i18n/i18n.service';
-import type { AppLocale } from '@common/i18n/i18n.types';
-import { isPaginatedResult, type PaginatedResult } from '@common/utils/pagination.util';
+import { SKIP_API_RESPONSE_KEY } from '#common/decorators/api-response.decorator.js';
+import type { ApiSuccessResponse, PaginationMeta } from '#common/http/api-response.types.js';
+import { I18nService } from '#common/i18n/i18n.service.js';
+import type { AppLocale } from '#common/i18n/i18n.types.js';
+import { isPaginatedResult, type PaginatedResult } from '#common/utils/pagination.util.js';
 
 @Injectable()
 export class ApiResponseInterceptor<T> implements NestInterceptor<

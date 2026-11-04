@@ -1,10 +1,10 @@
-import { PartyType } from '@generated/prisma';
-import { defineListQuery } from '@common/query';
+import { PartyType } from '#generated/prisma/client.js';
+import { defineListQuery } from '#common/query/index.js';
 
 /**
  * Fields clients may filter and sort on for `GET /parties`.
- * `outstandingDocuments` is a database aggregate; `receivable` and `payable` are computed by
- * PartiesService (sort only), so they carry `computed: true`.
+ * `outstandingDocuments`, `receivable` and `payable` use an owned
+ * PostgreSQL aggregate/page query (sort only), so generic Prisma orderBy skips them.
  */
 export const PARTY_LIST_QUERY = defineListQuery({
   model: 'Party',
@@ -26,7 +26,7 @@ export const PARTY_LIST_QUERY = defineListQuery({
       type: 'number',
       filterable: false,
       description: 'Number of debts of the party.',
-      sort: (direction) => ({ debts: { _count: direction } }),
+      computed: true,
     },
     receivable: {
       type: 'decimal',

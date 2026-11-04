@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ExecutionContext } from '@nestjs/common';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import type { AuthenticatedRequest } from '@auth/types/auth-context.types';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import type { AuthenticatedRequest } from '#auth/types/auth-context.types.js';
 
 const payload = {
   sub: 'user-1',

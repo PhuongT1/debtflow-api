@@ -49,7 +49,7 @@ test('copied core installs offline in a different project for all clients withou
   fixture(({ root, read }) => {
     const result = setupAi(root, { init: true });
     assert.equal(result.skills, 3);
-    for (const directory of ['.agents', '.claude', '.cursor']) {
+    for (const directory of ['.codex', '.agents', '.claude', '.cursor']) {
       const content = read(`${directory}/skills/backend-change/SKILL.md`);
       assert.match(content, /NestJS/);
       assert.doesNotMatch(content, /DebtFlow|Prisma|OrganizationRole|org_legacy/);
@@ -126,7 +126,7 @@ test('project skills replace entire core skills and carry nested reference files
     configure({ skillSources: ['.ai/team-skills'], rules: ['docs/project.md'] });
     assert.throws(() => setupAi(root, { check: true }), /outdated/);
     setupAi(root);
-    for (const dir of ['.agents', '.claude', '.cursor']) {
+    for (const dir of ['.codex', '.agents', '.claude', '.cursor']) {
       assert.match(read(`${dir}/skills/review/SKILL.md`), /specific policy/);
       assert.equal(read(`${dir}/skills/review/references/policy.md`), 'Project access policy');
     }
@@ -225,6 +225,7 @@ test('generated paths are ignored by Git while canonical policy and automation r
     setupAi(root, { init: true });
     execFileSync('git', ['init', '--quiet'], { cwd: root });
     const paths = [
+      '.codex/skills/commit/SKILL.md',
       '.agents/skills/review/SKILL.md',
       '.claude/skills/review/SKILL.md',
       '.cursor/skills/review/SKILL.md',
@@ -272,6 +273,7 @@ test('repository ignores local artifacts without hiding team configuration, temp
       '.claude/settings.local.json',
       '.claude/sessions/local.json',
       '.claude/skills/backend-change/SKILL.md',
+      '.codex/skills/commit/SKILL.md',
       '.agents/skills/review/SKILL.md',
       '.cursor/skills/review/SKILL.md',
       '.cursor/rules/team-nestjs.mdc',
@@ -280,7 +282,9 @@ test('repository ignores local artifacts without hiding team configuration, temp
       '.github/copilot-instructions.md',
       'CLAUDE.md',
       'dist/src/main.js',
-      'src/generated/prisma/index.ts',
+      'src/generated/prisma/client.ts',
+      'src/generated/list-query/models.ts',
+      '.vercel/output/config.json',
       'node_modules/library/index.js',
       'docs/.vitepress/dist/index.html',
       'docs/.vitepress/cache/state.json',
@@ -295,9 +299,13 @@ test('repository ignores local artifacts without hiding team configuration, temp
       '.env.production.example',
       '.env.test.example',
       'AGENTS.md',
+      'Dockerfile',
+      '.dockerignore',
+      '.nvmrc',
+      'vercel.json',
       '.ai/core/index.md',
       '.ai/project.json',
-      '.codex/skills/backend-change/SKILL.md',
+      '.ai/skills/backend-change/SKILL.md',
       '.codex/config.toml',
       '.claude/settings.json',
       '.claude/rules/business.md',
@@ -324,4 +332,17 @@ test('repository ignores local artifacts without hiding team configuration, temp
     }).split('\n');
     for (const path of versioned)
       assert.ok(visible.includes(path), `${path} must remain eligible for commit`);
+  }));
+
+test('rejects generated client folders as skill sources before changing installations', () =>
+  fixture(({ root, read, configure }) => {
+    setupAi(root, { init: true });
+    const state = read('.ai/local-state.json');
+    const installed = read('.codex/skills/commit/SKILL.md');
+    for (const source of ['.codex/skills', '.agents/skills', '.claude/skills', '.ai/generated']) {
+      configure({ skillSources: [source] });
+      assert.throws(() => setupAi(root), /maintained under \.ai/);
+      assert.equal(read('.ai/local-state.json'), state);
+      assert.equal(read('.codex/skills/commit/SKILL.md'), installed);
+    }
   }));

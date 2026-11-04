@@ -168,7 +168,6 @@ Services publish a domain event after each successful change and `AuditLogsListe
 
 These are facts observed while writing this documentation, not planned work:
 
-| #   | Observation                                                                                                                          | Where                   |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| 1   | Party balance sorting loads matching parties into memory before pagination. Large tenants will need database-side aggregate sorting. | `parties.service.ts`    |
-| 2   | `POST /imports/debts` is a scaffold and imports nothing.                                                                             | `imports.controller.ts` |
+| Observation                                              | Where                   |
+| -------------------------------------------------------- | ----------------------- |
+| `POST /imports/debts` is a scaffold and imports nothing. | `imports.controller.ts` |

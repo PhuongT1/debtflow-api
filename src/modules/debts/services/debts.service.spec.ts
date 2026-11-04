@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DebtsService } from './debts.service';
+import { DebtsService } from './debts.service.js';
 
 describe('debt query and required tenant context', () => {
   it.each([undefined, null, '', ' '])(

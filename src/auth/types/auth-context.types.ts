@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import type { OrganizationRole, SystemRole } from '@generated/prisma';
+import type { OrganizationRole, SystemRole } from '#generated/prisma/client.js';
 
 export type JwtAuthPayload = {
   sub: string;

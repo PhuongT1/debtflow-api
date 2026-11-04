@@ -7,17 +7,17 @@
     "debug": "nest start --debug --watch",
     "setup:dev": "npm run db:migrate && npm run db:generate && npm run db:seed && npm run dev",
     "start": "node dist/src/main.js",
-    "build": "npm run db:generate && nest build && tsc-alias -p tsconfig.json",
+    "build": "npm run db:generate && nest build",
     "build:prod": "npm run build",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.{ts,js}\"",
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:conventions": "node scripts/check-backend-conventions.mjs",
     "test:architecture": "node --test scripts/check-architecture.test.mjs scripts/check-backend-conventions.test.mjs scripts/check-maintainability.test.mjs",
-    "check": "npm run ai:check && npm run test:ai && npm run build && npm run check:architecture && npm run check:conventions && npm run check:maintainability && npm run test:architecture && npm run lint && npm test",
+    "check": "npm run ai:check && npm run test:ai && npm run build && npm run typecheck && npm run check:architecture && npm run check:conventions && npm run check:maintainability && npm run test:architecture && npm run lint && npm test && npm run test:runtime",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate --generator client",
+    "db:generate": "prisma generate --generator client --generator listQueryMetadata",
     "db:deploy": "prisma migrate deploy",
     "db:validate": "prisma validate",
     "db:check": "npm run db:validate && npm run db:generate",
@@ -31,25 +31,28 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
+    "typecheck": "tsc --noEmit --incremental false",
     "test": "vitest run",
     "test:watch": "vitest",
     "ai:setup": "node scripts/ai-setup.mjs",
     "ai:check": "node scripts/ai-setup.mjs --check",
     "test:ai": "node --test scripts/ai-setup.test.mjs",
-    "check:maintainability": "node scripts/check-maintainability.mjs"
+    "check:maintainability": "node scripts/check-maintainability.mjs",
+    "test:parties:postgres": "vitest run src/modules/parties/queries/party-balance-page.postgres.spec.ts",
+    "test:runtime": "node --test scripts/runtime-smoke.test.mjs"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.0",
-    "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.1.0",
+    "@nestjs/common": "^12.3.2",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.3.2",
     "@nestjs/event-emitter": "^12.0.1",
-    "@nestjs/jwt": "^11.0.0",
-    "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.1.0",
-    "@nestjs/swagger": "^11.2.0",
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "@prisma/client-runtime-utils": "7.8.0",
+    "@nestjs/jwt": "^12.0.3",
+    "@nestjs/passport": "^12.0.0",
+    "@nestjs/platform-express": "^12.3.2",
+    "@nestjs/swagger": "^12.1.0",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "@prisma/client-runtime-utils": "^7.9.1",
     "bcryptjs": "^3.0.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
@@ -62,26 +65,55 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.7",
-    "@nestjs/schematics": "^11.0.5",
-    "@nestjs/testing": "^11.1.0",
+    "@nestjs/cli": "^12.0.11",
+    "@nestjs/schematics": "^12.0.12",
+    "@nestjs/testing": "^12.3.2",
+    "@prisma/generator-helper": "^7.9.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.15.32",
+    "@types/node": "^24.19.2",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
     "eslint": "^9.29.0",
     "mermaid": "^11.17.2",
     "prettier": "^3.9.6",
-    "prisma": "^7.8.0",
+    "prisma": "^7.9.1",
     "prisma-markdown": "^4.0.0",
-    "tsc-alias": "^1.9.1",
-    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0",
     "vitepress": "^1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17",
     "vitest": "^5.0.5"
+  },
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "imports": {
+    "#auth/*": {
+      "types": "./src/auth/*",
+      "default": "./dist/src/auth/*"
+    },
+    "#common/*": {
+      "types": "./src/common/*",
+      "default": "./dist/src/common/*"
+    },
+    "#config/*": {
+      "types": "./src/config/*",
+      "default": "./dist/src/config/*"
+    },
+    "#database/*": {
+      "types": "./src/database/*",
+      "default": "./dist/src/database/*"
+    },
+    "#generated/*": {
+      "types": "./src/generated/*",
+      "default": "./dist/src/generated/*"
+    },
+    "#modules/*": {
+      "types": "./src/modules/*",
+      "default": "./dist/src/modules/*"
+    }
   }
 }

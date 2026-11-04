@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getDebtAgingRanges, DEBT_AGING_VALUES } from './debt-aging.rules';
-import { buildDebtDateFilters } from '../queries/debt-date-filters';
+import { getDebtAgingRanges, DEBT_AGING_VALUES } from './debt-aging.rules.js';
+import { buildDebtDateFilters } from '../queries/debt-date-filters.js';
 
 describe('shared Vietnam calendar aging', () => {
   const now = new Date('2026-11-01T05:00:00Z');

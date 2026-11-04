@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@database/prisma.service';
-import type { Prisma } from '@generated/prisma';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
+import { PrismaService } from '#database/prisma.service.js';
+import type { Prisma } from '#generated/prisma/client.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
 
 /** Shared membership lookup; callers own the error semantics of their operation. */
 @Injectable()

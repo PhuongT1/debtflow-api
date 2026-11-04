@@ -61,6 +61,7 @@ model Debt {
 
   @@unique([organizationId, code])
   @@index([organizationId, type, status])
+  @@index([organizationId, partyId, status, type])
   @@index([status])
   @@index([collectionStatus])
   @@index([dueDate])

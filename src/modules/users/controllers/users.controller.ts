@@ -11,20 +11,20 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { Roles } from '@auth/decorators/roles.decorator';
-import { ApiErrorEnvelopes, ApiEnvelope } from '@common/http/api-envelope.decorator';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
-import { OrganizationRole } from '@generated/prisma';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { QueryUsersDto } from '../dto/query-users.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { MemberDto, UserOptionDto } from '../dto/user-response.dto';
-import { USER_LIST_QUERY } from '../queries/users.list-query';
-import type { Actor } from '../types/member.types';
-import { UsersService } from '../services/users.service';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { Roles } from '#auth/decorators/roles.decorator.js';
+import { ApiErrorEnvelopes, ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { OrganizationRole } from '#generated/prisma/client.js';
+import { CreateUserDto } from '../dto/create-user.dto.js';
+import { QueryUsersDto } from '../dto/query-users.dto.js';
+import { UpdateUserDto } from '../dto/update-user.dto.js';
+import { MemberDto, UserOptionDto } from '../dto/user-response.dto.js';
+import { USER_LIST_QUERY } from '../queries/users.list-query.js';
+import type { Actor } from '../types/member.types.js';
+import { UsersService } from '../services/users.service.js';
 
 const ID_PARAM = ApiParam({ name: 'id', description: 'User id (the `id` returned by the list).' });
 

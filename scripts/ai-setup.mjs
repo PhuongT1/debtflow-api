@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const stateFile = '.ai/local-state.json';
 const contextFile = '.ai/generated/project-context.md';
-const skillTargets = ['.agents/skills', '.claude/skills', '.cursor/skills'];
+const skillTargets = ['.codex/skills', '.agents/skills', '.claude/skills', '.cursor/skills'];
 const adapters = [
   'AGENTS.md',
   'CLAUDE.md',
@@ -28,6 +28,7 @@ const portable = (value) => value.replaceAll('\\', '/');
 const ignored = [
   '/.ai/generated/',
   '/.ai/local-state.json',
+  '/.codex/skills/',
   '/.agents/skills/',
   '/.claude/skills/',
   '/.cursor/skills/',
@@ -97,6 +98,14 @@ export function setupAi(root = defaultRoot, { check = false, init = false } = {}
     throw Error(
       'Invalid project configuration: expected version 1, name, rules, skillSources, commands.',
     );
+  for (const source of config.skillSources)
+    if (
+      typeof source !== 'string' ||
+      !source.startsWith('.ai/') ||
+      source === '.ai/generated' ||
+      source.startsWith('.ai/generated/')
+    )
+      throw Error('Skill sources must be maintained under .ai/, outside generated outputs.');
   for (const rule of config.rules) read(rule);
   const coreRoot = '.ai/core';
   for (const topic of [
