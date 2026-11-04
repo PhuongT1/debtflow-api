@@ -1,6 +1,6 @@
-import type { Debt, PaymentAllocation, Prisma } from '@generated/prisma';
-import type { CreatePaymentDto } from '../dto/create-payment.dto';
-import type { PAYMENT_DETAILS_INCLUDE } from '../queries/payment.select';
+import type { Debt, PaymentAllocation, Prisma } from '#generated/prisma/client.js';
+import type { CreatePaymentDto } from '../dto/create-payment.dto.js';
+import type { PAYMENT_DETAILS_INCLUDE } from '../queries/payment.select.js';
 
 export type PaymentWithDetails = Prisma.PaymentGetPayload<{
   include: typeof PAYMENT_DETAILS_INCLUDE;

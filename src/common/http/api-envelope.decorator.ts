@@ -7,7 +7,7 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { ApiErrorResponseDto, PaginationMetaDto } from './api-envelope.dto';
+import { ApiErrorResponseDto, PaginationMetaDto } from './api-envelope.dto.js';
 
 type EnvelopeOptions = {
   /** HTTP status, 200 by default. */

@@ -1,6 +1,6 @@
-import { badRequest } from '@common/errors/app-errors';
-import { getBusinessDayRangeForDate } from '@common/utils/business-date.util';
-import { nest } from './parse-sort-params';
+import { badRequest } from '#common/errors/app-errors.js';
+import { getBusinessDayRangeForDate } from '#common/utils/business-date.util.js';
+import { nest } from './parse-sort-params.js';
 import {
   FILTER_OPERATORS,
   isGroup,
@@ -14,7 +14,7 @@ import {
   type ListQueryField,
   type LogicalOperator,
   type PrismaFragment,
-} from './list-query.types';
+} from './list-query.types.js';
 
 const FILTER_KEY = /^filter\[([\w.]+)\](?:\[(\w+)\])?$/;
 const MAX_LIST_VALUES = 50;
@@ -27,11 +27,7 @@ type DayValue = { dayStart: Date; dayEnd: Date };
 /** The query keys that belong to the list query and must bypass DTO validation. */
 export function isListQueryKey(key: string) {
   return (
-    key === 'sort' ||
-    key === 'sortBy' ||
-    key === 'sortOrder' ||
-    key === 'filterOperator' ||
-    FILTER_KEY.test(key)
+    key === 'sortBy' || key === 'sortOrder' || key === 'filterOperator' || FILTER_KEY.test(key)
   );
 }
 

@@ -10,19 +10,19 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { Roles } from '@auth/decorators/roles.decorator';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
-import { OrganizationRole } from '@generated/prisma';
-import { CreatePartyDto } from '../dto/create-party.dto';
-import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from '../dto/party-response.dto';
-import { QueryPartiesDto } from '../dto/query-parties.dto';
-import { UpdatePartyDto } from '../dto/update-party.dto';
-import { PARTY_LIST_QUERY } from '../queries/parties.list-query';
-import { PartiesService } from '../services/parties.service';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { Roles } from '#auth/decorators/roles.decorator.js';
+import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { OrganizationRole } from '#generated/prisma/client.js';
+import { CreatePartyDto } from '../dto/create-party.dto.js';
+import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from '../dto/party-response.dto.js';
+import { QueryPartiesDto } from '../dto/query-parties.dto.js';
+import { UpdatePartyDto } from '../dto/update-party.dto.js';
+import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
+import { PartiesService } from '../services/parties.service.js';
 
 const ID_PARAM = ApiParam({ name: 'id', description: 'Party id.' });
 const WRITERS = [OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT];

@@ -1,5 +1,7 @@
 # Run Source
 
+Use Node 24 (`nvm use` reads `.nvmrc`) and npm. CI, Vercel and Docker use the same major.
+
 ## First Setup
 
 ```bash
@@ -69,15 +71,15 @@ This command runs:
 ```bash
 npm run db:generate
 nest build
-tsc-alias -p tsconfig.json
 ```
 
-`src/vercel.ts` contains the NestJS serverless bootstrap. The build compiles it to
-`dist/src/vercel.js` and rewrites TypeScript path aliases. Vercel invokes `api/index.js`, which
-loads that compiled handler. This is required because Vercel Functions do not resolve TypeScript
-`paths` mappings in raw function source.
+The build generates the native ESM Prisma client and list-query schema metadata, then compiles Nest
+and copies its Swagger browser asset. Generation does not connect to a database. List-query metadata
+is generated from the same schema so startup validation does not depend on private Prisma internals.
 
-`tsc-alias` rewrites TypeScript path aliases in `dist` so compiled Node.js output can run.
+`src/vercel.ts` compiles to `dist/src/vercel.js`. Vercel invokes the ESM entry `api/index.js`, which
+exports that handler. Node resolves `#...` aliases through `package.json` on every deployment target;
+there is no post-build alias rewrite. See [Import Aliases](import-aliases.md).
 
 ## Run Compiled Output
 
@@ -123,7 +125,7 @@ DATABASE_URL
 DIRECT_URL
 ```
 
-### `Cannot find module '@generated/prisma'`
+### Missing generated client or list-query metadata
 
 Run:
 
@@ -138,3 +140,31 @@ Close extra dev servers or increase the macOS file watcher limit. This project d
 ```json
 "watchAssets": false
 ```
+
+
+## Deploy on Vercel or another Node platform
+
+`package.json` pins Node `24.x`; keep the Vercel project's Node setting on 24 as well. `vercel.json`
+runs `npm run build` and includes `dist/**` in the function. Use the Node runtime, not Edge.
+Provide the deployment environment's `DATABASE_URL`, `JWT_SECRET` and other settings through the host.
+The handler initializes Nest once per warm instance. The standalone server uses the host's `PORT`
+and handles termination signals so Nest closes its Prisma pool.
+
+For another Node host, run `npm ci`, `npm run build`, and `npm prune --omit=dev --ignore-scripts`.
+Ship `package.json`, `dist/` and production `node_modules/` together; start with `npm start`.
+Do not ship `.env`, source-only generated files or local caches. Run `npm run db:deploy` separately
+from a release job with Prisma CLI and authorized database access when a release has migrations.
+Neither the application startup nor the Docker image applies migrations or seeds data.
+
+## Docker
+
+```bash
+docker build -t debtflow-api .
+docker run --rm --init --env-file /path/to/deployment.env -p 4000:4000 debtflow-api
+```
+
+The multi-stage Dockerfile installs the locked dependencies, compiles ESM and runs Node 24 as the
+non-root `node` user with production dependencies only. `.dockerignore` excludes real environment
+files, generated source, local AI/editor data and build caches from the context. Environment values
+are injected at runtime. The image build uses synthetic schema-generation URLs and performs no
+schema writes or database connections. Open `/docs` to inspect the deployed API.

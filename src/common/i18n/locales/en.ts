@@ -1,4 +1,4 @@
-import type { viTranslations } from './vi';
+import type { viTranslations } from './vi.js';
 
 export const enTranslations: typeof viTranslations = {
   common: {
@@ -70,7 +70,6 @@ export const enTranslations: typeof viTranslations = {
   },
   query: {
     INVALID_SORT: 'Sort field "{field}" is invalid. Valid fields: {validFields}.',
-    TOO_MANY_SORT_FIELDS: 'You can sort by at most {max} fields.',
     INVALID_SORT_ORDER: 'Sort order "{value}" is invalid. Use asc or desc.',
     INVALID_FILTER_FIELD: 'Filter field "{field}" is invalid. Valid fields: {validFields}.',
     INVALID_FILTER_OPERATOR:

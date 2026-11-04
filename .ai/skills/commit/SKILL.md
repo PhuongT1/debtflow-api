@@ -1,11 +1,18 @@
 ---
 name: commit
-description: Prepare or create git commits for this repository. Use when the user says /commit, commit, commit code, prepare a commit, create a commit message, split changes into commits, or safely push commit-ready work after review and validation.
+description: Prepare or create local Git commits when the user asks to commit, prepare a commit message, or split changes into commits. Pull, push and deployment are separate tasks.
 ---
 
 # Commit
 
 Prepare clean commits. Only create commits when the user explicitly asks to commit. Never commit secrets or unrelated changes.
+
+## Authorization boundary
+
+A commit request authorizes local commit work only. Do not contact remotes, pull, fetch, push,
+troubleshoot credentials or deploy unless the user separately and explicitly requests that action.
+Phrases such as "commit so I can push/deploy" describe the user's next step; they do not authorize
+remote actions. Stop after the local commits and report their hashes and working-tree status.
 
 ## Workflow
 
@@ -14,7 +21,8 @@ Prepare clean commits. Only create commits when the user explicitly asks to comm
    multiple commits; name each group before staging. Separate unrelated work.
 3. Read relevant diffs before staging or committing.
 4. Check for secrets, `.env`, generated noise, lockfile churn, and unrelated files.
-5. Run relevant validation before commit when practical.
+5. Reuse successful checks for the exact unchanged tree. Run only checks needed for new or
+   unverified changes or reconstructed intermediate trees.
 6. State the commit groups and concise titles. Stage and inspect one group at a time.
 7. Commit only after the user has clearly asked for a commit.
 
@@ -38,7 +46,8 @@ Prefer small, coherent commits:
 
 ## Validation
 
-Use the smallest relevant checks:
+Use the smallest relevant checks. Do not rerun a passed full suite or regenerate unchanged
+documentation solely because the user requested a commit:
 
 - Prisma/schema changes: `npm run db:check`.
 - Backend TypeScript changes: `npm run build`.

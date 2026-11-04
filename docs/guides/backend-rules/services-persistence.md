@@ -39,8 +39,8 @@ writes, the whole invariant MUST commit or roll back together. The existing patt
 ```ts
 const payment = await this.prisma.$transaction(async (tx) => {
   const debt = await tx.debt.findFirstOrThrow({ where: { id: debtId, organizationId } });
-  const amount = this.validateAmount(input.amount);
-  this.assertPayable(debt, amount);
+  const amount = paymentAmount(input.amount);
+  assertPayableDebt(debt, amount);
   return this.createVoucher(tx, {
     allocations: [{ amount, debt }],
     input: { ...input, createdById },
@@ -51,6 +51,14 @@ const payment = await this.prisma.$transaction(async (tx) => {
 this.auditCreated(payment, organizationId, createdById);
 return payment;
 ```
+
+`payments/rules/payment-allocation.rules.ts` owns amount checks and the pure allocation algorithm;
+`debts/rules/debt-payment.rules.ts` owns balance-to-status calculation reused through Debts' public
+contract by payment application and reversal. Keep those rules independent of HTTP, Prisma clients
+and event emission. `payments/queries/payments.query.ts` owns authorized list composition. Services
+retain the transaction boundary and publish audit only after successful completion. Allocation priority
+is due date, issue date, creation time, then unique debt ID; the ID resolves otherwise equal priorities.
+Do not replace explicit `tx` propagation with a global mutable request/transaction context.
 
 This demonstrates transaction-client propagation and event ordering, **not** a complete concurrent
 payment algorithm. Inside the callback and all called persistence helpers, use `tx`/

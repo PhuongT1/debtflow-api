@@ -1,7 +1,7 @@
-import { OrganizationMembershipStatus, OrganizationRole } from '@generated/prisma';
-import { badRequest, forbidden } from '@common/errors/app-errors';
+import { OrganizationMembershipStatus, OrganizationRole } from '#generated/prisma/client.js';
+import { badRequest, forbidden } from '#common/errors/app-errors.js';
 
-import type { Actor, Target, AccessChange } from '../types/member.types';
+import type { Actor, Target, AccessChange } from '../types/member.types.js';
 
 /**
  * Access rules for managing members (pure, covered by unit tests):

@@ -2,7 +2,8 @@
 
 NestJS backend API for Debt Flow / Sales Debt Management: multi-tenant tracking of receivables and
 payables, payments with automatic allocation, collection follow-up, dashboard, aging report and Excel export.
-Start with the [documentation](docs/README.md).
+Start with the [documentation](docs/README.md). Use Node 24 (`nvm use`) and npm;
+[Run Source](docs/guides/run-source.md) covers local, Vercel and Docker deployment.
 
 AI coding agents start at [AGENTS.md](AGENTS.md). Backend contribution rules and verification are in
 [AI Backend Development](docs/guides/ai-development.md). Run `npm run check` for the local quality checks.
@@ -123,15 +124,17 @@ Role:     ADMIN
 | `npm run ai:check`       | Verify AI installation without writing files. |
 | `npm run test:ai`        | Test setup portability, conflicts and Git ignore behavior. |
 | `npm run setup:dev`      | Migrate, generate Prisma Client, seed, and start development. |
-| `npm run build`          | Generate Prisma Client and build backend.                     |
+| `npm run build`          | Generate ESM client/schema metadata and build backend.                     |
 | `npm run db:migrate`     | Create and apply migrations in development.                   |
-| `npm run db:generate`    | Regenerate Prisma Client from the current models.             |
+| `npm run db:generate`    | Regenerate client and list-query metadata from the models.             |
 | `npm run db:deploy`      | Apply committed migrations in staging or production.          |
 | `npm run db:validate`    | Validate all Prisma schema files.                             |
 | `npm run db:check`       | Validate Prisma models and regenerate Prisma Client.          |
 | `npm run db:studio`      | Open Prisma Studio.                                           |
 | `npm run db:seed`        | Seed the admin and idempotent payment demo data.              |
 | `npm run import:parties` | Import 100 demo customers/suppliers directly into PostgreSQL. |
+| `npm run typecheck`     | Check TypeScript including tests, without emitting output. |
+| `npm run test:runtime`  | Smoke-test compiled Node and Vercel entries; build first. |
 | `npm test`               | Run unit tests (vitest).                                      |
 | `npm run docs:generate`  | Rebuild the OpenAPI JSON, API reference and database ERD.     |
 | `npm run docs:dev`       | Open the documentation site locally (http://localhost:5173).  |
@@ -203,14 +206,15 @@ Full documentation lives in [docs/](docs/README.md):
   [Database Workflow](docs/guides/database-workflow.md), [Project Structure](docs/guides/project-structure.md),
   [Authentication And Authorization](docs/guides/authorization.md),
   [Validation And Errors](docs/guides/validation-and-errors.md), [Import Aliases](docs/guides/import-aliases.md)
-- [Project Codex Skills](.codex/skills/SKILLS.md)
+- [Project AI Skills](.ai/skills/SKILLS.md)
 
 After changing an endpoint, DTO or Prisma model, run `npm run docs:generate` and commit
 `docs/generated/`. `npm run docs:check` fails if the committed files are out of date.
 
 ## Tech Stack
 
-- NestJS 11
+- Node 24 native ESM / TypeScript 6
+- NestJS 12
 - Prisma 7
 - PostgreSQL / Neon
 - JWT auth

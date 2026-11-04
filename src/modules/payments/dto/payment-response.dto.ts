@@ -1,11 +1,11 @@
 import { PickType } from '@nestjs/swagger';
-import { PartyResponseDto } from '@modules/parties/public/parties';
-import { DebtWithPartyDto } from '@modules/debts/public/debt-responses';
+import { PartyResponseDto } from '#modules/parties/public/parties.js';
+import { DebtWithPartyDto } from '#modules/debts/public/debt-responses.js';
 import {
   PaymentRecordDto,
   PaymentWithCreatorDto,
   PaymentAllocationRecordDto,
-} from './payment-record.dto';
+} from './payment-record.dto.js';
 
 export class PaymentPartyDto extends PickType(PartyResponseDto, ['id', 'name'] as const) {}
 export class PaymentAllocationResponseDto extends PaymentAllocationRecordDto {

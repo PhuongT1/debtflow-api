@@ -53,12 +53,12 @@ scripts/
 | `src/common`           | Shared DTOs, filters, validation helpers.                                                            |
 | `src/config`           | Environment validation and config helpers.                                                           |
 | `src/database`         | Prisma service and database module.                                                                  |
-| `src/generated/prisma` | Generated Prisma Client. Do not edit manually.                                                       |
+| `src/generated/prisma` | Generated native ESM Prisma Client. Do not edit manually.                                                       |
 | `prisma/models`        | Domain Prisma models and enums.                                                                      |
 | `prisma/migrations`    | Database migration history.                                                                          |
 | `.ai/core`             | Portable NestJS rules and default skills.                                                            |
 | `.ai/project.json`     | Project rules, skill sources and reference commands.                                                 |
-| `.codex/skills`        | Authored DebtFlow skills installed across clients by `npm run ai:setup`.                             |
+| `.ai/skills`        | Authored DebtFlow skills installed across clients by `npm run ai:setup`.                             |
 
 ## Current Modules
 
@@ -214,6 +214,43 @@ record DTO contracts separate from relation response contracts when that avoids 
 public exports. Tests may reach their subject directly. `public/` is unrelated to HTTP access policy.
 
 `OrganizationMembersService` belongs to Users, active party access belongs to Parties, collection
-PATCH mapping and shared aging rules belong to Debts, settlement state transitions remain owned by
-Payments, and dashboard aggregation belongs to Dashboard. These owners are the starting points for
+PATCH mapping, shared aging and debt payment-state derivation belong to Debts. Payments owns
+settlement orchestration, and Dashboard owns its aggregation. These owners are the starting points for
 changes; do not add a second implementation under a different entry point.
+
+## Party list query ownership
+
+`parties/queries/parties.query.ts` composes the canonical authorized filters. Ordinary ordering uses
+Prisma; aggregate ordering is implemented by `party-balance-page.query.ts`, which accepts one
+`SortItem` and adds the internal ID tie-breaker. There is no multi-sort loop or projection registry.
+It reuses the supported Prisma predicate subset adapted by `party-filter.sql.ts`. This adapter is private to Parties, not a
+generic query framework. `PartiesService.list` owns the RepeatableRead boundary and bounded page
+hydration; `party.select.ts` owns the scoped include, and payload types derive from it. Keep tests
+beside these owners. There is no separate JavaScript full-result sort or duplicate request parser.
+
+## Payment responsibilities
+
+`payments/services/payments.service.ts` orchestrates scoped reads, voucher/debt writes in one transaction
+and audit after commit. `payments/rules/payment-allocation.rules.ts` owns pure amount/allocation
+checks; `payments/queries/payments.query.ts` owns list filters and stable default ordering. Shared
+balance-to-status calculation belongs to `debts/rules/debt-payment.rules.ts`, imported only through
+`debts/public/debts.ts`. It preserves the existing application/reversal semantics and is not a generic
+state-machine framework. These pure helpers need no Nest provider registration or extra module.
+
+Middleware handles HTTP concerns, guards access, pipes validation, interceptors request/response
+wrapping, and filters exceptions. Business rules stay with their feature. Add an HTTP middleware,
+strategy, queue or provider module only for a concrete responsibility or consumer; Vendure's folder
+names and plugin infrastructure are not a reason to add them to every DebtFlow feature.
+
+## Swagger documentation ownership
+
+`common/swagger/swagger.setup.ts` owns OpenAPI creation and documentation route registration.
+`swagger-ui.ts` owns the HTML, route constants and pinned Swagger UI assets; `swagger-auth.js` is the
+linted browser entry for authorization. `configureApp()` composes this adapter and returns the same
+OpenAPI document to the offline documentation generator. Follow the task-to-file table in
+[API and Swagger](./api-and-swagger.md) rather than adding another setup, token form or copied schema.
+
+Runtime/build ownership: Node 24 + native ESM, TypeScript 6 and Nest 12.
+[Import Aliases](import-aliases.md) defines import syntax; [Run Source](run-source.md) covers
+Vercel, Node and Docker artifacts. `src/generated/list-query/` is schema-generated metadata for
+list-query validation and is regenerated together with the Prisma client.

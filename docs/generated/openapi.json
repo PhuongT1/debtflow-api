@@ -510,9 +510,9 @@
             "schema": {
               "type": "string",
               "enum": [
-                "INVITED",
                 "ACTIVE",
-                "SUSPENDED"
+                "SUSPENDED",
+                "INVITED"
               ]
             }
           },
@@ -538,20 +538,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, email, phone, userStatus, role, membershipStatus, joinedAt, createdAt.",
-            "schema": {
-              "example": "-name",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "name",
@@ -1360,20 +1350,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, code, type, phone, email, taxCode, provinceName, creditLimit, isActive, createdAt, updatedAt, outstandingDocuments, receivable, payable.",
-            "schema": {
-              "example": "-name",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "name",
@@ -2420,20 +2400,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
-            "schema": {
-              "example": "-code",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "code",
@@ -3491,20 +3461,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: type, method, amount, paidAt, referenceNo, partyName, createdAt.",
-            "schema": {
-              "example": "-type",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "type",
@@ -4254,20 +4214,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
-            "schema": {
-              "example": "-code",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "code",
@@ -4818,20 +4768,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
-            "schema": {
-              "example": "-code",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "code",
@@ -5266,20 +5206,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: entityType, action, createdAt.",
-            "schema": {
-              "example": "-entityType",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "entityType",
@@ -5479,19 +5409,19 @@
         "type": "object",
         "properties": {
           "systemRole": {
+            "type": "string",
             "enum": [
               "USER",
               "PLATFORM_OWNER",
               "PLATFORM_SUPPORT"
-            ],
-            "type": "string"
+            ]
           },
           "status": {
+            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ],
-            "type": "string"
+            ]
           },
           "id": {
             "type": "string"
@@ -5518,13 +5448,13 @@
             "type": "string"
           },
           "role": {
+            "type": "string",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           },
           "id": {
             "type": "string"
@@ -5536,20 +5466,20 @@
             "type": "string"
           },
           "kind": {
+            "type": "string",
             "enum": [
               "PERSONAL",
               "BUSINESS"
-            ],
-            "type": "string"
+            ]
           },
           "status": {
+            "type": "string",
             "enum": [
               "ACTIVE",
-              "SUSPENDED",
               "PENDING",
+              "SUSPENDED",
               "CLOSED"
-            ],
-            "type": "string"
+            ]
           }
         },
         "required": [
@@ -5728,20 +5658,20 @@
         "type": "object",
         "properties": {
           "status": {
+            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ],
-            "type": "string"
+            ]
           },
           "role": {
+            "type": "string",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           },
           "id": {
             "type": "string"
@@ -5791,9 +5721,9 @@
           "membershipStatus": {
             "description": "Status of the membership in this organization.",
             "enum": [
-              "INVITED",
               "ACTIVE",
-              "SUSPENDED"
+              "SUSPENDED",
+              "INVITED"
             ],
             "type": "string"
           },
@@ -5946,14 +5876,14 @@
             "description": "Initial password, hashed before storage. 8-72 characters with a letter and a digit."
           },
           "role": {
+            "type": "string",
             "description": "Role in this organization. Only an OWNER can create another OWNER.",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           }
         },
         "required": [
@@ -5980,14 +5910,14 @@
             "example": "0901234567"
           },
           "role": {
+            "type": "string",
             "description": "New role in this organization. Granting or removing OWNER requires an OWNER, and you cannot change your own role.",
             "enum": [
               "OWNER",
               "ADMIN",
               "ACCOUNTANT",
               "VIEWER"
-            ],
-            "type": "string"
+            ]
           }
         }
       },
@@ -6065,12 +5995,12 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "CUSTOMER",
               "SUPPLIER",
               "BOTH"
-            ],
-            "type": "string"
+            ]
           },
           "code": {
             "type": "string",
@@ -6288,13 +6218,13 @@
         "type": "object",
         "properties": {
           "type": {
+            "type": "string",
             "description": "Customer, supplier, or both.",
             "enum": [
               "CUSTOMER",
               "SUPPLIER",
               "BOTH"
-            ],
-            "type": "string"
+            ]
           },
           "code": {
             "type": "string",
@@ -6371,11 +6301,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -6419,13 +6349,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -6436,23 +6366,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -6982,11 +6912,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -7030,13 +6960,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -7047,23 +6977,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -7135,11 +7065,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -7183,13 +7113,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -7200,23 +7130,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -7297,11 +7227,11 @@
         "type": "object",
         "properties": {
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -7334,12 +7264,12 @@
             "nullable": true
           },
           "salesChannel": {
+            "type": "string",
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "items": {
             "type": "array",
@@ -7474,11 +7404,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "amount": {
             "type": "string",
@@ -7489,12 +7419,12 @@
             "type": "string"
           },
           "method": {
+            "type": "string",
             "enum": [
               "CASH",
               "BANK_TRANSFER",
               "OTHER"
-            ],
-            "type": "string"
+            ]
           },
           "referenceNo": {
             "type": "string",
@@ -7939,14 +7869,14 @@
             "nullable": true
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           }
         }
       },
@@ -7963,11 +7893,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "partyId": {
             "type": "string"
@@ -8011,13 +7941,13 @@
             "type": "string"
           },
           "salesChannel": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "STORE",
               "ONLINE",
               "WHOLESALE"
-            ],
-            "type": "string"
+            ]
           },
           "issueDate": {
             "format": "date-time",
@@ -8028,23 +7958,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string",
             "enum": [
               "OPEN",
               "PARTIAL",
               "PAID",
               "CANCELLED"
-            ],
-            "type": "string"
+            ]
           },
           "collectionStatus": {
+            "type": "string",
             "enum": [
               "NEW",
               "CONTACTED",
               "PROMISED",
               "DISPUTED",
               "ESCALATED"
-            ],
-            "type": "string"
+            ]
           },
           "nextFollowUpAt": {
             "format": "date-time",
@@ -8241,12 +8171,12 @@
             "type": "string"
           },
           "method": {
+            "type": "string",
             "enum": [
               "CASH",
               "BANK_TRANSFER",
               "OTHER"
-            ],
-            "type": "string"
+            ]
           },
           "referenceNo": {
             "type": "string"
@@ -8287,11 +8217,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           }
         },
         "required": [
@@ -8640,11 +8570,11 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "RECEIVABLE",
               "PAYABLE"
-            ],
-            "type": "string"
+            ]
           },
           "amount": {
             "type": "string",
@@ -8655,12 +8585,12 @@
             "type": "string"
           },
           "method": {
+            "type": "string",
             "enum": [
               "CASH",
               "BANK_TRANSFER",
               "OTHER"
-            ],
-            "type": "string"
+            ]
           },
           "referenceNo": {
             "type": "string",

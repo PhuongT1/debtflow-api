@@ -79,8 +79,11 @@ export function checkArchitecture(root = projectRoot) {
         report(literal, 'service-controller-dependency', 'Services must not import controllers.');
       }
       if (
-        ['src/common', 'src/config', 'src/database', 'src/auth'].some((dir) => inside(owner, dir)) &&
-        (inside(target, 'src/modules') || (!inside(owner, 'src/auth') && inside(target, 'src/auth')))
+        ['src/common', 'src/config', 'src/database', 'src/auth'].some((dir) =>
+          inside(owner, dir),
+        ) &&
+        (inside(target, 'src/modules') ||
+          (!inside(owner, 'src/auth') && inside(target, 'src/auth')))
       ) {
         report(
           literal,
@@ -88,31 +91,30 @@ export function checkArchitecture(root = projectRoot) {
           `Infrastructure must not import feature/auth code (${literal.text}).`,
         );
       }
-      if (
-        owner.endsWith('.controller.ts') &&
-        (inside(target, 'src/database') ||
-          /(?:^|\/)generated\/prisma\/[^/]*client(?:\.d)?\.ts$/.test(target))
-      ) {
+      if (owner.endsWith('.controller.ts') && inside(target, 'src/database')) {
         report(
           literal,
           'controller-persistence',
           `Delegate database access to a service (${literal.text}).`,
         );
       }
-      // @generated/prisma also exports enums/types, which controllers may legitimately use.
-      // Constructing or importing a client through that barrel is a separate persistence violation.
-      if (
-        owner.endsWith('.controller.ts') &&
-        inside(target, 'src/generated/prisma') &&
-        literal.parent &&
-        ts.isImportDeclaration(literal.parent)
-      ) {
-        const bindings = literal.parent.importClause?.namedBindings;
-        if (
+      // Generated modules also export enums/types. Named imports of those remain legal;
+      // whole client modules and aliased constructors must not bypass controller ownership.
+      if (owner.endsWith('.controller.ts') && inside(target, 'src/generated/prisma')) {
+        const declaration = literal.parent;
+        const bindings = ts.isImportDeclaration(declaration)
+          ? declaration.importClause?.namedBindings
+          : undefined;
+        const importsClient =
           bindings &&
           ts.isNamedImports(bindings) &&
-          bindings.elements.some((item) => (item.propertyName ?? item.name).text === 'PrismaClient')
-        )
+          bindings.elements.some(
+            (item) => (item.propertyName ?? item.name).text === 'PrismaClient',
+          );
+        const wholeClient =
+          /(?:client|index)(?:\.d)?\.ts$/.test(target) &&
+          ((bindings && ts.isNamespaceImport(bindings)) || ts.isCallExpression(declaration));
+        if (importsClient || wholeClient)
           report(literal, 'controller-persistence', 'Controllers must not import PrismaClient.');
       }
     };

@@ -1,8 +1,8 @@
-import { applyListQuery, type ListQueryResult } from '@common/query';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
-import { DebtStatus, Prisma } from '@generated/prisma';
-import type { QueryDebtsDto } from '../dto/query-debts.dto';
-import { buildDebtDateFilters } from './debt-date-filters';
+import { applyListQuery, type ListQueryResult } from '#common/query/index.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { DebtStatus, Prisma } from '#generated/prisma/client.js';
+import type { QueryDebtsDto } from '../dto/query-debts.dto.js';
+import { buildDebtDateFilters } from './debt-date-filters.js';
 
 /** Shared, tenant-scoped read contract for debt lists and reports. */
 export function buildDebtQuery(

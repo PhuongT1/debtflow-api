@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { Public } from './public.decorator';
+import { Public } from './public.decorator.js';
 
 export const PublicApi = () => applyDecorators(Public());
 

@@ -1,6 +1,6 @@
-import { badRequest } from '@common/errors/app-errors';
-import { getBusinessDayRangeForDate } from '@common/utils/business-date.util';
-import type { DashboardQueryDto } from '../dto/query-dashboard.dto';
+import { badRequest } from '#common/errors/app-errors.js';
+import { getBusinessDayRangeForDate } from '#common/utils/business-date.util.js';
+import type { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
 
 export function getDashboardPeriod(query: DashboardQueryDto | undefined) {
   const read = (value: string | undefined, field: string) => {

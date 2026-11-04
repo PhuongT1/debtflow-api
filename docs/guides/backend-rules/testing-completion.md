@@ -37,9 +37,20 @@ npm run check:conventions   # naming and declarative API rules + exact legacy ra
 npm run check:maintainability # responsibility folders, shared contracts and exact helper clones
 npm run test:architecture   # executable checker regression tests
 npm run lint
+npm run typecheck        # full TypeScript project, including test files
 npm test
 npm run build
 ```
+
+Vitest executes transpiled tests; it does not establish that TypeScript accepts them. The Nest build
+excludes `*.spec.ts`. `npm run typecheck` checks those files with the actual root configuration and
+writes no output. DebtFlow uses native ESM on Node 24 with `NodeNext` and package imports (`#...`).
+Use explicit `.js` suffixes for application imports (including `/index.js` for barrels),
+`import.meta.dirname` for file paths and `import.meta.url` when a module URL is needed.
+Tests that require emitted Nest constructor metadata load the compiled graph via
+`createRequire(import.meta.url)`; Node 24 supports synchronous ESM interop for this graph.
+Build before those tests. Do not suppress editor errors or reintroduce CommonJS output/alias rewriting.
+See [Import Aliases](../import-aliases.md) and [Run Source](../run-source.md).
 
 `npm run check` combines these and builds first to generate Prisma Client on a fresh checkout. Prisma
 schema changes additionally require `npm run db:check`. Changes to API/schema descriptions or response
@@ -65,3 +76,7 @@ Before reporting completion, inspect the diff and identify:
 Do not say an entire module is secure/production-ready because lint, import checks or a happy-path
 request pass. Read-only review remains read-only. Implementation does not authorize commit, push,
 deployment or database writes beyond the user's request.
+
+`npm run test:runtime` checks native standalone and Vercel entries against a deliberately unreachable
+synthetic database URL: Swagger/assets, validation, unauthorized access and shutdown. It does not
+replace real database integration tests or a Vercel deployment check. `npm run check` includes it.

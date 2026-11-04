@@ -12,7 +12,7 @@ large project does; [Vendure](../guides/vendure-reference.md) was studied for th
 
 ## Decision
 
-- One convention for every list endpoint: `sort` / `sortBy`+`sortOrder`, `filter[field][operator]`,
+- One convention for every list endpoint: single-field `sortBy`+`sortOrder`, `filter[field][operator]`,
   `filterOperator` ([List Query guide](../guides/list-query.md)).
 - Split like Vendure: a transport-neutral `ListQueryOptions` contract, `parse-sort-params`,
   `parse-filter-params` and `list-query-builder`; pure functions covered by specs next to the code.
@@ -28,5 +28,7 @@ large project does; [Vendure](../guides/vendure-reference.md) was studied for th
 - Existing named parameters (`q`, `status`, `aging`, ...) and the web's `sortBy`/`sortOrder` for parties keep working.
 - A field must be declared to be usable; this is deliberate (security, indexes).
 - `sortBy` and `sortOrder` are consumed by the generic parser, so resource DTOs must not redeclare them.
-- Sorting on a computed field only supports that field as the primary sort; any further sort fields are ignored by the service that implements it.
+- Clients select exactly one sort field. The internal unique ID tie-breaker keeps pagination stable.
+- The earlier comma-separated `sort` HTTP syntax was removed; old requests are rejected rather than silently ignored.
+- Computed Party ordering runs in the owned PostgreSQL aggregate/page query before pagination.
 - Nested AND/OR groups are supported by the contract but not yet by the query-string syntax.

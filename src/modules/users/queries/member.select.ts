@@ -1,4 +1,4 @@
-import type { Prisma } from '@generated/prisma';
+import type { Prisma } from '#generated/prisma/client.js';
 
 export const MEMBER_INCLUDE = {
   user: {

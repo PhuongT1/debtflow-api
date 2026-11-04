@@ -137,12 +137,47 @@ test('keeps domain subfolders flexible while rejecting auth-first feature roots'
 });
 
 test('keeps auth infrastructure independent of feature sessions while allowing its own helpers', () => {
-  fixture({
-    'src/auth/guards/bad.guard.ts': "import { PartiesService } from '../../modules/parties/parties.service';",
-    'src/auth/types/context.types.ts': 'export type Context = { id: string };',
-    'src/auth/guards/good.guard.ts': "import type { Context } from '../types/context.types';",
-  }, (result) => {
-    assert.equal(result.violations.length, 1);
-    assert.equal(result.violations[0].rule, 'infrastructure-dependency');
-  });
+  fixture(
+    {
+      'src/auth/guards/bad.guard.ts':
+        "import { PartiesService } from '../../modules/parties/parties.service';",
+      'src/auth/types/context.types.ts': 'export type Context = { id: string };',
+      'src/auth/guards/good.guard.ts': "import type { Context } from '../types/context.types';",
+    },
+    (result) => {
+      assert.equal(result.violations.length, 1);
+      assert.equal(result.violations[0].rule, 'infrastructure-dependency');
+    },
+  );
+});
+
+test('resolves native ESM package imports and permits generated enums but rejects a client', () => {
+  fixture(
+    {
+      'package.json': JSON.stringify({
+        type: 'module',
+        imports: {
+          '#generated/*': { types: './src/generated/*', default: './dist/src/generated/*' },
+        },
+      }),
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: { module: 'NodeNext', moduleResolution: 'NodeNext' },
+        include: ['src/**/*.ts'],
+      }),
+      'src/generated/prisma/client.ts':
+        'export class PrismaClient {}; export enum PartyType { CUSTOMER }',
+      'src/modules/parties/good.controller.ts':
+        "import { PartyType } from '#generated/prisma/client.js';",
+      'src/modules/parties/bad.controller.ts':
+        "import { PrismaClient as Client } from '#generated/prisma/client.js';",
+      'src/modules/parties/namespace.controller.ts':
+        "import * as Database from '#generated/prisma/client.js';",
+      'src/modules/parties/dynamic.controller.ts':
+        "const db = import('#generated/prisma/client.js');",
+    },
+    (result) => {
+      assert.equal(result.violations.length, 3);
+      assert.equal(result.violations[0].rule, 'controller-persistence');
+    },
+  );
 });

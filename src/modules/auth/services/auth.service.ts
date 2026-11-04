@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { forbidden, unauthorized } from '@common/errors/app-errors';
+import { forbidden, unauthorized } from '#common/errors/app-errors.js';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { PrismaService } from '@database/prisma.service';
-import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma';
-import { LoginDto } from '@modules/auth/dto/login.dto';
+import { PrismaService } from '#database/prisma.service.js';
+import { OrganizationMembershipStatus, UserStatus } from '#generated/prisma/client.js';
+import { LoginDto } from '#modules/auth/dto/login.dto.js';
 
 import type {
   JwtAuthPayload as AccessTokenPayload,
   RefreshTokenPayload,
-} from '@auth/types/auth-context.types';
-import type { AuthUser, MembershipContext } from '../types/auth.types';
-import { AUTH_USER_SELECT, MEMBERSHIP_CONTEXT_SELECT } from '../queries/auth.select';
+} from '#auth/types/auth-context.types.js';
+import type { AuthUser, MembershipContext } from '../types/auth.types.js';
+import { AUTH_USER_SELECT, MEMBERSHIP_CONTEXT_SELECT } from '../queries/auth.select.js';
 
 const DEFAULT_ACCESS_TOKEN_EXPIRES_IN = '15m';
 const DEFAULT_REFRESH_TOKEN_EXPIRES_IN = '7d';

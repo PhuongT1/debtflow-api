@@ -1,28 +1,28 @@
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator';
-import { DebtRecordDto } from '../dto/debt-record.dto';
+import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
+import { DebtRecordDto } from '../dto/debt-record.dto.js';
 import {
   DebtWithPartyDto,
   DebtCollectionResponseDto,
   DebtListResponseDto,
   DebtDetailResponseDto,
-} from '../dto/debt-response.dto';
-import { PaymentResponseDto } from '@modules/payments/public/payments';
+} from '../dto/debt-response.dto.js';
+import { PaymentResponseDto } from '#modules/payments/public/payments.js';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query';
-import { DEBT_LIST_QUERY } from '../queries/debts.list-query';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { Roles } from '@auth/decorators/roles.decorator';
-import { OrganizationRole } from '@generated/prisma';
-import { DebtsService } from '../services/debts.service';
-import { PaymentsService } from '@modules/payments/public/payments';
-import { CreateDebtDto } from '../dto/create-debt.dto';
-import { QueryDebtsDto } from '../dto/query-debts.dto';
-import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto';
-import { CreatePaymentDto } from '@modules/payments/public/payments';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { DEBT_LIST_QUERY } from '../queries/debts.list-query.js';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { Roles } from '#auth/decorators/roles.decorator.js';
+import { OrganizationRole } from '#generated/prisma/client.js';
+import { DebtsService } from '../services/debts.service.js';
+import { PaymentsService } from '#modules/payments/public/payments.js';
+import { CreateDebtDto } from '../dto/create-debt.dto.js';
+import { QueryDebtsDto } from '../dto/query-debts.dto.js';
+import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto.js';
+import { CreatePaymentDto } from '#modules/payments/public/payments.js';
 @ApiTags('Debts')
 @ProtectedApi()
 @ApiErrorEnvelopes({

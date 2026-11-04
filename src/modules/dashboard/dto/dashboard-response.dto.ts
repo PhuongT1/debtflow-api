@@ -1,8 +1,8 @@
 import { PickType } from '@nestjs/swagger';
-import { DebtRecordDto } from '@modules/debts/public/debt-records';
-import { DebtWithPartyDto } from '@modules/debts/public/debt-responses';
-import { PaymentWithPartyDto, PaymentPartyDto } from '@modules/payments/public/payments';
-import { UserSummaryDto } from '@modules/users/public/users';
+import { DebtRecordDto } from '#modules/debts/public/debt-records.js';
+import { DebtWithPartyDto } from '#modules/debts/public/debt-responses.js';
+import { PaymentWithPartyDto, PaymentPartyDto } from '#modules/payments/public/payments.js';
+import { UserSummaryDto } from '#modules/users/public/users.js';
 
 export class DashboardDebtTotalsDto {
   /** Decimal string. */

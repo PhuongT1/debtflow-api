@@ -1,8 +1,5 @@
-import { Prisma } from '@generated/prisma';
-import type { FieldType, ListQueryConfig } from './list-query.types';
-
-type DmmfField = { name: string; kind: string; type: string };
-type DmmfModel = { name: string; fields: DmmfField[] };
+import { LIST_QUERY_MODELS } from '#generated/list-query/models.js';
+import type { FieldType, ListQueryConfig } from './list-query.types.js';
 
 const SCALAR_TYPES: Record<FieldType, readonly string[]> = {
   string: ['String'],
@@ -25,8 +22,7 @@ export function defineListQuery(config: ListQueryConfig): ListQueryConfig {
 }
 
 function assertMatchesPrismaModel(config: ListQueryConfig, modelName: string) {
-  const models = (Prisma as unknown as { dmmf: { datamodel: { models: DmmfModel[] } } }).dmmf
-    .datamodel.models;
+  const models = LIST_QUERY_MODELS;
   const find = (name: string) => models.find((model) => model.name === name);
 
   if (!find(modelName)) throw new Error(`defineListQuery: unknown Prisma model "${modelName}".`);

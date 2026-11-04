@@ -27,3 +27,6 @@ Vendure-informed principles: thin transport boundaries, explicit provider owners
 and results, context-aware access, centralized list capabilities, propagated transactions, deliberate
 event timing and negative API tests. Do not copy its GraphQL, TypeORM, channel or plugin machinery
 into an unrelated NestJS application. Project evidence belongs in the project's source map.
+
+Maintain skill sources under `.ai/` (`.ai/core/skills/` defaults and project overrides such as
+`.ai/skills/`). Client skill folders are generated copies; update the source and rerun setup.

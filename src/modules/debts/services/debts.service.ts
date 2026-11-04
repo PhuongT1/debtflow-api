@@ -1,21 +1,21 @@
-import { PartiesService } from '@modules/parties/public/parties';
-import { OrganizationMembersService } from '@modules/users/public/users';
-import { buildDebtCollectionData } from '../mappers/debt-collection.mapper';
-import { normalizeOptionalText } from '@common/utils/optional-text.util';
+import { PartiesService } from '#modules/parties/public/parties.js';
+import { OrganizationMembersService } from '#modules/users/public/users.js';
+import { buildDebtCollectionData } from '../mappers/debt-collection.mapper.js';
+import { normalizeOptionalText } from '#common/utils/optional-text.util.js';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { badRequest } from '@common/errors/app-errors';
-import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
-import type { ListQueryResult } from '@common/query';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
-import { buildDebtQuery } from '../queries/debt-query';
-import { getPagination, paginate } from '@common/utils/pagination.util';
-import { CollectionStatus, DebtStatus, Prisma } from '@generated/prisma';
-import { PrismaService } from '@database/prisma.service';
-import { CreateDebtDto } from '../dto/create-debt.dto';
-import { DebtLineItemService } from './debt-line-item.service';
-import { QueryDebtsDto } from '../dto/query-debts.dto';
-import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto';
+import { badRequest } from '#common/errors/app-errors.js';
+import { AuditAction, emitAudit, scalarSnapshot } from '#common/events/audit-event.js';
+import type { ListQueryResult } from '#common/query/index.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { buildDebtQuery } from '../queries/debt-query.js';
+import { getPagination, paginate } from '#common/utils/pagination.util.js';
+import { CollectionStatus, DebtStatus, Prisma } from '#generated/prisma/client.js';
+import { PrismaService } from '#database/prisma.service.js';
+import { CreateDebtDto } from '../dto/create-debt.dto.js';
+import { DebtLineItemService } from './debt-line-item.service.js';
+import { QueryDebtsDto } from '../dto/query-debts.dto.js';
+import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto.js';
 
 @Injectable()
 export class DebtsService {

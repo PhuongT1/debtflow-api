@@ -9,11 +9,11 @@ import {
   Prisma,
   PrismaClient,
   SystemRole,
-} from '../src/generated/prisma';
+} from '../src/generated/prisma/client.ts';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { loadEnvFile } from 'node:process';
 import * as bcrypt from 'bcryptjs';
-import { partySearchText } from '../src/common/utils/search-normalization.util';
+import { partySearchText } from '../src/common/utils/search-normalization.util.js';
 loadEnvFile('.env');
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required to seed the database.');

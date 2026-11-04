@@ -1,11 +1,11 @@
-import { ApiEnvelope } from '@common/http/api-envelope.decorator';
-import { CurrentUserResponseDto } from '../dto/auth-response.dto';
+import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { CurrentUserResponseDto } from '../dto/auth-response.dto.js';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import { AuthService } from '@modules/auth/services/auth.service';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { AuthService } from '#modules/auth/services/auth.service.js';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
 
 @ApiTags('Auth')
 @ProtectedApi()

@@ -45,16 +45,15 @@ type OpenApi = {
 };
 
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
-const outputDir = join(__dirname, '..', 'docs', 'generated');
+const outputDir = join(import.meta.dirname, '..', 'docs', 'generated');
 
 async function main() {
   const { NestFactory } = await import('@nestjs/core');
-  const { AppModule } = await import('../dist/src/app.module');
-  const { configureApp, createOpenApiDocument } = await import('../dist/src/configure-app');
+  const { AppModule } = await import('../dist/src/app.module.js');
+  const { configureApp } = await import('../dist/src/configure-app.js');
 
   const app = await NestFactory.create(AppModule, { logger: false });
-  configureApp(app);
-  const document = createOpenApiDocument(app) as unknown as OpenApi;
+  const document = configureApp(app) as unknown as OpenApi;
   await app.close();
 
   mkdirSync(outputDir, { recursive: true });
@@ -91,7 +90,7 @@ function renderMarkdown(document: OpenApi) {
     '- "Roles" lists the organization roles allowed. `All members` means any authenticated active member (including `VIEWER`).',
     '- JSON responses use the envelope described in [api-response-format](../guides/api-response-format.md).',
     '- Send `Accept-Language: en` or `vi` (default `vi`) to localize messages: [localization](../guides/localization.md).',
-    '- List endpoints accept `sort` and `filter[field][op]=value`: [list query](../guides/list-query.md).',
+    '- List endpoints accept single-field `sortBy`/`sortOrder` and `filter[field][op]=value`: [list query](../guides/list-query.md).',
     '',
     '## Endpoint index',
     '',

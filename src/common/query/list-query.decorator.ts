@@ -1,10 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
-import { parseListQuery } from './list-query-builder';
-import type { ListQueryConfig } from './list-query.types';
+import { parseListQuery } from './list-query-builder.js';
+import type { ListQueryConfig } from './list-query.types.js';
 
 /**
- * Parameter decorator that turns `sort`/`sortBy`/`sortOrder` and `filter[...]` into a ready-to-use
+ * Parameter decorator that turns `sortBy`/`sortOrder` and `filter[...]` into a ready-to-use
  * Prisma fragment:
  *
  *   list(@Query() query: QueryDebtsDto, @ListQuery(DEBT_LIST_QUERY) listQuery: ListQueryResult) {}

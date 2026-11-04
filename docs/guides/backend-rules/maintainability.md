@@ -31,6 +31,9 @@ ownership; route decorators and service invariants define access.
 | Optional text and phone format      | `common/utils/optional-text.util.ts`, `common/validation/phone.constants.ts`; no feature-specific clones                                                                                                                                            |
 | Debt filters for list/report/export | `debts/queries/debt-query.ts`; preserve scope and intersect overlapping constraints                                                                                                                                                                 |
 | Party/member list filters           | `parties/queries/parties.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                         |
+| Payment allocation and debt status  | `payments/rules/payment-allocation.rules.ts` owns allocation/amount checks; `debts/rules/debt-payment.rules.ts` owns state derivation and is exposed through `debts/public/debts.ts`                                                                |
+| Payment list composition            | `payments/queries/payments.query.ts`; tenant and named filters intersect with shared dynamic filters; retain a unique sort tie-breaker                                                                                                              |
+| Swagger setup and browser helper    | `common/swagger/swagger.setup.ts` owns the document/routes; `swagger-ui.ts` owns HTML/paths; `swagger-auth.js` owns browser authorization and is linted/tested as an asset. Follow the [owner table](../api-and-swagger.md#where-to-make-changes).  |
 | Public member mapping               | `users/mappers/member.mapper.ts`; business role decisions stay in `users/rules/users.rules.ts`                                                                                                                                                      |
 | XLSX document generation            | `exports/services/debt-export.service.ts`; controller owns headers, provider owns scoped capped data and workbook                                                                                                                                   |
 
@@ -67,9 +70,11 @@ Every current JSON handler has a concrete response DTO/envelope description. The
 is empty; do not add a waiver for a new or changed handler. DTO annotations document the response;
 they do not sanitize output. Money remains serialized as decimal strings.
 
-Computed Party balance sorting
-still loads matching records, XLSX exports remain capped at 1000 rows, and audit delivery remains
-best-effort in-process. These are explicit behavior/scale limits, not solved by creating more folders.
+Party list count, page and balances share a RepeatableRead snapshot. Aggregate sorting is owned
+by `parties/queries/party-balance-page.query.ts`; `party-filter.sql.ts` adapts the canonical Prisma
+where subset rather than parsing requests again. Extend its SQL and database regression tests when
+adding a Party filter or sort. `partyListInclude(organizationId)` owns the tenant-scoped relation count.
+XLSX exports remain capped at 1000 rows, and audit delivery remains best-effort in-process. These are explicit behavior/scale limits, not solved by creating more folders.
 Mocked persistence tests do not establish live database isolation, concurrency safety or migration safety.
 
 ## Cross-feature calls and API implementation

@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { loadEnvFile } from 'node:process';
-import { PartyType, Prisma, PrismaClient } from '../src/generated/prisma';
+import { PartyType, Prisma, PrismaClient } from '../src/generated/prisma/client.ts';
 
 type PartySeed = {
   type: PartyType;

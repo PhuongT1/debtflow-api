@@ -1,26 +1,26 @@
-import { buildUsersQuery } from '../queries/users.query';
-import { MEMBER_INCLUDE } from '../queries/member.select';
-import { toMemberDto } from '../mappers/member.mapper';
-import type { Actor } from '../types/member.types';
+import { buildUsersQuery } from '../queries/users.query.js';
+import { MEMBER_INCLUDE } from '../queries/member.select.js';
+import { toMemberDto } from '../mappers/member.mapper.js';
+import type { Actor } from '../types/member.types.js';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcryptjs';
-import { notFound } from '@common/errors/app-errors';
-import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
-import type { ListQueryResult } from '@common/query';
-import { getPagination, paginate } from '@common/utils/pagination.util';
-import { PrismaService } from '@database/prisma.service';
-import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma';
-import type { CreateUserDto } from '../dto/create-user.dto';
-import type { QueryUsersDto } from '../dto/query-users.dto';
-import type { UpdateUserDto } from '../dto/update-user.dto';
+import { notFound } from '#common/errors/app-errors.js';
+import { AuditAction, emitAudit, scalarSnapshot } from '#common/events/audit-event.js';
+import type { ListQueryResult } from '#common/query/index.js';
+import { getPagination, paginate } from '#common/utils/pagination.util.js';
+import { PrismaService } from '#database/prisma.service.js';
+import { OrganizationMembershipStatus, UserStatus } from '#generated/prisma/client.js';
+import type { CreateUserDto } from '../dto/create-user.dto.js';
+import type { QueryUsersDto } from '../dto/query-users.dto.js';
+import type { UpdateUserDto } from '../dto/update-user.dto.js';
 import {
   assertCanChangeAccess,
   assertCanEditProfile,
   assertCanGrantRole,
   assertCanReactivate,
   assertCanSuspend,
-} from '../rules/users.rules';
+} from '../rules/users.rules.js';
 
 const PASSWORD_ROUNDS = 12;
 

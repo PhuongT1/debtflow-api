@@ -13,7 +13,8 @@ detects model/path/type mistakes, but does not infer all enum values/nullability
 
 Bind the existing `@ListQuery(CONFIG)` and `@ApiListQuery(CONFIG)` in the controller, use a real query
 DTO for remaining resource-specific parameters, and call `applyListQuery` with a trusted base `where`.
-Do not add a second `sortBy`, `sortOrder`, operator parser or field allow-list in a service. Do not
+Use only the shared single-field `sortBy`/`sortOrder` HTTP contract. Do not add a `sort` parameter,
+comma-separated/repeated sort fields, another operator parser or a field allow-list in a service. Do not
 copy all database columns into a public list definition; tenant IDs, credentials and internal metadata
 do not become queryable merely because they exist.
 
@@ -21,14 +22,18 @@ do not become queryable merely because they exist.
 
 Count and fetch MUST use the same final authorized `where`. Use bounded `pageSize`, validated positive
 integer pagination and a unique tie-breaker in the final order so duplicate values do not shuffle
-pages. For multiple requested sorts preserve key order, direction and null behavior. Permission/
-visibility filters belong before slicing, not after fetching one page.
+pages. The client selects exactly one field; preserve its direction and null behavior. Keep the unique
+ID tie-breaker internal to database ordering. Permission/visibility filters belong before slicing, not after fetching one page.
 
-Computed balance sorts require the value before pagination and must honor every requested primary
-and secondary key. Do not sort only the current page or discard noncomputed sort keys. The current
-Party implementation does this in memory across matching rows; adding another unbounded scan needs
-an explicit scale assessment. For larger datasets prefer a tenant-scoped database aggregate/projection
-or a bounded documented alternative, not a hidden full-table load.
+Computed balance sorts require the value before pagination and must honor the selected field and
+its internal ID tie-breaker. Do not sort only the current page or replace the requested field with
+the default order. Party uses a tenant-scoped PostgreSQL aggregate/page query for balance and
+document-count sorts,
+then hydrates only the selected IDs. Reuse its canonical filter builder; the private SQL adapter
+supports only the predicates produced by that feature and rejects unknown predicates. Count, rows
+and balances use one short RepeatableRead transaction. Do not reintroduce full-result JavaScript
+sorting. Database aggregation still processes matching debts; measure realistic query plans before
+promising a latency target or introducing a summary projection with its own freshness contract.
 
 ## QRY-03 — dates, relations and SQL are deliberate
 
@@ -57,6 +62,6 @@ tenant/filter conditions and deterministic progress. Document caps, CSV/XLSX rep
 large-result behavior, and check more-than-one-page data in a real applicable test.
 
 **Acceptance:** same-scope count/items, foreign-tenant exclusion including OR, unknown field/operator
-rejection, default/compound/stable sort, duplicate/null values, cross-page computed results, strict
+rejection, default/single-field/stable sort, duplicate/null values, cross-page computed results, strict
 dates and the declared export/report volume semantics. Existing capped reports/exports are not a
 template for silently complete-data claims.

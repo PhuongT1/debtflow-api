@@ -64,21 +64,22 @@ Behaviours worth copying:
 
 ## 3. What DebtFlow adopted
 
-| Vendure                                                                                                    | DebtFlow (`src/common/query/`)                                      | Note                                                |
-| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
-| `ListQueryOptions` as the transport-neutral contract                                                       | `ListQueryOptions { sort, filter: FilterGroup }`                    | HTTP parsing and Prisma building are separate steps |
-| `parse-sort-params` / `parse-filter-params` / `list-query-builder` split                                   | same three files                                                    | plus `define-list-query`, decorator, pipe, swagger  |
-| Operator vocabulary `eq, notEq, contains, notContains, in, notIn, isNull, lt..gte, between, before, after` | same names                                                          | `startsWith`/`endsWith` added; `regex` skipped      |
-| `filterOperator` AND/OR and nested groups                                                                  | `filterOperator`; internal tree supports nesting                    | query string stays flat                             |
-| `@Calculated`                                                                                              | `computed: true` and `sort` / `filter` hooks on a field             | e.g. party balances                                 |
-| Error lists valid fields                                                                                   | `INVALID_SORT` / `INVALID_FILTER_FIELD` / `INVALID_FILTER_OPERATOR` | localized                                           |
-| Parser specs next to the code                                                                              | `*.spec.ts` in `src/common/query`, `npm test`                       | pure functions, no database                         |
-| Field list derived from entity metadata                                                                    | allow-list **verified** against the Prisma schema at startup        | see below                                           |
+| Vendure                                                                                                    | DebtFlow (`src/common/query/`)                                                                  | Note                                                |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `ListQueryOptions` as the transport-neutral contract                                                       | `ListQueryOptions { sort, filter: FilterGroup }` (internal; HTTP uses one `sortBy`/`sortOrder`) | HTTP parsing and Prisma building are separate steps |
+| `parse-sort-params` / `parse-filter-params` / `list-query-builder` split                                   | same three files                                                                                | plus `define-list-query`, decorator, pipe, swagger  |
+| Operator vocabulary `eq, notEq, contains, notContains, in, notIn, isNull, lt..gte, between, before, after` | same names                                                                                      | `startsWith`/`endsWith` added; `regex` skipped      |
+| `filterOperator` AND/OR and nested groups                                                                  | `filterOperator`; internal tree supports nesting                                                | query string stays flat                             |
+| `@Calculated`                                                                                              | `computed: true` and `sort` / `filter` hooks on a field                                         | e.g. party balances                                 |
+| Error lists valid fields                                                                                   | `INVALID_SORT` / `INVALID_FILTER_FIELD` / `INVALID_FILTER_OPERATOR`                             | localized                                           |
+| Parser specs next to the code                                                                              | `*.spec.ts` in `src/common/query`, `npm test`                                                   | pure functions, no database                         |
+| Field list derived from entity metadata                                                                    | allow-list **verified** against the Prisma schema at startup                                    | see below                                           |
 
 ### Where we intentionally differ
 
 - **Allow-list instead of "all columns".** Vendure exposes every entity column and relies on its API layer and permissions. Our REST endpoints serve tenant data from shared tables, so each resource declares the exact fields (the security boundary). Prisma's runtime metadata does not include nullability or enum values, so types stay explicit but are cross-checked against the schema at startup.
-- **REST, not GraphQL.** Vendure generates `*ListOptions` GraphQL inputs. We express the same options as `sort` / `filter[field][op]` query parameters and document them in OpenAPI.
+- **One sort field per request.** The public contract is `sortBy` + `sortOrder`, with an internal unique ID tie-breaker. Vendure's richer sort model is not a requirement for DebtFlow.
+- **REST, not GraphQL.** Vendure generates `*ListOptions` GraphQL inputs. We express the same options as `sortBy` + `sortOrder` / `filter[field][op]` query parameters and document them in OpenAPI.
 - **`page`/`pageSize` instead of `skip`/`take`.** Kept for compatibility with the existing frontend; the cap (`MAX_PAGE_SIZE`) is enforced by validation, which rejects rather than trims.
 
 ## 4. Lessons for the rest of the project (not done yet)
@@ -90,7 +91,7 @@ Behaviours worth copying:
 | Strategy objects in `config/`                               | Use for things likely to vary per tenant (code generation `CN-YYYYMM-NNNN`, aging buckets)                                                  |
 | `common` package shared by server and UI                    | Generate frontend types from `docs/generated/openapi.json` instead of hand-copying the envelope and DTOs in `debtflow-web`                  |
 | One service per concern + `helpers/` for reusable machinery | `src/common/query` is the first such helper; `DebtsService` and `PaymentsService` are the next candidates to split                          |
-| Layer-based folders in a platform                           | **Do not copy.** DebtFlow is one product, so feature folders (`modules/<feature>`) stay; shared machinery goes to `common/`       |
+| Layer-based folders in a platform                           | **Do not copy.** DebtFlow is one product, so feature folders (`modules/<feature>`) stay; shared machinery goes to `common/`                 |
 | Plugin system                                               | Not needed for a single product; revisit only if third parties must extend the API                                                          |
 
 ## 5. Local source review: AI guidance and dependency boundaries

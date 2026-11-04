@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DEBT_AGING_VALUES } from '../rules/debt-aging.rules';
-import type { DebtAging } from '../types/debt-aging.types';
+import { DEBT_AGING_VALUES } from '../rules/debt-aging.rules.js';
+import type { DebtAging } from '../types/debt-aging.types.js';
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
-import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
-import { CollectionStatus, DebtStatus, DebtType, SalesChannel } from '@generated/prisma';
+import { PaginationQueryDto } from '#common/dto/pagination-query.dto.js';
+import { CollectionStatus, DebtStatus, DebtType, SalesChannel } from '#generated/prisma/client.js';
 
 export class QueryDebtsDto extends PaginationQueryDto {
   @IsOptional()

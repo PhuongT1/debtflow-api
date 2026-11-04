@@ -1,16 +1,19 @@
 import 'reflect-metadata';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { join } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Prisma } from '@generated/prisma';
+import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
+import { Prisma } from '#generated/prisma/client.js';
+import { SWAGGER_PATHS } from '#common/swagger/swagger-ui.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Exercise the real compiled graph: Nest build emits constructor metadata and Swagger factories.
 // `npm run check` builds before tests; no Prisma connection is opened (the provider is overridden).
-const require = createRequire(import.meta.url);
+const requireCompiled = createRequire(import.meta.url);
 const membership = vi.fn();
 const aggregateDebt = vi.fn();
 const findDebts = vi.fn();
@@ -56,20 +59,27 @@ const activeMember = (role = 'VIEWER') => ({
 describe('domain module composition and HTTP access', () => {
   let app: INestApplication;
   let url: string;
+  let document: OpenAPIObject;
 
   beforeAll(async () => {
     vi.stubEnv('NODE_ENV', 'test');
     vi.stubEnv('DATABASE_URL', 'postgresql://test:test@127.0.0.1:5432/not_connected');
     vi.stubEnv('JWT_SECRET', 'test-only-placeholder-with-at-least-24-characters');
-    const { AppModule } = require('../dist/src/app.module.js') as typeof import('./app.module');
-    const { PrismaService } =
-      require('../dist/src/database/prisma.service.js') as typeof import('./database/prisma.service');
-    const { AuthService } =
-      require('../dist/src/modules/auth/services/auth.service.js') as typeof import('./modules/auth/services/auth.service');
-    const { PartiesService } =
-      require('../dist/src/modules/parties/services/parties.service.js') as typeof import('./modules/parties/services/parties.service');
-    const { configureApp } =
-      require('../dist/src/configure-app.js') as typeof import('./configure-app');
+    const { AppModule } = requireCompiled(
+      '../dist/src/app.module.js',
+    ) as typeof import('./app.module.js');
+    const { PrismaService } = requireCompiled(
+      '../dist/src/database/prisma.service.js',
+    ) as typeof import('./database/prisma.service.js');
+    const { AuthService } = requireCompiled(
+      '../dist/src/modules/auth/services/auth.service.js',
+    ) as typeof import('./modules/auth/services/auth.service.js');
+    const { PartiesService } = requireCompiled(
+      '../dist/src/modules/parties/services/parties.service.js',
+    ) as typeof import('./modules/parties/services/parties.service.js');
+    const { configureApp } = requireCompiled(
+      '../dist/src/configure-app.js',
+    ) as typeof import('./configure-app.js');
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
       .useValue(prisma)
@@ -79,7 +89,7 @@ describe('domain module composition and HTTP access', () => {
       .useValue(parties)
       .compile();
     app = module.createNestApplication({ logger: false });
-    configureApp(app);
+    document = configureApp(app);
     vi.spyOn(app.get(JwtService), 'verifyAsync').mockResolvedValue(payload);
     await app.listen(0, '127.0.0.1');
     url = await app.getUrl();
@@ -136,6 +146,28 @@ describe('domain module composition and HTTP access', () => {
     });
     return { status: response.status, body: await response.json() };
   }
+
+  it('serves the same OpenAPI document returned for offline generation', async () => {
+    const response = await fetch(`${url}${SWAGGER_PATHS.json}`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(JSON.parse(JSON.stringify(document)));
+    expect(membership).not.toHaveBeenCalled();
+  });
+
+  it('serves the standalone browser asset from the compiled application', async () => {
+    const page = await fetch(`${url}${SWAGGER_PATHS.ui}`);
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain(`src="${SWAGGER_PATHS.authScript}"`);
+    expect(html).toContain(`data-spec-url="${SWAGGER_PATHS.json}"`);
+    expect(html).not.toContain('<script>');
+    const asset = await fetch(`${url}${SWAGGER_PATHS.authScript}`);
+    expect(asset.status).toBe(200);
+    expect(asset.headers.get('content-type')).toContain('javascript');
+    expect(await asset.text()).toBe(
+      readFileSync(join(import.meta.dirname, 'common/swagger/swagger-auth.js'), 'utf8'),
+    );
+  });
 
   it('keeps credential and refresh routes public in the auth domain', async () => {
     expect(
@@ -356,14 +388,18 @@ describe('domain module composition and HTTP access', () => {
   });
 
   it('allows a domain provider module to compose without the HTTP application or auth grouping modules', async () => {
-    const { PaymentsModule } =
-      require('../dist/src/modules/payments/payments.module.js') as typeof import('./modules/payments/payments.module');
-    const { PaymentsService } =
-      require('../dist/src/modules/payments/services/payments.service.js') as typeof import('./modules/payments/services/payments.service');
-    const { DatabaseModule } =
-      require('../dist/src/database/database.module.js') as typeof import('./database/database.module');
-    const { PrismaService } =
-      require('../dist/src/database/prisma.service.js') as typeof import('./database/prisma.service');
+    const { PaymentsModule } = requireCompiled(
+      '../dist/src/modules/payments/payments.module.js',
+    ) as typeof import('./modules/payments/payments.module.js');
+    const { PaymentsService } = requireCompiled(
+      '../dist/src/modules/payments/services/payments.service.js',
+    ) as typeof import('./modules/payments/services/payments.service.js');
+    const { DatabaseModule } = requireCompiled(
+      '../dist/src/database/database.module.js',
+    ) as typeof import('./database/database.module.js');
+    const { PrismaService } = requireCompiled(
+      '../dist/src/database/prisma.service.js',
+    ) as typeof import('./database/prisma.service.js');
     const worker = await Test.createTestingModule({
       imports: [DatabaseModule, EventEmitterModule.forRoot(), PaymentsModule],
     })

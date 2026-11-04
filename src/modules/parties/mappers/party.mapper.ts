@@ -1,9 +1,9 @@
-import type { PartyWriteData, PartySearchSource } from '../types/party.types';
-import { normalizeOptionalText } from '@common/utils/optional-text.util';
-import { Prisma } from '@generated/prisma';
-import { partySearchText } from '@common/utils/search-normalization.util';
-import type { CreatePartyDto } from '../dto/create-party.dto';
-import type { UpdatePartyDto } from '../dto/update-party.dto';
+import type { PartyWriteData, PartySearchSource } from '../types/party.types.js';
+import { normalizeOptionalText } from '#common/utils/optional-text.util.js';
+import { Prisma } from '#generated/prisma/client.js';
+import { partySearchText } from '#common/utils/search-normalization.util.js';
+import type { CreatePartyDto } from '../dto/create-party.dto.js';
+import type { UpdatePartyDto } from '../dto/update-party.dto.js';
 
 const toCreditLimit = (value: string | null | undefined) => {
   const text = normalizeOptionalText(value);
