@@ -84,7 +84,7 @@ test('allows service persistence and controller enum imports; ignores generated 
     `,
       'src/modules/parties/parties.service.ts': `import { PrismaService } from '@database/prisma.service';`,
       'src/common/allowed.ts': `const sample = "import x from '@modules/parties/parties.service'";`,
-      'src/common/example.spec.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
+      'src/common/_test/example.spec.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
       'src/generated/ignored.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
     },
     (result) => assert.deepEqual(result.violations, []),
@@ -179,6 +179,21 @@ test('resolves short ESM aliases and permits generated enums but rejects a clien
     (result) => {
       assert.equal(result.violations.length, 3);
       assert.equal(result.violations[0].rule, 'controller-persistence');
+    },
+  );
+});
+
+test('keeps feature tests in their own _test folder and out of production imports', () => {
+  fixture(
+    {
+      'src/modules/parties/queries/bad.spec.ts': 'export {};',
+      'src/modules/parties/_test/good.spec.ts': 'export {};',
+      'src/modules/parties/_test/fixture.ts': 'export const fixture = 1;',
+      'src/modules/parties/parties.service.ts': "import { fixture } from './_test/fixture';",
+    },
+    (result) => {
+      assert.equal(result.violations.filter((v) => v.rule === 'test-layout').length, 1);
+      assert.equal(result.violations.filter((v) => v.rule === 'test-dependency').length, 1);
     },
   );
 });

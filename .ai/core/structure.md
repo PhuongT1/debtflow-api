@@ -31,7 +31,7 @@ Typical grouped shape for a feature with multiple responsibilities (adapt to the
   orders.module.ts
   controllers/orders.controller.ts
   services/orders.service.ts
-  services/orders.service.spec.ts
+  _test/orders.service.spec.ts
   dto/create-order.dto.ts
   dto/update-order.dto.ts
   dto/order-response.dto.ts
@@ -62,3 +62,7 @@ Use an injectable adapter/token or strategy when an actual integration varies, s
 providers. Do not add an interface for every service merely to appear extensible. Extract a workspace
 package only for a concrete independent consumer, build/release boundary or published extension.
 Keeping `src/` in one application does not limit those options.
+
+Follow the project's test placement policy. Keep specs and test-only fixtures in the owner's
+`_test/` folder, outside production responsibility folders and build output. Moving tests requires
+updating imports, runners, references and documented commands together. See [Testing](testing.md).

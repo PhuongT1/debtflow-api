@@ -19,7 +19,7 @@ boundaries, with this repository's test runner, fixtures and ownership.
 | Export/report                     | full declared volume, beyond one page/cap, correct content type and tenant filter                      |
 | New checker/tool                  | a real violating fixture fails, a valid fixture passes, and a plausible bypass/regression is covered   |
 
-Extend an existing suite when it owns the scenario; put specs beside the code. Use deterministic dates,
+Extend an existing suite when it owns the scenario; put specs in the owning `_test/` folder. Use deterministic dates,
 explicit timezone, Decimal values and sanitized identities. Reset timers/mocks and clean up only the
 test-owned temporary resources. Do not seed, reset, migrate or create records in an unspecified DB to
 claim a test passed. Do not run the full Vendure test infrastructure just to validate DebtFlow rules.
@@ -81,3 +81,39 @@ deployment or database writes beyond the user's request.
 `npm run test:runtime` checks native standalone and Vercel entries against a deliberately unreachable
 synthetic database URL: Swagger/assets, validation, unauthorized access and shutdown. It does not
 replace real database integration tests or a Vercel deployment check. `npm run check` includes it.
+
+
+## Test placement
+
+All specs and test-only helpers/fixtures in `src` live under an owning `_test/` folder:
+
+```text
+src/modules/parties/
+  services/parties.service.ts
+  mappers/party.mapper.ts
+  queries/party-balance-page.query.ts
+  _test/
+    parties.service.spec.ts
+    party.mapper.spec.ts
+    party-balance-page.query.spec.ts
+    party-balance-page.postgres.spec.ts
+src/common/query/_test/        # parser tests and test-config.ts
+src/auth/_test/                # auth infrastructure
+src/config/_test/              # environment validation
+src/_test/app.module.spec.ts   # application composition / HTTP
+```
+
+Keep tests with their owning feature; create a new spec only when an existing suite does not own
+the scenario. Name HTTP and database suites clearly (`*.http.spec.ts`, `*.postgres.spec.ts`).
+Use subfolders within `_test/` when the suite grows, not parallel test roots. Repository automation
+tests stay with their scripts under `scripts/` and are run by Node's test runner.
+
+Vitest discovers `src/**/_test/**/*.spec.ts`. Typecheck includes these files; the production build
+excludes `_test/`. Architecture checks reject misplaced specs and imports from `_test/` into
+production. Update relative imports, fixtures, package commands and references together when moving
+suites. `npm run test:parties:postgres` stays opt-in and never falls back to the application's DB.
+
+Vendure reference: unit specs are beside subjects (for example
+`packages/core/src/service/services/channel.service.spec.ts`), while integration/e2e specs are in
+`packages/core/e2e/`. DebtFlow deliberately uses feature-owned `_test/` for all suites to keep
+production responsibility folders uncluttered. This is a project convention, not a Nest requirement.

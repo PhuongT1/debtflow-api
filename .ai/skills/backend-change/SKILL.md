@@ -28,6 +28,12 @@ These files live under `docs/guides/backend-rules/`. `vendure-source-map.md` pro
 source symbols and two traced request flows when a pattern's origin or adaptation is in question.
 Do not assume GraphQL inputs, TypeORM transactions or Permission.Owner work identically in DebtFlow.
 
+## Testing requests
+
+When asked to add, check or reorganize tests, read [the testing workflow](references/testing.md).
+It selects the owning `_test/` folder, behavioral scenarios and authorized test environment; the
+project testing guide remains the canonical verification contract.
+
 ## Establish the change
 
 1. Inspect the working tree. Identify the API behavior requested, the owning feature and the smallest

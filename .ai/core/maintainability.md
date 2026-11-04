@@ -34,7 +34,7 @@ null, required-field or permission semantics; do not apply `PartialType` mechani
 
 Follow the project's folder convention consistently. Keep module composition at the feature root;
 group actual transport, services, queries, types, mapping and business rules under named responsibility
-folders when the project uses them. Keep tests beside the subject. Create only folders with real files.
+folders when the project uses them. Keep tests in the subject owner's `_test/` folder, following the project testing policy. Create only folders with real files.
 Use child domain modules when they have a coherent boundary or independent consumers.
 
 Shared contracts belong with their domain, not exported from executable service/controller files.

@@ -38,7 +38,7 @@
     "ai:check": "node scripts/ai-setup.mjs --check",
     "test:ai": "node --test scripts/ai-setup.test.mjs",
     "check:maintainability": "node scripts/check-maintainability.mjs",
-    "test:parties:postgres": "vitest run src/modules/parties/queries/party-balance-page.postgres.spec.ts",
+    "test:parties:postgres": "vitest run src/modules/parties/_test/party-balance-page.postgres.spec.ts",
     "test:runtime": "node --test scripts/runtime-smoke.test.mjs"
   },
   "dependencies": {

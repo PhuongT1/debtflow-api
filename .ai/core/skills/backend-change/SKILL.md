@@ -10,3 +10,5 @@ before defining contracts/helpers, and verify runtime metadata when reusing DTOs
 Preserve the installed stack and explicit access/resource/status invariants. Implement the requested
 behavior, test its relevant failure cases and run the project's configured checks. Report actual
 results and limitations. Implementation does not authorize commit, push, deployment or database data changes.
+
+For test requests, read `.ai/core/testing.md` and the project's test placement/verification policy.

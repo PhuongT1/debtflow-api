@@ -10,7 +10,8 @@ Domain ownership comes first: `src/modules/<feature>/`. At the feature root keep
 composition. Put controllers in `controllers/`, providers in `services/`, typed projections/list
 capabilities/filter builders in `queries/`, shared compile-time contracts in `types/`, conversion
 functions in `mappers/`, business decisions in `rules/`, listeners in `listeners/`, and runtime
-request/response classes in `dto/`. Nested document inputs may use `dto/items/`. Tests stay adjacent.
+request/response classes in `dto/`. Nested document inputs may use `dto/items/`. All tests and test-only fixtures live in the owner's `_test/`
+and are excluded from production output.
 Create only responsibilities that exist. Webhooks, workers and integrations may use `api/`, `jobs/`
 and `integrations/`; reuse the same domain providers with explicit trusted context.
 

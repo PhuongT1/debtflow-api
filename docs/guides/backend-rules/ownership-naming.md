@@ -15,6 +15,7 @@ src/modules/<plural-feature>/
     <plural-feature>.controller.ts # routes, context, policy, documentation
   services/
     <plural-feature>.service.ts      # use-case orchestration and persistence
+  _test/
     <plural-feature>.service.spec.ts # observable service behavior
   queries/                          # only when query responsibilities exist
     <plural-feature>.list-query.ts   # public filter/sort capabilities
@@ -38,7 +39,12 @@ This template is not a closed list. A growing feature may use focused `services/
 `DebtLineItemService` and `DashboardActionCenterService` demonstrate splitting by responsibility.
 Use responsibility folders consistently for small features too. Group cooperating providers in `services/`, list config
 and query/date builders in `queries/`, and nested document item inputs in `dto/items/` when present.
-Keep tests adjacent to their subject. Do not require a repository/mapper/interface for every service or split
+All unit, HTTP and database specs and test-only fixtures MUST live in the owner's `_test/` folder:
+`src/modules/<feature>/_test/`, `src/auth/_test/`, `src/config/_test/`, or
+`src/common/<responsibility>/_test/`. Application composition tests live in `src/_test/`.
+Do not leave `.spec.ts` beside production providers/mappers/queries or gather feature tests into
+one global folder. Subfolders within `_test/` are allowed when distinct suites need them.
+Do not require a repository/mapper/interface for every service or split
 by an arbitrary file-length threshold. New nested files still follow naming, dependency, registration
 and verification rules. Keep cross-feature consumers on the owning module's intentional exports.
 
@@ -60,7 +66,7 @@ its provider module; the worker imports the latter. Do not create those extra mo
 | Response classes           | specific response purpose + `Dto`      | `PartyResponseDto`, `PartyListItemDto`, `MemberDto`    |
 | List config/constant       | UPPER_SNAKE_CASE                       | `PARTY_LIST_QUERY`, `PASSWORD_ROUNDS`                  |
 | Method/variable            | camelCase, behavior-oriented verb      | `assertAssignee`, `buildPartyUpdateData`               |
-| Test                       | adjacent `<subject>.spec.ts`           | `users.rules.spec.ts`                                  |
+| Test                       | owned `_test/<subject>.spec.ts`           | `users.rules.spec.ts`                                  |
 
 Prefer established service method names (`list`, `detail`, `create`, `update`, `deactivate`) when their
 meaning fits. A domain operation such as `reactivate`, `cancel` or `createAutoAllocated` should name
