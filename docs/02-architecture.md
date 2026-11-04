@@ -23,7 +23,7 @@ flowchart LR
 ```
 
 The browser only talks to the shell's same-origin `/api/*` route. The BFF reads the access token from the
-encrypted NextAuth session cookie and calls `API_BASE_URL` (`http://localhost:4000/api`) with
+encrypted NextAuth session cookie and calls `API_BASE_URL` (`http://localhost:<PORT>/api`) with
 `Authorization: Bearer ...`. The backend URL is never exposed through a `NEXT_PUBLIC_*` variable.
 
 ## Containers and deployment (C4 level 2)
@@ -159,5 +159,5 @@ the frontend yet.
 | Validation    | Global `ValidationPipe`: `whitelist`, `forbidNonWhitelisted`, `transform`, stops at the first error.                                                                                                                                               |
 | Money         | `Decimal(18,2)` in the database; amounts travel as numeric **strings** (`@IsNumberString`).                                                                                                                                                        |
 | Dates         | ISO 8601 strings; dashboard period boundaries use the `+07:00` (Vietnam) offset.                                                                                                                                                                   |
-| Imports       | Native ESM package imports `#auth`, `#common`, `#config`, `#database`, `#generated`, `#modules` ([guide](./guides/import-aliases.md)).                                                                                                                           |
+| Imports       | TypeScript aliases rewritten at build time: `@auth`, `@common`, `@config`, `@database`, `@generated`, `@modules` ([guide](./guides/import-aliases.md)).                                                                                                                           |
 | Localization  | `Accept-Language: en\|vi` (default `vi`) localizes `message` and validation errors; services throw translation keys, never text ([guide](./guides/localization.md)).                                                                               |

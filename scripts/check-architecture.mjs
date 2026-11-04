@@ -27,9 +27,29 @@ export function checkArchitecture(root = projectRoot) {
   const files = ts.sys.readDirectory(
     resolve(root, 'src'),
     ['.ts'],
-    ['**/generated/**', '**/*.spec.ts', '**/*.d.ts'],
+    ['**/generated/**', '**/*.spec.ts', '**/_test/**', '**/*.d.ts'],
   );
   const violations = [];
+  const specs = ts.sys.readDirectory(
+    resolve(root, 'src'),
+    ['.ts'],
+    ['**/generated/**'],
+    ['**/*.spec.ts'],
+  );
+  for (const file of specs) {
+    const owner = portable(relative(root, file));
+    const parts = owner.split('/');
+    const expected = owner.startsWith('src/modules/')
+      ? `src/modules/${parts[2]}/_test/`
+      : undefined;
+    if (expected ? !owner.startsWith(expected) : !parts.slice(0, -1).includes('_test'))
+      violations.push({
+        file: owner,
+        line: 1,
+        rule: 'test-layout',
+        message: `Keep tests in the owning _test folder${expected ? ` (${expected})` : ''}.`,
+      });
+  }
 
   for (const file of files) {
     const owner = portable(relative(root, file));
@@ -75,6 +95,8 @@ export function checkArchitecture(root = projectRoot) {
       ).resolvedModule;
       if (!imported) return; // The TypeScript build reports unresolved modules.
       const target = portable(relative(root, imported.resolvedFileName));
+      if (target.split('/').includes('_test'))
+        report(literal, 'test-dependency', 'Production code must not import test-only modules.');
       if (businessService && target.endsWith('.controller.ts')) {
         report(literal, 'service-controller-dependency', 'Services must not import controllers.');
       }

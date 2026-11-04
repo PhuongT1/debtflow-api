@@ -67,7 +67,7 @@ export function checkBackendConventions(root = projectRoot, { baseline, routePol
   const files = ts.sys.readDirectory(
     resolve(root, 'src'),
     ['.ts'],
-    ['**/generated/**', '**/*.spec.ts', '**/*.d.ts'],
+    ['**/generated/**', '**/*.spec.ts', '**/_test/**', '**/*.d.ts'],
   );
   const program = ts.createProgram(files, parsed.options);
   const checker = program.getTypeChecker();

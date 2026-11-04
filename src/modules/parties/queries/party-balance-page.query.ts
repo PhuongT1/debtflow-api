@@ -1,7 +1,7 @@
-import { DebtStatus, DebtType, Prisma } from '#generated/prisma/client.js';
-import type { SortItem } from '#common/query/index.js';
-import type { Pagination } from '#common/utils/pagination.util.js';
-import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { DebtStatus, DebtType, Prisma } from '@generated/prisma/client.js';
+import type { SortItem } from '@common/query/index.js';
+import type { Pagination } from '@common/utils/pagination.util.js';
+import { requireOrganizationId } from '@common/validation/require-organization-id.js';
 import { PARTY_LIST_QUERY } from './parties.list-query.js';
 import { partyColumn, partyWhereSql } from './party-filter.sql.js';
 

@@ -3,7 +3,7 @@ import {
   OrganizationRole,
   SystemRole,
   UserStatus,
-} from '#generated/prisma/client.js';
+} from '@generated/prisma/client.js';
 
 export class UserSummaryDto {
   id!: string;

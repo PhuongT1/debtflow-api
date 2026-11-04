@@ -1,4 +1,4 @@
-import type { Party, Prisma } from '#generated/prisma/client.js';
+import type { Party, Prisma } from '@generated/prisma/client.js';
 import type { partyListInclude } from '../queries/party.select.js';
 
 export type PartySearchSource = Pick<Party, 'name' | 'code' | 'phone' | 'taxCode'>;

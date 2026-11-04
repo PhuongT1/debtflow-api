@@ -23,7 +23,17 @@ export function validateEnv(config: EnvConfig) {
     throw new Error('JWT_SECRET must be at least 24 characters.');
   }
 
-  return config;
+  const portInput = config.PORT ?? 4000;
+  const port =
+    typeof portInput === 'number'
+      ? portInput
+      : typeof portInput === 'string' && portInput.trim()
+        ? Number(portInput)
+        : NaN;
+  if (!Number.isInteger(port) || port < 0 || port > 65535)
+    throw new Error('PORT must be an integer between 0 and 65535.');
+
+  return { ...config, PORT: port };
 }
 
 function isPostgresUrl(value: string) {

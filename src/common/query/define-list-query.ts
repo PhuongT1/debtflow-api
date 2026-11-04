@@ -1,4 +1,4 @@
-import { LIST_QUERY_MODELS } from '#generated/list-query/models.js';
+import { LIST_QUERY_MODELS } from '@generated/list-query/models.js';
 import type { FieldType, ListQueryConfig } from './list-query.types.js';
 
 const SCALAR_TYPES: Record<FieldType, readonly string[]> = {

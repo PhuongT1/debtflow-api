@@ -1,17 +1,19 @@
-import { ApiEnvelope, ApiErrorEnvelopes } from '#common/http/api-envelope.decorator.js';
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
+import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
 import { DashboardResponseDto } from '../dto/dashboard-response.dto.js';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
 import { DashboardService } from '../services/dashboard.service.js';
 import { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
 
-@ApiTags('Dashboard')
+@ApiTags(API_TAGS.DASHBOARD)
 @ProtectedApi()
 @ApiErrorEnvelopes({ badRequest: 'Invalid input or business rule violation.' })
-@Controller('dashboard')
+@Controller(API_ROUTES.DASHBOARD.PREFIX)
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 

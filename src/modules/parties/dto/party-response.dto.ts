@@ -1,6 +1,6 @@
-import { DebtRecordDto } from '#modules/debts/public/debt-records.js';
-import { PartyType } from '#generated/prisma/client.js';
-import { UserSummaryDto } from '#modules/users/public/users.js';
+import { DebtRecordDto } from '@modules/debts/public/debt-records.js';
+import { PartyType } from '@generated/prisma/client.js';
+import { UserSummaryDto } from '@modules/users/public/users.js';
 
 export class PartyBalanceDto {
   /** Remaining amount customers owe the organization (open and partial receivables). @example "8325000" */

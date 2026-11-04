@@ -8,6 +8,7 @@ Start here. Pages are ordered from "what is this" to "how is it built".
 | 2   | [Architecture](./02-architecture.md)                   | how the system, modules, auth, tenancy and the web frontend fit together |
 | 3   | [Business Rules](./03-business-rules.md)               | roles, debt lifecycle, payment allocation, reports, known gaps           |
 | 4   | [Database](./04-database.md)                           | the data model, relationships, enums and conventions                     |
+| -   | [Endpoint catalog](./generated/endpoints.md) | HTTP method + full URL index (generated) |
 | -   | [API Reference](./generated/api-reference.md)          | every endpoint, its roles, parameters and bodies (generated)             |
 | -   | [Database ERD and dictionary](./generated/database.md) | every table and column (generated)                                       |
 | -   | [OpenAPI JSON](./generated/openapi.json)               | the machine-readable spec (generated)                                    |

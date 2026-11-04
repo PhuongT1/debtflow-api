@@ -1,21 +1,23 @@
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
 import { PaymentResponseDto, PaymentReversalResponseDto } from '../dto/payment-response.dto.js';
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
 import { PAYMENT_LIST_QUERY } from '../queries/payments.list-query.js';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { Roles } from '#auth/decorators/roles.decorator.js';
-import { OrganizationRole } from '#generated/prisma/client.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { Roles } from '@auth/decorators/roles.decorator.js';
+import { OrganizationRole } from '@generated/prisma/client.js';
 import { PaymentsService } from '../services/payments.service.js';
 import { QueryPaymentsDto } from '../dto/query-payments.dto.js';
 import { CreateAllocatedPaymentDto } from '../dto/create-allocated-payment.dto.js';
-@ApiTags('Payments')
+@ApiTags(API_TAGS.PAYMENTS)
 @ProtectedApi()
-@Controller('payments')
+@Controller(API_ROUTES.PAYMENTS.PREFIX)
 export class PaymentsController {
   constructor(private readonly service: PaymentsService) {}
 
@@ -40,7 +42,7 @@ export class PaymentsController {
       "Applies the amount to the party's OPEN/PARTIAL debts of the given type, oldest due date first. " +
       "Rejected when the amount exceeds the party's total remaining balance.",
   })
-  @Post('auto-allocate')
+  @Post(API_ROUTES.PAYMENTS.AUTO_ALLOCATE)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   @ApiEnvelope(PaymentResponseDto, { status: HttpStatus.CREATED })
   create(@CurrentUser() u: JwtAuthPayload, @Body() b: CreateAllocatedPaymentDto) {
@@ -52,7 +54,7 @@ export class PaymentsController {
     description:
       'Deletes the voucher and subtracts its allocations from each debt, recomputing OPEN/PARTIAL/PAID.',
   })
-  @Delete(':id')
+  @Delete(API_ROUTES.PAYMENTS.BY_ID)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   @ApiEnvelope(PaymentReversalResponseDto)
   remove(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {

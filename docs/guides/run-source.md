@@ -71,15 +71,16 @@ This command runs:
 ```bash
 npm run db:generate
 nest build
+node scripts/rewrite-build-aliases.mjs
 ```
 
 The build generates the native ESM Prisma client and list-query schema metadata, then compiles Nest
-and copies its Swagger browser asset. Generation does not connect to a database. List-query metadata
+and copies its Swagger browser asset, then rewrites short aliases in the compiled output. Generation does not connect to a database. List-query metadata
 is generated from the same schema so startup validation does not depend on private Prisma internals.
 
 `src/vercel.ts` compiles to `dist/src/vercel.js`. Vercel invokes the ESM entry `api/index.js`, which
-exports that handler. Node resolves `#...` aliases through `package.json` on every deployment target;
-there is no post-build alias rewrite. See [Import Aliases](import-aliases.md).
+exports that handler. The build rewrites `@auth/*`, `@common/*` and the other configured aliases to
+relative ESM paths before deployment; plain Node needs no runtime alias resolver. See [Import Aliases](import-aliases.md).
 
 ## Run Compiled Output
 

@@ -44,7 +44,7 @@ type OpenApi = {
   components?: { schemas?: Record<string, Schema> };
 };
 
-const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
+const METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'];
 const outputDir = join(import.meta.dirname, '..', 'docs', 'generated');
 
 async function main() {
@@ -58,11 +58,27 @@ async function main() {
 
   mkdirSync(outputDir, { recursive: true });
   writeFileSync(join(outputDir, 'openapi.json'), `${JSON.stringify(document, null, 2)}\n`);
-  writeFileSync(join(outputDir, 'api-reference.md'), renderMarkdown(document));
-  console.log('Generated docs/generated/openapi.json and docs/generated/api-reference.md');
+  const groups = groupOperationsByTag(document);
+  const reference = renderMarkdown(document, groups);
+  writeFileSync(join(outputDir, 'api-reference.md'), reference);
+  writeFileSync(
+    join(outputDir, 'endpoints.md'),
+    [
+      '# Endpoint catalog',
+      '',
+      '> Generated from Nest/OpenAPI by `npm run docs:generate`. Do not edit by hand.',
+      '> Path segments: `src/common/constants/api-routes.constants.ts`; HTTP methods and handlers: feature controllers.',
+      '',
+      'See [full API reference](./api-reference.md) for DTOs, filters, examples and responses.',
+      '',
+      ...renderEndpointIndex(groups),
+      '',
+    ].join('\n'),
+  );
+  console.log('Generated OpenAPI, API reference and endpoint catalog in docs/generated/');
 }
 
-function renderMarkdown(document: OpenApi) {
+function groupOperationsByTag(document: OpenApi) {
   const groups = new Map<string, Array<{ method: string; path: string; op: Operation }>>();
 
   for (const [path, item] of Object.entries(document.paths)) {
@@ -74,6 +90,23 @@ function renderMarkdown(document: OpenApi) {
     }
   }
 
+  return groups;
+}
+
+function renderEndpointIndex(groups: ReturnType<typeof groupOperationsByTag>) {
+  return [
+    '| Method | Path | Access | Summary |',
+    '| --- | --- | --- | --- |',
+    ...[...groups].flatMap(([tag, list]) =>
+      list.map(
+        ({ method, path, op }) =>
+          `| ${method.toUpperCase()} | \`${path}\` | ${access(op)} | ${op.summary ?? ''} (${tag}) |`,
+      ),
+    ),
+  ];
+}
+
+function renderMarkdown(document: OpenApi, groups: ReturnType<typeof groupOperationsByTag>) {
   const total = [...groups.values()].reduce((sum, list) => sum + list.length, 0);
   const lines: string[] = [
     `# API Reference`,
@@ -82,7 +115,7 @@ function renderMarkdown(document: OpenApi) {
     '> Fix the controller decorators or DTOs instead, then regenerate.',
     '',
     `**${document.info.title}** v${document.info.version} - ${total} endpoints.`,
-    'Base URL: `http://localhost:4000/api`. Interactive docs: `/docs`. Raw spec: [openapi.json](./openapi.json).',
+    'Paths are relative to the backend origin. Local port comes from `PORT`; startup logs print the Swagger URL. Interactive docs: `/docs`. Raw spec: [openapi.json](./openapi.json).',
     '',
     '## Conventions',
     '',
@@ -94,17 +127,8 @@ function renderMarkdown(document: OpenApi) {
     '',
     '## Endpoint index',
     '',
-    '| Method | Path | Access | Summary |',
-    '| --- | --- | --- | --- |',
+    ...renderEndpointIndex(groups),
   ];
-
-  for (const [tag, list] of groups) {
-    for (const { method, path, op } of list) {
-      lines.push(
-        `| ${method.toUpperCase()} | \`${path}\` | ${access(op)} | ${op.summary ?? ''} (${tag}) |`,
-      );
-    }
-  }
 
   for (const [tag, list] of groups) {
     lines.push('', `## ${tag}`);

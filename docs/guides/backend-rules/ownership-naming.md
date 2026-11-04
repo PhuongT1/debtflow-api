@@ -15,6 +15,7 @@ src/modules/<plural-feature>/
     <plural-feature>.controller.ts # routes, context, policy, documentation
   services/
     <plural-feature>.service.ts      # use-case orchestration and persistence
+  _test/
     <plural-feature>.service.spec.ts # observable service behavior
   queries/                          # only when query responsibilities exist
     <plural-feature>.list-query.ts   # public filter/sort capabilities
@@ -38,7 +39,12 @@ This template is not a closed list. A growing feature may use focused `services/
 `DebtLineItemService` and `DashboardActionCenterService` demonstrate splitting by responsibility.
 Use responsibility folders consistently for small features too. Group cooperating providers in `services/`, list config
 and query/date builders in `queries/`, and nested document item inputs in `dto/items/` when present.
-Keep tests adjacent to their subject. Do not require a repository/mapper/interface for every service or split
+All unit, HTTP and database specs and test-only fixtures MUST live in the owner's `_test/` folder:
+`src/modules/<feature>/_test/`, `src/auth/_test/`, `src/config/_test/`, or
+`src/common/<responsibility>/_test/`. Application composition tests live in `src/_test/`.
+Do not leave `.spec.ts` beside production providers/mappers/queries or gather feature tests into
+one global folder. Subfolders within `_test/` are allowed when distinct suites need them.
+Do not require a repository/mapper/interface for every service or split
 by an arbitrary file-length threshold. New nested files still follow naming, dependency, registration
 and verification rules. Keep cross-feature consumers on the owning module's intentional exports.
 
@@ -60,13 +66,13 @@ its provider module; the worker imports the latter. Do not create those extra mo
 | Response classes           | specific response purpose + `Dto`      | `PartyResponseDto`, `PartyListItemDto`, `MemberDto`    |
 | List config/constant       | UPPER_SNAKE_CASE                       | `PARTY_LIST_QUERY`, `PASSWORD_ROUNDS`                  |
 | Method/variable            | camelCase, behavior-oriented verb      | `assertAssignee`, `buildPartyUpdateData`               |
-| Test                       | adjacent `<subject>.spec.ts`           | `users.rules.spec.ts`                                  |
+| Test                       | owned `_test/<subject>.spec.ts`           | `users.rules.spec.ts`                                  |
 
 Prefer established service method names (`list`, `detail`, `create`, `update`, `deactivate`) when their
 meaning fits. A domain operation such as `reactivate`, `cancel` or `createAutoAllocated` should name
 its business action. Do not rename compatible existing public methods solely to mimic Vendure's
-`findAll`/`findOne`. Local import aliases must follow `tsconfig.json`; same-feature relative imports
-are fine. Public DTO classes may share a response file when they describe one resource contract.
+`findAll`/`findOne`. Local imports follow the short `@auth/*`, `@common/*`, `@config/*`, `@database/*`, `@generated/*` and `@modules/*` aliases declared in `tsconfig.json` and the ESM import guide; same-feature relative
+imports use explicit `.js` suffixes. Public DTO classes may share a response file when they describe one resource contract.
 
 ## OWN-03 — wire exactly one provider owner
 
@@ -133,3 +139,23 @@ Vendure has strategy folders. Prefer a named function/helper for a pure rule. Av
 repository, CQRS bus, plugin engine or global request context when the actual task only needs a small
 use case. If an exception is necessary for a documented runtime constraint, scope and explain it
 instead of making it the default pattern.
+
+
+## OWN-06 — locate constants by ownership
+
+Search existing constants and callers before adding a definition. Constants shared by feature HTTP
+adapters belong in the existing `src/common/constants/` folder: `api-routes.constants.ts` owns
+`API_PREFIX` and `API_ROUTES`; `api-tags.constants.ts` owns Swagger group names. Use `PREFIX` for a
+controller prefix, `BY_ID` for an item path and descriptive action names for subpaths.
+
+Business constants used only by a feature belong in that feature (a focused `<concern>.constants.ts`
+or its existing `constants/` folder). A private value used by one implementation can stay beside it.
+Concern-specific infrastructure constants stay with their owner, such as validation's
+`phone.constants.ts` and Swagger's private asset configuration. Do not dump every constant into a
+global registry or create duplicate generic `constants.ts` files without an owner. Reuse Prisma
+enums and existing values rather than redeclaring them.
+
+Vendure illustrates both scopes: `packages/core/src/common/constants.ts` holds shared infrastructure
+values, while `health-check/constants.ts`, `job-queue/constants.ts` and `api/constants.ts` stay with
+their respective owners. DebtFlow uses its existing shared constants directory for the public REST
+path/tag contract; it does not import Vendure's constants or assume its GraphQL paths match REST.

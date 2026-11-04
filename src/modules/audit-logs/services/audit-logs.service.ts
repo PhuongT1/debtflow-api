@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { applyListQuery, type ListQueryResult } from '#common/query/index.js';
-import { PrismaService } from '#database/prisma.service.js';
-import { Prisma } from '#generated/prisma/client.js';
-import { getPagination, paginate } from '#common/utils/pagination.util.js';
+import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
+import { PrismaService } from '@database/prisma.service.js';
+import { Prisma } from '@generated/prisma/client.js';
+import { getPagination, paginate } from '@common/utils/pagination.util.js';
 import { QueryAuditLogsDto } from '../dto/query-audit-logs.dto.js';
 
 @Injectable()

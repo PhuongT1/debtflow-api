@@ -1,21 +1,23 @@
-import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
+import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
 import { AuditLogResponseDto } from '../dto/audit-log-response.dto.js';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
-import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '#common/query/index.js';
+import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
+import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
+import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
 import { AUDIT_LOG_LIST_QUERY } from '../queries/audit-logs.list-query.js';
-import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
-import { Roles } from '#auth/decorators/roles.decorator.js';
-import { OrganizationRole } from '#generated/prisma/client.js';
+import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
+import { Roles } from '@auth/decorators/roles.decorator.js';
+import { OrganizationRole } from '@generated/prisma/client.js';
 import { AuditLogsService } from '../services/audit-logs.service.js';
 import { QueryAuditLogsDto } from '../dto/query-audit-logs.dto.js';
 
-@ApiTags('Audit logs')
+@ApiTags(API_TAGS.AUDIT_LOGS)
 @ProtectedApi()
 @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
-@Controller('audit-logs')
+@Controller(API_ROUTES.AUDIT_LOGS.PREFIX)
 export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 

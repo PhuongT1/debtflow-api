@@ -190,14 +190,14 @@ justifies extracting a package. See the [pinned Vendure source map](./backend-ru
 
 ## Composition regression checks
 
-`src/app.module.spec.ts` boots the real compiled Nest graph on an ephemeral localhost port, overriding
+`src/_test/app.module.spec.ts` boots the real compiled Nest graph on an ephemeral localhost port, overriding
 Prisma and the exercised business services with sanitized mocks. It checks public login/refresh,
 protected reads and organization switching, current-role mutation rejection, tenant/actor forwarding,
 unknown-field rejection and response status/envelope. It also composes `PaymentsModule` independently
 of the HTTP application. These tests cover wiring/access integration, not live database guarantees.
 
 Run `npm run check`, which builds before running the suite. For a targeted run after source changes,
-run `npm run build` before `npx vitest run src/app.module.spec.ts`; the suite intentionally loads compiled
+run `npm run build` before `npx vitest run src/_test/app.module.spec.ts`; the suite intentionally loads compiled
 artifacts for Nest constructor metadata and generated Swagger factories. Source layout is additionally
 guarded by `check:architecture` and `check:maintainability`, and exact public/member policies by `check:conventions`.
 
@@ -254,3 +254,15 @@ Runtime/build ownership: Node 24 + native ESM, TypeScript 6 and Nest 12.
 [Import Aliases](import-aliases.md) defines import syntax; [Run Source](run-source.md) covers
 Vercel, Node and Docker artifacts. `src/generated/list-query/` is schema-generated metadata for
 list-query validation and is regenerated together with the Prisma client.
+
+
+Test placement: all specs and fixtures live in the owner's `_test/` folder. For example,
+`parties/_test/` contains service, mapper and query suites together; `common/query/_test/` owns
+shared query tests and their helpers. Application composition tests are in `src/_test/`.
+Tests do not enter the production build; see the [testing contract](backend-rules/testing-completion.md#test-placement).
+
+
+`.ai/` is the maintained AI workspace: reusable core rules/skills, project-specific skills and the
+project manifest. It is intentionally broader than `.ai-rules/`. Client folders remain generated
+installations. Rename this workspace only for a concrete requirement and update the installer,
+manifest, root guide, client adapters, ignore policy and portability tests together.

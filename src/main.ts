@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+import { SWAGGER_PATHS } from '@common/swagger/swagger-ui.js';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
@@ -9,7 +11,8 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
   configureApp(app);
-  await app.listen(config.get<number>('PORT') ?? 4000);
+  await app.listen(config.getOrThrow<number>('PORT'));
+  Logger.log(`Swagger UI: ${new URL(SWAGGER_PATHS.ui, await app.getUrl()).href}`, 'Bootstrap');
 }
 
 bootstrap();

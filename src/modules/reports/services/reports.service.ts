@@ -1,11 +1,11 @@
-import { getDebtAgingRanges, DEBT_AGING_VALUES } from '#modules/debts/public/debts.js';
+import { getDebtAgingRanges, DEBT_AGING_VALUES } from '@modules/debts/public/debts.js';
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '#database/prisma.service.js';
-import { DebtStatus, Prisma } from '#generated/prisma/client.js';
-import { buildDebtQuery } from '#modules/debts/public/debts.js';
-import type { QueryDebtsDto } from '#modules/debts/public/debts.js';
+import { PrismaService } from '@database/prisma.service.js';
+import { DebtStatus, Prisma } from '@generated/prisma/client.js';
+import { buildDebtQuery } from '@modules/debts/public/debts.js';
+import type { QueryDebtsDto } from '@modules/debts/public/debts.js';
 import type { AgingReportResponseDto } from '../dto/aging-report-response.dto.js';
-import type { ListQueryResult } from '#common/query/index.js';
+import type { ListQueryResult } from '@common/query/index.js';
 
 @Injectable()
 export class ReportsService {

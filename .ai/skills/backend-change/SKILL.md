@@ -14,6 +14,8 @@ contract; this skill selects and applies it rather than maintaining a second cop
 - Providers, DTOs, types or queries: `.ai/core/maintainability.md` and project
   `maintainability.md`. Search existing contracts/helpers and trace callers before defining another
   shape; choose runtime DTO reuse, generated payload derivation or inference as appropriate.
+- Constants or file moves: read `ownership-naming.md` (including constant ownership), search existing
+  definitions/callers and choose the existing owner before adding a folder or file.
 - New file/feature: `ownership-naming.md` (owner, kebab-case role suffix, DTO/class names, Nest wiring).
 - Route/input/output: `http-contract.md` and `validation.md` (runtime DTO imports, null/blank semantics,
   status/envelope, validation/error contracts, binary exceptions).
@@ -27,6 +29,12 @@ contract; this skill selects and applies it rather than maintaining a second cop
 These files live under `docs/guides/backend-rules/`. `vendure-source-map.md` provides the pinned
 source symbols and two traced request flows when a pattern's origin or adaptation is in question.
 Do not assume GraphQL inputs, TypeORM transactions or Permission.Owner work identically in DebtFlow.
+
+## Testing requests
+
+When asked to add, check or reorganize tests, read [the testing workflow](references/testing.md).
+It selects the owning `_test/` folder, behavioral scenarios and authorized test environment; the
+project testing guide remains the canonical verification contract.
 
 ## Establish the change
 

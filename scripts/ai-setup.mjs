@@ -115,6 +115,7 @@ export function setupAi(root = defaultRoot, { check = false, init = false } = {}
     'security',
     'persistence',
     'verification',
+    'testing',
   ])
     read(`${coreRoot}/${topic}.md`);
 
