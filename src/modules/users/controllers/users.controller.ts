@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import {
   Body,
   Controller,
@@ -30,9 +32,9 @@ const ID_PARAM = ApiParam({ name: 'id', description: 'User id (the `id` returned
 
 const toActor = (user: JwtAuthPayload): Actor => ({ userId: user.sub, role: user.role });
 
-@ApiTags('Users')
+@ApiTags(API_TAGS.USERS)
 @ProtectedApi()
-@Controller('users')
+@Controller(API_ROUTES.USERS.PREFIX)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -41,7 +43,7 @@ export class UsersController {
     description: 'Lightweight list of active members used by assignee pickers.',
   })
   @ApiEnvelope(UserOptionDto, { isArray: true })
-  @Get('options')
+  @Get(API_ROUTES.USERS.OPTIONS)
   options(@CurrentUser() user: JwtAuthPayload) {
     return this.usersService.options(user.organizationId);
   }
@@ -94,7 +96,7 @@ export class UsersController {
     conflict: 'The phone already belongs to another account.',
   })
   @ID_PARAM
-  @Patch(':id')
+  @Patch(API_ROUTES.USERS.BY_ID)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   update(
     @CurrentUser() user: JwtAuthPayload,
@@ -116,7 +118,7 @@ export class UsersController {
     notFound: 'The user is not a member of this organization.',
   })
   @ID_PARAM
-  @Delete(':id')
+  @Delete(API_ROUTES.USERS.BY_ID)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   deactivate(@CurrentUser() user: JwtAuthPayload, @Param('id') id: string) {
     return this.usersService.deactivate(user.organizationId, id, toActor(user));
@@ -133,7 +135,7 @@ export class UsersController {
   })
   @ID_PARAM
   @HttpCode(HttpStatus.OK)
-  @Post(':id/reactivate')
+  @Post(API_ROUTES.USERS.REACTIVATE)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   reactivate(@CurrentUser() user: JwtAuthPayload, @Param('id') id: string) {
     return this.usersService.reactivate(user.organizationId, id, toActor(user));

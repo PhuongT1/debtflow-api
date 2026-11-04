@@ -5394,7 +5394,52 @@
     "version": "0.1.0",
     "contact": {}
   },
-  "tags": [],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": ""
+    },
+    {
+      "name": "Users",
+      "description": ""
+    },
+    {
+      "name": "Parties",
+      "description": ""
+    },
+    {
+      "name": "Debts",
+      "description": ""
+    },
+    {
+      "name": "Payments",
+      "description": ""
+    },
+    {
+      "name": "Catalog",
+      "description": ""
+    },
+    {
+      "name": "Dashboard",
+      "description": ""
+    },
+    {
+      "name": "Reports",
+      "description": ""
+    },
+    {
+      "name": "Exports",
+      "description": ""
+    },
+    {
+      "name": "Imports",
+      "description": ""
+    },
+    {
+      "name": "Audit logs",
+      "description": ""
+    }
+  ],
   "servers": [],
   "components": {
     "securitySchemes": {

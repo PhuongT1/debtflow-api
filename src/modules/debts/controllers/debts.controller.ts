@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { HttpStatus } from '@nestjs/common';
 import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
 import { DebtRecordDto } from '../dto/debt-record.dto.js';
@@ -23,14 +25,14 @@ import { CreateDebtDto } from '../dto/create-debt.dto.js';
 import { QueryDebtsDto } from '../dto/query-debts.dto.js';
 import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto.js';
 import { CreatePaymentDto } from '@modules/payments/public/payments.js';
-@ApiTags('Debts')
+@ApiTags(API_TAGS.DEBTS)
 @ProtectedApi()
 @ApiErrorEnvelopes({
   badRequest: 'Invalid input or business rule violation.',
   notFound: 'The tenant-owned resource was not found.',
   conflict: 'Resource conflict.',
 })
-@Controller('debts')
+@Controller(API_ROUTES.DEBTS.PREFIX)
 export class DebtsController {
   constructor(
     private readonly debts: DebtsService,
@@ -69,7 +71,7 @@ export class DebtsController {
     summary: 'Get debt detail',
     description: 'Includes party, assignee, line items and the payments applied to the debt.',
   })
-  @Get(':id')
+  @Get(API_ROUTES.DEBTS.BY_ID)
   @ApiEnvelope(DebtDetailResponseDto)
   detail(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
     return this.debts.detail(id, u.organizationId);
@@ -80,7 +82,7 @@ export class DebtsController {
     description:
       'Updates the assignee, collection status, follow-up schedule and reference numbers. Amounts and status are not editable here.',
   })
-  @Patch(':id')
+  @Patch(API_ROUTES.DEBTS.BY_ID)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   @ApiEnvelope(DebtCollectionResponseDto)
   update(
@@ -94,7 +96,7 @@ export class DebtsController {
     summary: 'Cancel a debt',
     description: 'Sets status to CANCELLED. Rejected when the debt already has payments.',
   })
-  @Delete(':id')
+  @Delete(API_ROUTES.DEBTS.BY_ID)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   @ApiEnvelope(DebtRecordDto)
   cancel(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
@@ -106,7 +108,7 @@ export class DebtsController {
     description:
       'Rejected when the debt is PAID or CANCELLED, or when the amount exceeds the remaining balance.',
   })
-  @Post(':id/payments')
+  @Post(API_ROUTES.DEBTS.PAYMENTS)
   @Roles(OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   @ApiEnvelope(PaymentResponseDto, { status: HttpStatus.CREATED })
   payment(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string, @Body() b: CreatePaymentDto) {

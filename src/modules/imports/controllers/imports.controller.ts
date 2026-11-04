@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { HttpStatus } from '@nestjs/common';
 import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
 import { ImportScaffoldResponseDto } from '../dto/import-scaffold-response.dto.js';
@@ -7,15 +9,15 @@ import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
 import { Roles } from '@auth/decorators/roles.decorator.js';
 import { OrganizationRole } from '@generated/prisma/client.js';
 
-@ApiTags('Imports')
+@ApiTags(API_TAGS.IMPORTS)
 @ProtectedApi()
-@Controller('imports')
+@Controller(API_ROUTES.IMPORTS.PREFIX)
 export class ImportsController {
   @ApiOperation({
     summary: 'Import debts from Excel (scaffold)',
     description: 'Not implemented yet: returns a placeholder message and imports nothing.',
   })
-  @Post('debts')
+  @Post(API_ROUTES.IMPORTS.DEBTS)
   @Roles(OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT)
   @ApiEnvelope(ImportScaffoldResponseDto, { status: HttpStatus.CREATED })
   debts() {

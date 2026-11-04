@@ -139,3 +139,23 @@ Vendure has strategy folders. Prefer a named function/helper for a pure rule. Av
 repository, CQRS bus, plugin engine or global request context when the actual task only needs a small
 use case. If an exception is necessary for a documented runtime constraint, scope and explain it
 instead of making it the default pattern.
+
+
+## OWN-06 — locate constants by ownership
+
+Search existing constants and callers before adding a definition. Constants shared by feature HTTP
+adapters belong in the existing `src/common/constants/` folder: `api-routes.constants.ts` owns
+`API_PREFIX` and `API_ROUTES`; `api-tags.constants.ts` owns Swagger group names. Use `PREFIX` for a
+controller prefix, `BY_ID` for an item path and descriptive action names for subpaths.
+
+Business constants used only by a feature belong in that feature (a focused `<concern>.constants.ts`
+or its existing `constants/` folder). A private value used by one implementation can stay beside it.
+Concern-specific infrastructure constants stay with their owner, such as validation's
+`phone.constants.ts` and Swagger's private asset configuration. Do not dump every constant into a
+global registry or create duplicate generic `constants.ts` files without an owner. Reuse Prisma
+enums and existing values rather than redeclaring them.
+
+Vendure illustrates both scopes: `packages/core/src/common/constants.ts` holds shared infrastructure
+values, while `health-check/constants.ts`, `job-queue/constants.ts` and `api/constants.ts` stay with
+their respective owners. DebtFlow uses its existing shared constants directory for the public REST
+path/tag contract; it does not import Vendure's constants or assume its GraphQL paths match REST.

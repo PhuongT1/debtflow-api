@@ -19,9 +19,10 @@ route and `scripts/generate-api-docs.ts` use that same document; do not maintain
 | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Endpoint, input/output or response description                                        | Owning feature controller and DTO; shared response decorators in `common/decorators/`              |
 | Exposed sort/filter fields                                                            | Feature `*.list-query.ts`; shared `common/query/list-query.swagger.ts` renders their documentation |
+| Swagger group names (`Auth`, `Parties`, etc.) | `src/common/constants/api-tags.constants.ts`; controllers import `API_TAGS` |
 | API title, version, bearer scheme, global headers or documentation route registration | `src/common/swagger/swagger.setup.ts`                                                              |
 | Documentation URLs, page HTML or pinned Swagger UI asset version                      | `src/common/swagger/swagger-ui.ts`                                                                 |
-| Automatic login token, persistence, expiry and Logout                                 | `src/common/swagger/swagger-auth.js`; extend adjacent `swagger-auth.spec.ts`                       |
+| Automatic login token, persistence, expiry and Logout                                 | `src/common/swagger/swagger-auth.js`; extend `common/swagger/_test/swagger-auth.spec.ts`                       |
 | Application prefix, CORS and global validation                                        | `src/configure-app.ts`                                                                             |
 | Generated Markdown rendering                                                          | `scripts/generate-api-docs.ts`; schema still comes from the shared Swagger setup                   |
 
@@ -35,7 +36,7 @@ in development. Vercel already includes `dist/**`. Keep the asset rule when chan
 The compiled application HTTP suite verifies that the page, JSON document and browser asset are served.
 
 After changing controller/DTO documentation, run `npm run docs:generate`. After changing the browser
-helper, run its adjacent tests, `npm run typecheck` and `npm run lint`. `npm run build` must finish before running the full
+helper, run its `_test/` suite, `npm run typecheck` and `npm run lint`. `npm run build` must finish before running the full
 suite, which loads compiled Nest metadata and checks packaged assets; `npm run check` uses this order.
 For documentation-site changes run `npm run docs:build`. Keep generated references with their source.
 
@@ -105,3 +106,15 @@ The frontend `.env` should use:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
+
+
+`@ApiTags(API_TAGS.PARTIES)` assigns a documentation group. It does not register an endpoint,
+a permission or an API prefix. Keep `@Controller`, route methods, DTOs and policy with their
+feature; OpenAPI derives the complete endpoint list from that code. The shared tag registry is
+also registered by `createOpenApiDocument()`; the compact endpoint catalog is generated from the same document.
+
+
+Endpoint discovery: [Endpoint catalog](../generated/endpoints.md) lists every HTTP method and URL from the compiled OpenAPI document.
+Path definitions live in `src/common/constants/api-routes.constants.ts`; controllers use `API_ROUTES`
+for `@Controller(...)` and named method paths. HTTP verbs, policy and implementations remain in
+the owning controllers. Run `npm run docs:generate` after a route change; do not edit the catalog.

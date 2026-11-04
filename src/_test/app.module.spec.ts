@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { Prisma } from '@generated/prisma/client.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { SWAGGER_PATHS } from '@common/swagger/swagger-ui.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -146,6 +147,20 @@ describe('domain module composition and HTTP access', () => {
     });
     return { status: response.status, body: await response.json() };
   }
+
+  it('uses the shared Swagger groups for every documented operation', () => {
+    const registered = Object.values(API_TAGS);
+    expect(document.tags?.map(({ name }) => name)).toEqual(registered);
+    for (const path of Object.values(document.paths)) {
+      for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+        const operation = path?.[method];
+        if (operation) {
+          expect(operation.tags?.length).toBeGreaterThan(0);
+          for (const tag of operation.tags ?? []) expect(registered).toContain(tag);
+        }
+      }
+    }
+  });
 
   it('serves the same OpenAPI document returned for offline generation', async () => {
     const response = await fetch(`${url}${SWAGGER_PATHS.json}`);

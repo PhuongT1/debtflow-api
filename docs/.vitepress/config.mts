@@ -27,6 +27,7 @@ export default withMermaid(
       nav: [
         { text: 'Overview', link: '/01-overview' },
         { text: 'Architecture', link: '/02-architecture' },
+        { text: 'Endpoints', link: '/generated/endpoints' },
         { text: 'API Reference', link: '/generated/api-reference' },
         { text: 'Database', link: '/04-database' },
       ],
@@ -44,6 +45,7 @@ export default withMermaid(
         {
           text: 'Reference (generated)',
           items: [
+            { text: 'Endpoint catalog', link: '/generated/endpoints' },
             { text: 'API Reference', link: '/generated/api-reference' },
             { text: 'Database ERD & dictionary', link: '/generated/database' },
           ],

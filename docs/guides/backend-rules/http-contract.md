@@ -75,3 +75,15 @@ behavior. Never return a partial capped export while describing it as the whole 
 
 **Acceptance:** compare the generated operation with an actual response or HTTP test, including status,
 envelope, error details, content type and relevant role/tenant failures. AST checks only cover metadata.
+
+
+Swagger group names are defined once in `common/constants/api-tags.constants.ts`. Use
+`@ApiTags(API_TAGS.<GROUP>)` in controllers; keep endpoint definitions and auth/role metadata on the
+owning feature. A central documentation-group registry must not duplicate the route catalog.
+
+
+Controller prefixes and named subpaths MUST reference `API_ROUTES` from
+`common/constants/api-routes.constants.ts`. `API_PREFIX` owns the global prefix. Base GET/POST handlers
+can use a pathless decorator. Do not duplicate literal prefixes in controllers or move providers
+into a global routing service. `docs/generated/endpoints.md` is the human-readable method + full
+URL catalog generated from OpenAPI; update generated references with each route change.

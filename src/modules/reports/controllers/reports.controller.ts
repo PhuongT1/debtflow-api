@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
@@ -10,9 +12,9 @@ import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decora
 import { QueryDebtsDto } from '@modules/debts/public/debts.js';
 import { AgingReportResponseDto } from '../dto/aging-report-response.dto.js';
 
-@ApiTags('Reports')
+@ApiTags(API_TAGS.REPORTS)
 @ProtectedApi()
-@Controller('reports')
+@Controller(API_ROUTES.REPORTS.PREFIX)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
@@ -26,7 +28,7 @@ export class ReportsController {
   @ApiEnvelope(AgingReportResponseDto)
   @ApiErrorEnvelopes({ badRequest: 'Invalid debt filters or query parameters.' })
   @ApiListQuery(DEBT_LIST_QUERY)
-  @Get('aging')
+  @Get(API_ROUTES.REPORTS.AGING)
   aging(
     @CurrentUser() user: JwtAuthPayload,
     @Query() query: QueryDebtsDto,

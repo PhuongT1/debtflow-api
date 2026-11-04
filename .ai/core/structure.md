@@ -66,3 +66,9 @@ Keeping `src/` in one application does not limit those options.
 Follow the project's test placement policy. Keep specs and test-only fixtures in the owner's
 `_test/` folder, outside production responsibility folders and build output. Moving tests requires
 updating imports, runners, references and documented commands together. See [Testing](testing.md).
+
+
+Place constants by owner and actual callers. Reuse the existing shared constants location for
+cross-feature contracts; keep feature-only values with the feature and private implementation values
+near their use. Do not create another constants folder/file or duplicate an enum without checking
+existing owners. Name constants for their meaning and functions for their actual input/output/action.

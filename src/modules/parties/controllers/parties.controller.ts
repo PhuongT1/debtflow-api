@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@common/constants/api-routes.constants.js';
+import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import {
   Body,
   Controller,
@@ -27,9 +29,9 @@ import { PartiesService } from '../services/parties.service.js';
 const ID_PARAM = ApiParam({ name: 'id', description: 'Party id.' });
 const WRITERS = [OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT];
 
-@ApiTags('Parties')
+@ApiTags(API_TAGS.PARTIES)
 @ProtectedApi()
-@Controller('parties')
+@Controller(API_ROUTES.PARTIES.PREFIX)
 export class PartiesController {
   constructor(private readonly service: PartiesService) {}
 
@@ -73,7 +75,7 @@ export class PartiesController {
   @ApiEnvelope(PartyDetailDto)
   @ApiErrorEnvelopes({ notFound: 'The party does not exist in this organization.' })
   @ID_PARAM
-  @Get(':id')
+  @Get(API_ROUTES.PARTIES.BY_ID)
   detail(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
     return this.service.detail(u.organizationId, id);
   }
@@ -91,7 +93,7 @@ export class PartiesController {
     conflict: 'The code already exists in this organization.',
   })
   @ID_PARAM
-  @Patch(':id')
+  @Patch(API_ROUTES.PARTIES.BY_ID)
   @Roles(...WRITERS)
   update(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string, @Body() b: UpdatePartyDto) {
     return this.service.update(u.organizationId, id, b, u.sub);
@@ -107,7 +109,7 @@ export class PartiesController {
     notFound: 'The party does not exist in this organization.',
   })
   @ID_PARAM
-  @Delete(':id')
+  @Delete(API_ROUTES.PARTIES.BY_ID)
   @Roles(...WRITERS)
   remove(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
     return this.service.deactivate(u.organizationId, id, u.sub);

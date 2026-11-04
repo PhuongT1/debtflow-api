@@ -219,3 +219,9 @@ After changing an endpoint, DTO or Prisma model, run `npm run docs:generate` and
 - PostgreSQL / Neon
 - JWT auth
 - Swagger / OpenAPI
+
+
+Endpoint discovery: [Endpoint catalog](docs/generated/endpoints.md) lists every HTTP method and URL from the compiled OpenAPI document.
+Path definitions live in `src/common/constants/api-routes.constants.ts`; controllers use `API_ROUTES`
+for `@Controller(...)` and named method paths. HTTP verbs, policy and implementations remain in
+the owning controllers. Run `npm run docs:generate` after a route change; do not edit the catalog.

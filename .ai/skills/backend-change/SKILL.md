@@ -14,6 +14,8 @@ contract; this skill selects and applies it rather than maintaining a second cop
 - Providers, DTOs, types or queries: `.ai/core/maintainability.md` and project
   `maintainability.md`. Search existing contracts/helpers and trace callers before defining another
   shape; choose runtime DTO reuse, generated payload derivation or inference as appropriate.
+- Constants or file moves: read `ownership-naming.md` (including constant ownership), search existing
+  definitions/callers and choose the existing owner before adding a folder or file.
 - New file/feature: `ownership-naming.md` (owner, kebab-case role suffix, DTO/class names, Nest wiring).
 - Route/input/output: `http-contract.md` and `validation.md` (runtime DTO imports, null/blank semantics,
   status/envelope, validation/error contracts, binary exceptions).
