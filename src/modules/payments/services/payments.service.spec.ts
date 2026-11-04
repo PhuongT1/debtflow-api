@@ -141,4 +141,38 @@ describe('payment tenant context and transaction effects', () => {
     await expect(s.service.create('d1', input, 'org-1')).rejects.toThrow('write failed');
     expect(s.events.emit).not.toHaveBeenCalled();
   });
+  it('uses a stable debt-ID tie-breaker when allocation priority dates are identical', async () => {
+    const s = setup();
+    await s.service.createAutoAllocated({ ...input, type: 'RECEIVABLE', partyId: 'p1' }, 'org-1');
+    expect(s.tx.debt.findMany.mock.calls[0][0].orderBy).toEqual([
+      { dueDate: 'asc' },
+      { issueDate: 'asc' },
+      { createdAt: 'asc' },
+      { id: 'asc' },
+    ]);
+  });
+
+  it('rejects insufficient auto-allocation balance before any write or audit', async () => {
+    const s = setup();
+    await expect(
+      s.service.createAutoAllocated(
+        { ...input, amount: '80.01', type: 'RECEIVABLE', partyId: 'p1' },
+        'org-1',
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(s.tx.payment.create).not.toHaveBeenCalled();
+    expect(s.tx.debt.update).not.toHaveBeenCalled();
+    expect(s.events.emit).not.toHaveBeenCalled();
+  });
+
+  it('does not publish success if transaction completion fails after the callback writes', async () => {
+    const s = setup();
+    s.transaction.mockImplementation(async (run) => {
+      await run(s.tx);
+      throw new Error('commit failed');
+    });
+    await expect(s.service.create('d1', input, 'org-1')).rejects.toThrow('commit failed');
+    expect(s.tx.payment.create).toHaveBeenCalledOnce();
+    expect(s.events.emit).not.toHaveBeenCalled();
+  });
 });
