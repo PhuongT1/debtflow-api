@@ -17,21 +17,22 @@ Named and dynamic filters are additive. Multiple constraints on status or due da
 does not replace another. Contradictory filters yield no rows. Named `dueDate`, `dueDateFrom` and
 `dueDateTo` use valid `YYYY-MM-DD` Vietnam dates; impossible or reversed dates return 400.
 
-| Purpose        | Query string                                     | Meaning                                                                                                |
-| -------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Page           | `page=2&pageSize=20`                             | `pageSize` max 1000, default 20                                                                        |
-| Sort           | `sort=-dueDate,code`                             | `-` = descending. Max 3 fields.                                                                        |
-| Sort (1 field) | `sortBy=dueDate&sortOrder=desc`                  | Same result. `sortOrder` is `asc` (default) or `desc`, case-insensitive. `sort` wins if both are sent. |
-| Filter         | `filter[status]=OPEN`                            | equals                                                                                                 |
-| Operator       | `filter[originalAmount][gte]=1000000`            | `filter[field][operator]=value`                                                                        |
-| Many           | `filter[status][in]=OPEN,PARTIAL`                | comma separated (also `filter[status]=A&filter[status]=B`)                                             |
-| Range          | `filter[dueDate][between]=2026-09-01,2026-09-30` | inclusive, exactly two values                                                                          |
-| Nullable       | `filter[assignedToId][isNull]=true`              | only fields marked nullable                                                                            |
-| Combine        | `filterOperator=OR`                              | how the `filter[...]` conditions combine: `AND` (default) or `OR`                                      |
+| Purpose  | Query string                                     | Meaning                                                                        |
+| -------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Page     | `page=2&pageSize=20`                             | `pageSize` max 1000, default 20                                                |
+| Sort     | `sortBy=dueDate&sortOrder=desc`                  | Exactly one field. `sortOrder` is `asc` (default) or `desc`, case-insensitive. |
+| Filter   | `filter[status]=OPEN`                            | equals                                                                         |
+| Operator | `filter[originalAmount][gte]=1000000`            | `filter[field][operator]=value`                                                |
+| Many     | `filter[status][in]=OPEN,PARTIAL`                | comma separated (also `filter[status]=A&filter[status]=B`)                     |
+| Range    | `filter[dueDate][between]=2026-09-01,2026-09-30` | inclusive, exactly two values                                                  |
+| Nullable | `filter[assignedToId][isNull]=true`              | only fields marked nullable                                                    |
+| Combine  | `filterOperator=OR`                              | how the `filter[...]` conditions combine: `AND` (default) or `OR`              |
 
-No `sort` means the endpoint's own default order (debts: newest first, or due date when `overdue=true`;
+No `sortBy` means the endpoint's own default order (debts: newest first, or due date when `overdue=true`;
 payments: `paidAt` desc; parties: name). A unique `id` tie-breaker is appended to every explicit sort so
-pages are stable when the sorted column has duplicates.
+pages are stable when the sorted column has duplicates. Clients select one field only; `id` is
+an internal tie-breaker. The old `sort` parameter is rejected as an unknown query field. Comma-separated,
+repeated, prefixed or object-valued `sortBy` inputs are rejected with 400.
 
 Brackets must be URL-encoded by clients that do not do it automatically (`filter%5Bstatus%5D=OPEN`);
 `curl` needs `-g`. Filters are additive to the endpoint's named parameters (`q`, `type`, `aging`, ... on
@@ -64,7 +65,6 @@ Using something that is not allowed fails with `400`. The message lists what is 
 | Code                            | When                                                              | Extra info in the message |
 | ------------------------------- | ----------------------------------------------------------------- | ------------------------- |
 | `INVALID_SORT`                  | sort field not declared / not sortable                            | valid sort fields         |
-| `TOO_MANY_SORT_FIELDS`          | more than 3 sort fields                                           | the maximum               |
 | `INVALID_SORT_ORDER`            | `sortOrder` is not asc/desc                                       |                           |
 | `INVALID_FILTER_FIELD`          | field not declared / not filterable / computed                    | valid filter fields       |
 | `INVALID_FILTER_OPERATOR`       | operator does not belong to the field's type                      | valid operators           |
@@ -77,11 +77,11 @@ declared can never be filtered or sorted on.
 ## What each endpoint allows
 
 Each endpoint's allowed fields, their type and whether they can be sorted are listed in the generated
-[API Reference](../generated/api-reference.md) (parameters `sort`, `sortBy`, `sortOrder`,
+[API Reference](../generated/api-reference.md) (parameters `sortBy`, `sortOrder`,
 `filterOperator` and `filter[...]`) and in Swagger UI. Resource definitions live next to their module:
 
-| Endpoint                                         | Definition                                                  |
-| ------------------------------------------------ | ----------------------------------------------------------- |
+| Endpoint                                         | Definition                                                |
+| ------------------------------------------------ | --------------------------------------------------------- |
 | `GET /debts`, `/reports/aging`, `/exports/debts` | `src/modules/debts/queries/debts.list-query.ts`           |
 | `GET /parties`                                   | `src/modules/parties/queries/parties.list-query.ts`       |
 | `GET /payments`                                  | `src/modules/payments/queries/payments.list-query.ts`     |
@@ -110,18 +110,34 @@ throws immediately instead of at the first request.
 
 ### Derived and custom fields (Vendure's `@Calculated`)
 
-| Case                                            | How                                                                                                                                                                                                                                   |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prisma can order/filter it with a custom clause | `sort: (direction) => ({ debts: { _count: direction } })` and/or `filter: (operator, value) => ({...})`                                                                                                                               |
-| Not a database value (e.g. party balances)      | `computed: true`. It is accepted by `sort`, no `orderBy` is generated, and the service reads `listQuery.sort` and sorts itself (see `PartiesService.list`). Computed fields cannot be filtered unless they also have a `filter` hook. |
+| Case                                            | How                                                                                                                                                                                                                                                       |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prisma can order/filter it with a custom clause | `sort: (direction) => ({ debts: { _count: direction } })` and/or `filter: (operator, value) => ({...})`                                                                                                                                                   |
+| Not a database value (e.g. party balances)      | `computed: true`. It is accepted by `sortBy`, no `orderBy` is generated, and the feature reads `listQuery.sort` to implement the complete ordering (see `PartiesService.list`). Computed fields cannot be filtered unless they also have a `filter` hook. |
 
-`GET /parties` uses this for `outstandingDocuments` (a hook) and `receivable` / `payable` (computed), so
+`GET /parties` marks `outstandingDocuments`, `receivable` and `payable` as computed, so
 `sortBy=receivable&sortOrder=desc` keeps working exactly as before.
 
-When a party sort includes a balance, every requested field is compared in the requested order
-(for example `sort=-receivable,code` or `sort=name,-payable`). A unique id resolves ties before
-pagination. This path loads all matching parties and balances into memory; ordinary sorts remain
-paginated by Prisma. Text comparison on this path uses the JavaScript runtime's locale rules.
+When a Party sort includes a balance or document count, PostgreSQL aggregates matching tenant debts
+and applies the selected field before LIMIT/OFFSET (for example
+`sortBy=receivable&sortOrder=desc`). A unique id resolves ties internally. Only the selected page of IDs/balances and its
+hydrated records leave the database. Ordinary sorts remain paginated by Prisma; their balances are
+aggregated for page IDs only. Both paths use the same canonical authorized `where` for count/items
+and one RepeatableRead transaction for count, rows and balances.
+
+Text/enum/null ordering follows PostgreSQL on both paths (ASC NULLS LAST, DESC NULLS FIRST).
+This replaces the old JavaScript locale comparison on balance sorts; text ordering follows the
+database collation. Balances include OPEN/PARTIAL debts only, use exact Decimal arithmetic, and
+keep parties without debts at zero. `balanceType` filters parties without excluding their opposite
+balance. `outstandingDocuments` preserves its existing meaning: all tenant-owned debts, including
+PAID/CANCELLED. It does not mean only unsettled documents.
+
+The private SQL adapter supports the canonical Party predicate subset, binds all values and uses
+fixed column/operator expressions. It rejects unsupported predicates. Changes to Party capabilities
+must extend the SQL coverage as well as the shared parser. See [database tests and indexes](./database-workflow.md#party-list-indexes-and-disposable-database-tests).
+A snapshot is consistent within one request; separate page requests can observe later commits.
+Aggregating matching debts and large OFFSETs still cost database work; bounded API memory does not
+imply constant-time queries.
 
 Date-only filters reject impossible calendar dates (such as February 30). Party `createdFrom` and
 `createdTo` also use Vietnam business-day boundaries regardless of the server timezone; explicit

@@ -10,17 +10,20 @@ import {
 import { DebtStatus, Prisma } from '@generated/prisma';
 import type { QueryPartiesDto } from '../dto/query-parties.dto';
 
+/** Compose Prisma arguments only; no database calls. Omitted filters add no conditions. */
 export function buildPartyQuery(
   organizationId: string,
   query: QueryPartiesDto,
   listQuery?: ListQueryResult,
 ) {
+  // Base scope is mandatory; optional filters below only narrow it.
   const where: Prisma.PartyWhereInput = { organizationId, isActive: true };
   if (query.type) where.type = query.type;
   if (query.assignedToId) where.assignedToId = query.assignedToId;
   if (query.balanceType)
     where.debts = {
       some: {
+        organizationId,
         status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] },
         type: query.balanceType,
       },
@@ -52,6 +55,7 @@ function createdAtFilter(query: QueryPartiesDto): Prisma.DateTimeFilter | undefi
 }
 
 function createdRange(range: QueryPartiesDto['createdRange']): Prisma.DateTimeFilter | undefined {
+  if (!range) return undefined;
   const { start } = getBusinessDayRange();
   switch (range) {
     case 'today':

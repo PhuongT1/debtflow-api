@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma';
-import { parseListQuery } from '@common/query';
+import { parseListQuery, validFieldsOf } from '@common/query';
 import { PartiesService } from './parties.service';
 import { OrganizationMembersService } from '@modules/users/services/organization-members.service';
 import { PARTY_LIST_QUERY } from '../queries/parties.list-query';
@@ -15,32 +15,50 @@ function setup() {
     {
       partyId: 'p1',
       type: 'RECEIVABLE',
-      _sum: { originalAmount: new Prisma.Decimal('100'), paidAmount: new Prisma.Decimal('0') },
+      _sum: { originalAmount: new Prisma.Decimal(100), paidAmount: new Prisma.Decimal(0) },
     },
     {
       partyId: 'p2',
       type: 'RECEIVABLE',
-      _sum: { originalAmount: new Prisma.Decimal('200'), paidAmount: new Prisma.Decimal('100') },
-    },
-    {
-      partyId: 'p3',
-      type: 'RECEIVABLE',
-      _sum: { originalAmount: new Prisma.Decimal('200'), paidAmount: new Prisma.Decimal('0') },
+      _sum: { originalAmount: new Prisma.Decimal(200), paidAmount: new Prisma.Decimal(100) },
     },
   ]);
+  const queryRaw = vi
+    .fn()
+    .mockResolvedValue([
+      { id: 'p2', receivable: new Prisma.Decimal(100), payable: new Prisma.Decimal(0) },
+    ]);
+  const count = vi.fn().mockResolvedValue(3);
+  const tx = { party: { findMany, count }, debt: { groupBy }, $queryRaw: queryRaw };
+  const transaction = vi.fn(async (run: (db: typeof tx) => unknown) => run(tx));
+  const rootRead = vi.fn(() => {
+    throw new Error('List read outside snapshot');
+  });
   const findFirst = vi.fn().mockResolvedValue(null);
   const create = vi.fn();
   const events = { emit: vi.fn() };
   const service = new PartiesService(
     {
-      party: { findMany, create },
-      debt: { groupBy },
-      organizationMembership: { findFirst },
+      party: { findMany: rootRead, count: rootRead, create },
+      debt: { groupBy: rootRead },
+      $queryRaw: rootRead,
+      $transaction: transaction,
     } as never,
     events as never,
     new OrganizationMembersService({ organizationMembership: { findFirst } } as never),
   );
-  return { service, findMany, groupBy, findFirst, create, events };
+  return {
+    service,
+    findMany,
+    count,
+    groupBy,
+    queryRaw,
+    transaction,
+    rootRead,
+    findFirst,
+    create,
+    events,
+  };
 }
 
 afterEach(() => vi.useRealTimers());
@@ -61,41 +79,137 @@ describe('PartiesService', () => {
     ).rejects.toMatchObject({ status: 404 });
     expect(s.create).not.toHaveBeenCalled();
   });
-  it('applies secondary sort keys before paginating computed balances', async () => {
+  it.each(
+    validFieldsOf(PARTY_LIST_QUERY, 'sortable')
+      .filter((field) => !PARTY_LIST_QUERY.fields[field].computed)
+      .flatMap((field) => ['asc', 'desc'].map((direction) => ({ field, direction }))),
+  )(
+    'keeps ordinary $field $direction sorting on paginated Prisma reads',
+    async ({ field, direction }) => {
+      const s = setup();
+      await s.service.list(
+        'org-1',
+        { page: 2, pageSize: 1 },
+        parseListQuery({ sortBy: field, sortOrder: direction }, PARTY_LIST_QUERY),
+      );
+      expect(s.queryRaw).not.toHaveBeenCalled();
+      expect(s.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ [field]: direction }, { id: 'asc' }],
+          skip: 1,
+          take: 1,
+        }),
+      );
+    },
+  );
+
+  it('asks SQL for one globally sorted page and hydrates only its IDs', async () => {
     const s = setup();
     const result = await s.service.list(
       'org-1',
       { page: 2, pageSize: 1 },
-      parseListQuery({ sort: '-receivable,code' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
     );
-    expect(result.items.map((p) => p.id)).toEqual(['p2']);
+    expect(result.items.map(({ id }) => id)).toEqual(['p2']);
     expect(result.total).toBe(3);
-    expect(s.findMany.mock.calls[0][0].where).toMatchObject({
-      organizationId: 'org-1',
-      isActive: true,
+    expect(s.findMany).toHaveBeenCalledWith({
+      where: { organizationId: 'org-1', isActive: true, id: { in: ['p2'] } },
+      include: expect.any(Object),
     });
-    expect(s.groupBy.mock.calls[0][0].where.organizationId).toBe('org-1');
+    const sql = s.queryRaw.mock.calls[0][0] as Prisma.Sql;
+    expect(sql.values.slice(-2)).toEqual([1, 1]);
+    expect(s.groupBy).not.toHaveBeenCalled();
+    expect(s.rootRead).not.toHaveBeenCalled();
+    expect(s.transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'RepeatableRead',
+    });
   });
 
-  it('honors fields preceding a computed key and more than one computed key', async () => {
+  it('routes document-count sorting through the tenant-scoped aggregate query', async () => {
     const s = setup();
+    await s.service.list(
+      'org-1',
+      {},
+      parseListQuery({ sortBy: 'outstandingDocuments', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+    );
+    expect(s.queryRaw).toHaveBeenCalledOnce();
+    expect((s.queryRaw.mock.calls[0][0] as Prisma.Sql).text).toContain('COUNT(*)');
+    expect(s.groupBy).not.toHaveBeenCalled();
+  });
+
+  it('retains database ordering even when the detail lookup returns rows in another order', async () => {
+    const s = setup();
+    s.queryRaw.mockResolvedValue([
+      {
+        id: 'p3',
+        receivable: new Prisma.Decimal('9007199254740993.25'),
+        payable: new Prisma.Decimal(0),
+      },
+      { id: 'p1', receivable: new Prisma.Decimal(100), payable: new Prisma.Decimal(0) },
+    ]);
     const result = await s.service.list(
       'org-1',
       {},
-      parseListQuery({ sort: 'name,-receivable,payable' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
     );
-    expect(result.items.map((p) => p.id)).toEqual(['p3', 'p1', 'p2']);
+    expect(result.items.map(({ id }) => id)).toEqual(['p3', 'p1']);
+    expect(result.items[0].balance.receivable.toString()).toBe('9007199254740993.25');
   });
 
-  it('uses a unique id tie-breaker when every requested value is equal', async () => {
+  it('keeps ordinary pagination and balance reads inside the same snapshot', async () => {
     const s = setup();
-    s.findMany.mockResolvedValue([...(await s.findMany())].reverse());
-    const result = await s.service.list(
-      'org-1',
-      {},
-      parseListQuery({ sort: '-receivable' }, PARTY_LIST_QUERY),
-    );
-    expect(result.items.map((p) => p.id)).toEqual(['p3', 'p1', 'p2']);
+    s.findMany.mockResolvedValue([{ id: 'p1' }, { id: 'p2' }]);
+    const result = await s.service.list('org-1', { page: 1, pageSize: 2 });
+    expect(s.queryRaw).not.toHaveBeenCalled();
+    expect(s.findMany.mock.calls[0][0]).toMatchObject({
+      skip: 0,
+      take: 2,
+      where: { organizationId: 'org-1' },
+      include: { _count: { select: { debts: { where: { organizationId: 'org-1' } } } } },
+    });
+    expect(s.groupBy.mock.calls[0][0].where).toMatchObject({
+      organizationId: 'org-1',
+      partyId: { in: ['p1', 'p2'] },
+    });
+    expect(result.items[1].balance.receivable.toString()).toBe('100');
+    expect(s.rootRead).not.toHaveBeenCalled();
+  });
+
+  it.each([0, 3])(
+    'returns the exact total %s for an empty/out-of-range page without aggregating',
+    async (total) => {
+      const s = setup();
+      s.count.mockResolvedValue(total);
+      const result = await s.service.list(
+        'org-1',
+        { page: 99, pageSize: 20 },
+        parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+      );
+      expect(result).toMatchObject({ items: [], total, page: 99 });
+      expect(s.queryRaw).not.toHaveBeenCalled();
+      expect(s.findMany).not.toHaveBeenCalled();
+      expect(s.groupBy).not.toHaveBeenCalled();
+    },
+  );
+
+  it('fails instead of silently losing a ranked row that cannot be hydrated', async () => {
+    const s = setup();
+    s.findMany.mockResolvedValue([]);
+    await expect(
+      s.service.list(
+        'org-1',
+        {},
+        parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+      ),
+    ).rejects.toThrow('snapshot is inconsistent');
+  });
+
+  it('propagates a failed count without returning a partial successful response', async () => {
+    const s = setup();
+    s.count.mockRejectedValue(new Error('read failed'));
+    await expect(s.service.list('org-1', {})).rejects.toThrow('read failed');
+    expect(s.queryRaw).not.toHaveBeenCalled();
+    expect(s.findMany).not.toHaveBeenCalled();
   });
 
   it('uses Vietnam day boundaries for explicit dates regardless of server timezone', async () => {
@@ -103,9 +217,9 @@ describe('PartiesService', () => {
     await s.service.list(
       'org-1',
       { createdFrom: '2026-10-31', createdTo: '2026-10-31' },
-      parseListQuery({ sort: 'receivable' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'receivable' }, PARTY_LIST_QUERY),
     );
-    expect(s.findMany.mock.calls[0][0].where.createdAt).toEqual({
+    expect(s.count.mock.calls[0][0].where.createdAt).toEqual({
       gte: new Date('2026-10-30T17:00:00Z'),
       lte: new Date('2026-10-31T16:59:59.999Z'),
     });

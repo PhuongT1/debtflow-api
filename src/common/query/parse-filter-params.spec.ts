@@ -201,7 +201,6 @@ describe('parseFilterParams + buildWhere', () => {
 describe('isListQueryKey', () => {
   it('recognizes the keys owned by the list query', () => {
     for (const key of [
-      'sort',
       'sortBy',
       'sortOrder',
       'filterOperator',
@@ -210,7 +209,7 @@ describe('isListQueryKey', () => {
     ]) {
       expect(isListQueryKey(key)).toBe(true);
     }
-    for (const key of ['page', 'q', 'filter', 'status', 'filter[]']) {
+    for (const key of ['sort', 'page', 'q', 'filter', 'status', 'filter[]']) {
       expect(isListQueryKey(key)).toBe(false);
     }
   });

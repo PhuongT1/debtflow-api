@@ -538,20 +538,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, email, phone, userStatus, role, membershipStatus, joinedAt, createdAt.",
-            "schema": {
-              "example": "-name",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "name",
@@ -1360,20 +1350,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, code, type, phone, email, taxCode, provinceName, creditLimit, isActive, createdAt, updatedAt, outstandingDocuments, receivable, payable.",
-            "schema": {
-              "example": "-name",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "name",
@@ -2420,20 +2400,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
-            "schema": {
-              "example": "-code",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "code",
@@ -3491,20 +3461,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: type, method, amount, paidAt, referenceNo, partyName, createdAt.",
-            "schema": {
-              "example": "-type",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "type",
@@ -4254,20 +4214,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
-            "schema": {
-              "example": "-code",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "code",
@@ -4818,20 +4768,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt.",
-            "schema": {
-              "example": "-code",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "code",
@@ -5266,20 +5206,10 @@
             }
           },
           {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "description": "Comma-separated fields, `-` prefix for descending, max 3. Allowed: entityType, action, createdAt.",
-            "schema": {
-              "example": "-entityType",
-              "type": "string"
-            }
-          },
-          {
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Single-field alternative to `sort`. Ignored when `sort` is present.",
+            "description": "One field to sort by. Omit to use the endpoint default order.",
             "schema": {
               "enum": [
                 "entityType",

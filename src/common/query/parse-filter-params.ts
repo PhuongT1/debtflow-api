@@ -27,11 +27,7 @@ type DayValue = { dayStart: Date; dayEnd: Date };
 /** The query keys that belong to the list query and must bypass DTO validation. */
 export function isListQueryKey(key: string) {
   return (
-    key === 'sort' ||
-    key === 'sortBy' ||
-    key === 'sortOrder' ||
-    key === 'filterOperator' ||
-    FILTER_KEY.test(key)
+    key === 'sortBy' || key === 'sortOrder' || key === 'filterOperator' || FILTER_KEY.test(key)
   );
 }
 

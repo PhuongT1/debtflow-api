@@ -36,7 +36,8 @@
     "ai:setup": "node scripts/ai-setup.mjs",
     "ai:check": "node scripts/ai-setup.mjs --check",
     "test:ai": "node --test scripts/ai-setup.test.mjs",
-    "check:maintainability": "node scripts/check-maintainability.mjs"
+    "check:maintainability": "node scripts/check-maintainability.mjs",
+    "test:parties:postgres": "vitest run src/modules/parties/queries/party-balance-page.postgres.spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

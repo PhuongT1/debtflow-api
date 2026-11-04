@@ -123,7 +123,8 @@ describe('full-dataset aging report', () => {
         'filter[partyId][eq]': 'party-1',
         'filter[code][eq]': 'CN-1',
         filterOperator: 'OR',
-        sort: '-dueDate',
+        sortBy: 'dueDate',
+        sortOrder: 'desc',
       },
       DEBT_LIST_QUERY,
     );

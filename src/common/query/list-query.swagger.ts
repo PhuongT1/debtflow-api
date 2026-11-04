@@ -5,20 +5,12 @@ import { operatorsOf, validFieldsOf, type ListQueryConfig } from './list-query.t
 /** Documents the sort and filter parameters of a resource's allow-list in Swagger/OpenAPI. */
 export function ApiListQuery(config: ListQueryConfig) {
   const sortable = validFieldsOf(config, 'sortable');
-  const first = sortable[0] ?? 'createdAt';
   const decorators = [
-    ApiQuery({
-      name: 'sort',
-      required: false,
-      type: String,
-      example: `-${first}`,
-      description: `Comma-separated fields, \`-\` prefix for descending, max 3. Allowed: ${sortable.join(', ')}.`,
-    }),
     ApiQuery({
       name: 'sortBy',
       required: false,
       enum: sortable,
-      description: 'Single-field alternative to `sort`. Ignored when `sort` is present.',
+      description: 'One field to sort by. Omit to use the endpoint default order.',
     }),
     ApiQuery({
       name: 'sortOrder',

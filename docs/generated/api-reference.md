@@ -125,8 +125,7 @@ Paginated members of the current organization. `status` is the effective status;
 | `membershipStatus` | query | `INVITED` \| `ACTIVE` \| `SUSPENDED` | no | Exact membership status in this organization. |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, email, phone, userStatus, role, membershipStatus, joinedAt, createdAt. |
-| `sortBy` | query | `name` \| `email` \| `phone` \| `userStatus` \| `role` \| `membershipStatus` \| `joinedAt` \| `createdAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `name` \| `email` \| `phone` \| `userStatus` \| `role` \| `membershipStatus` \| `joinedAt` \| `createdAt` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[name]` | query | string | no |  Type: string. Use `filter[name][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values). |
@@ -221,8 +220,7 @@ Paginated list of active parties. Each item includes the outstanding receivable/
 | `createdTo` | query | string | no | Created on or before this date (`YYYY-MM-DD`). |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: name, code, type, phone, email, taxCode, provinceName, creditLimit, isActive, createdAt, updatedAt, outstandingDocuments, receivable, payable. |
-| `sortBy` | query | `name` \| `code` \| `type` \| `phone` \| `email` \| `taxCode` \| `provinceName` \| `creditLimit` \| `isActive` \| `createdAt` \| `updatedAt` \| `outstandingDocuments` \| `receivable` \| `payable` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `name` \| `code` \| `type` \| `phone` \| `email` \| `taxCode` \| `provinceName` \| `creditLimit` \| `isActive` \| `createdAt` \| `updatedAt` \| `outstandingDocuments` \| `receivable` \| `payable` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[name]` | query | string | no |  Type: string. Use `filter[name][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values). |
@@ -359,8 +357,7 @@ Paginated list with filters for type, status, collection status, party, product,
 | `outstanding` | query | `true` \| `false` | no |  |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt. |
-| `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[code]` | query | string | no |  Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values). |
@@ -501,8 +498,7 @@ Paginated vouchers with their allocations. Filter by partyId or debtId.
 | `partyId` | query | string | no |  |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: type, method, amount, paidAt, referenceNo, partyName, createdAt. |
-| `sortBy` | query | `type` \| `method` \| `amount` \| `paidAt` \| `referenceNo` \| `partyName` \| `createdAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `type` \| `method` \| `amount` \| `paidAt` \| `referenceNo` \| `partyName` \| `createdAt` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[type]` | query | string | no |  Type: enum. Values: RECEIVABLE, PAYABLE. Use `filter[type][op]=value`, op: eq, notEq, in, notIn (no op means eq; `in`, `notIn` and `between` take comma-separated values). |
@@ -594,8 +590,7 @@ Remaining balance across all matching open/partial debts, grouped by whole elaps
 | `outstanding` | query | `true` \| `false` | no |  |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt. |
-| `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[code]` | query | string | no |  Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values). |
@@ -652,8 +647,7 @@ Streams an .xlsx file (not wrapped in the JSON envelope). Accepts the same query
 | `outstanding` | query | `true` \| `false` | no |  |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: code, title, type, status, collectionStatus, salesChannel, partyName, invoiceNo, orderNo, contractNo, poNo, originalAmount, paidAmount, issueDate, dueDate, nextFollowUpAt, createdAt, updatedAt. |
-| `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `code` \| `title` \| `type` \| `status` \| `collectionStatus` \| `salesChannel` \| `partyName` \| `invoiceNo` \| `orderNo` \| `contractNo` \| `poNo` \| `originalAmount` \| `paidAmount` \| `issueDate` \| `dueDate` \| `nextFollowUpAt` \| `createdAt` \| `updatedAt` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[code]` | query | string | no |  Type: string. Use `filter[code][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith (no op means eq; `in`, `notIn` and `between` take comma-separated values). |
@@ -703,8 +697,7 @@ Not implemented yet: returns a placeholder message and imports nothing.
 | `action` | query | string | no |  |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
-| `sort` | query | string | no | Comma-separated fields, `-` prefix for descending, max 3. Allowed: entityType, action, createdAt. |
-| `sortBy` | query | `entityType` \| `action` \| `createdAt` | no | Single-field alternative to `sort`. Ignored when `sort` is present. |
+| `sortBy` | query | `entityType` \| `action` \| `createdAt` | no | One field to sort by. Omit to use the endpoint default order. |
 | `sortOrder` | query | `asc` \| `desc` | no | Direction used with `sortBy`. Default asc. |
 | `filterOperator` | query | `AND` \| `OR` | no | How the `filter[...]` conditions are combined. Default AND. |
 | `filter[actorId]` | query | string | no |  Type: string. Use `filter[actorId][op]=value`, op: eq, notEq, in, notIn, contains, notContains, startsWith, endsWith, isNull (no op means eq; `in`, `notIn` and `between` take comma-separated values). |

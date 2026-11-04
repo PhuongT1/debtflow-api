@@ -42,13 +42,13 @@ describe('debt filter composition', () => {
     });
   });
 
-  it('uses a unique tie-breaker for default paging while preserving explicit compound sorts', () => {
+  it('uses a unique tie-breaker for default paging with a single explicit field', () => {
     expect(buildDebtQuery('org-1', {}).orderBy).toEqual([{ createdAt: 'desc' }, { id: 'asc' }]);
     expect(buildDebtQuery('org-1', { overdue: 'true' }).orderBy).toEqual([
       { dueDate: 'asc' },
       { id: 'asc' },
     ]);
-    const parsed = parseListQuery({ sort: '-dueDate,code' }, DEBT_LIST_QUERY);
+    const parsed = parseListQuery({ sortBy: 'dueDate', sortOrder: 'desc' }, DEBT_LIST_QUERY);
     expect(buildDebtQuery('org-1', {}, parsed).orderBy).toEqual(parsed.orderBy);
   });
 

@@ -1,13 +1,18 @@
-import { PARTY_LIST_INCLUDE } from '../queries/party.select';
+import { partyListInclude } from '../queries/party.select';
 import { buildPartyQuery } from '../queries/parties.query';
-import type { PartyBalance, PartyListRecord, PartyWithBalance } from '../types/party.types';
+import type {
+  PartyBalance,
+  PartyBalanceRow,
+  PartyListRecord,
+  PartyWithBalance,
+} from '../types/party.types';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { badRequest, notFound } from '@common/errors/app-errors';
 import { requireOrganizationId } from '@common/validation/require-organization-id';
 import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
-import type { ListQueryResult } from '@common/query';
-import { getPagination, paginate } from '@common/utils/pagination.util';
+import type { ListQueryResult, SortItem } from '@common/query';
+import { getPagination, paginate, type Pagination } from '@common/utils/pagination.util';
 import { DebtStatus, DebtType, Prisma } from '@generated/prisma';
 import { OrganizationMembersService } from '@modules/users/public/users';
 import { PrismaService } from '@database/prisma.service';
@@ -15,9 +20,8 @@ import { CreatePartyDto } from '../dto/create-party.dto';
 import { QueryPartiesDto } from '../dto/query-parties.dto';
 import { UpdatePartyDto } from '../dto/update-party.dto';
 import { buildPartyCreateData, buildPartyUpdateData } from '../mappers/party.mapper';
-import { compareParties } from '../queries/party-sort';
-
-const COMPUTED_BALANCE_FIELDS = new Set(['receivable', 'payable']);
+import { partyBalancePageSql } from '../queries/party-balance-page.query';
+import { PARTY_LIST_QUERY } from '../queries/parties.list-query';
 
 @Injectable()
 export class PartiesService {
@@ -31,46 +35,63 @@ export class PartiesService {
     requireOrganizationId(organizationId);
     const pagination = getPagination(query);
     const { where, orderBy } = buildPartyQuery(organizationId, query, listQuery);
-    // Receivable/payable are derived from the debts, so the database cannot order by them.
-    const computedSort = listQuery?.sort.find(({ field }) => COMPUTED_BALANCE_FIELDS.has(field));
+    const sort = listQuery?.sort[0];
+    return this.prisma.$transaction(
+      async (tx) => {
+        const total = await tx.party.count({ where });
+        if (pagination.skip >= total) return paginate([], total, pagination);
 
-    if (computedSort) {
-      // Calculate the balance before slicing the page so ordering stays correct across every page.
-      const items = await this.prisma.party.findMany({
-        where,
-        include: PARTY_LIST_INCLUDE,
-      });
-      const sortedItems = (await this.withBalances(items, organizationId)).sort((left, right) =>
-        compareParties(left, right, listQuery!.sort),
-      );
+        let items: PartyWithBalance[];
+        if (sort && PARTY_LIST_QUERY.fields[sort.field]?.computed) {
+          items = await this.aggregateSortedPage(tx, organizationId, where, sort, pagination);
+        } else {
+          const page = await tx.party.findMany({
+            where,
+            orderBy,
+            skip: pagination.skip,
+            take: pagination.take,
+            include: partyListInclude(organizationId),
+          });
+          items = await this.withBalances(page, organizationId, tx);
+        }
+        return paginate(items, total, pagination);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+  }
 
-      return paginate(
-        sortedItems.slice(pagination.skip, pagination.skip + pagination.take),
-        sortedItems.length,
-        pagination,
-      );
-    }
-
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.party.findMany({
-        where,
-        orderBy,
-        skip: pagination.skip,
-        take: pagination.take,
-        include: PARTY_LIST_INCLUDE,
-      }),
-      this.prisma.party.count({ where }),
-    ]);
-    return paginate(await this.withBalances(items, organizationId), total, pagination);
+  private async aggregateSortedPage(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    where: Prisma.PartyWhereInput,
+    sort: SortItem,
+    pagination: Pagination,
+  ): Promise<PartyWithBalance[]> {
+    const rows = await tx.$queryRaw<PartyBalanceRow[]>(
+      partyBalancePageSql(organizationId, where, sort, pagination),
+    );
+    if (rows.length === 0) return [];
+    const items = await tx.party.findMany({
+      where: { organizationId, isActive: true, id: { in: rows.map(({ id }) => id) } },
+      include: partyListInclude(organizationId),
+    });
+    const byId = new Map(items.map((item) => [item.id, item]));
+    return rows.map(({ id, receivable, payable }) => {
+      const item = byId.get(id);
+      if (!item) throw new Error('Party list snapshot is inconsistent');
+      return { ...item, balance: { receivable, payable } };
+    });
   }
 
   private async withBalances(
     items: PartyListRecord[],
     organizationId: string,
+    db: Prisma.TransactionClient,
   ): Promise<PartyWithBalance[]> {
     const balances = await this.getBalances(
       items.map((party) => party.id),
       organizationId,
+      db,
     );
     return items.map((party) => ({
       ...party,
@@ -168,11 +189,15 @@ export class PartiesService {
     return party;
   }
 
-  private async getBalances(partyIds: string[], organizationId: string) {
+  private async getBalances(
+    partyIds: string[],
+    organizationId: string,
+    db: Prisma.TransactionClient,
+  ) {
     requireOrganizationId(organizationId);
     if (partyIds.length === 0) return new Map<string, PartyBalance>();
 
-    const balances = await this.prisma.debt.groupBy({
+    const balances = await db.debt.groupBy({
       where: {
         partyId: { in: partyIds },
         organizationId,

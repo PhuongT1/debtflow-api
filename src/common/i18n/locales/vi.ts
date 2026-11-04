@@ -69,7 +69,6 @@ export const viTranslations = {
   },
   query: {
     INVALID_SORT: 'Trường sắp xếp "{field}" không hợp lệ. Các trường hợp lệ: {validFields}.',
-    TOO_MANY_SORT_FIELDS: 'Chỉ được sắp xếp tối đa {max} trường.',
     INVALID_SORT_ORDER: 'Thứ tự sắp xếp "{value}" không hợp lệ. Dùng asc hoặc desc.',
     INVALID_FILTER_FIELD: 'Trường lọc "{field}" không hợp lệ. Các trường hợp lệ: {validFields}.',
     INVALID_FILTER_OPERATOR:
