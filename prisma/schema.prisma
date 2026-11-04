@@ -1,6 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  moduleFormat = "esm"
+  importFileExtension = "ts"
   output   = "../src/generated/prisma"
+}
+
+generator listQueryMetadata {
+  provider = "node ./scripts/generate-list-query-metadata.mjs"
+  output = "../src/generated/list-query"
 }
 
 generator markdown {

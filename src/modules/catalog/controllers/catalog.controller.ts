@@ -1,11 +1,11 @@
-import { ApiEnvelope } from '@common/http/api-envelope.decorator';
-import { CatalogOptionsResponseDto } from '../dto/catalog-response.dto';
+import { ApiEnvelope } from '#common/http/api-envelope.decorator.js';
+import { CatalogOptionsResponseDto } from '../dto/catalog-response.dto.js';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '@auth/decorators/current-user.decorator';
-import { ProtectedApi } from '@auth/decorators/auth-api.decorator';
-import type { JwtAuthPayload } from '@auth/types/auth-context.types';
-import { CatalogService } from '../services/catalog.service';
+import { CurrentUser } from '#auth/decorators/current-user.decorator.js';
+import { ProtectedApi } from '#auth/decorators/auth-api.decorator.js';
+import type { JwtAuthPayload } from '#auth/types/auth-context.types.js';
+import { CatalogService } from '../services/catalog.service.js';
 @ApiTags('Catalog')
 @ProtectedApi()
 @Controller('catalog')

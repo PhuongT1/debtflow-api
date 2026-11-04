@@ -1,4 +1,4 @@
-import type { viTranslations } from './vi';
+import type { viTranslations } from './vi.js';
 
 export const enTranslations: typeof viTranslations = {
   common: {

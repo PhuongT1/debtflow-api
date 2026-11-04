@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseListQuery } from '@common/query';
-import { buildDebtQuery } from './debt-query';
-import { DEBT_LIST_QUERY } from './debts.list-query';
+import { parseListQuery } from '#common/query/index.js';
+import { buildDebtQuery } from './debt-query.js';
+import { DEBT_LIST_QUERY } from './debts.list-query.js';
 
 describe('debt filter composition', () => {
   it('preserves tenant scope when a client ORs filters and combines business filters', () => {

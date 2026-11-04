@@ -510,9 +510,9 @@
             "schema": {
               "type": "string",
               "enum": [
-                "INVITED",
                 "ACTIVE",
-                "SUSPENDED"
+                "SUSPENDED",
+                "INVITED"
               ]
             }
           },
@@ -5476,8 +5476,8 @@
             "type": "string",
             "enum": [
               "ACTIVE",
-              "SUSPENDED",
               "PENDING",
+              "SUSPENDED",
               "CLOSED"
             ]
           }
@@ -5721,9 +5721,9 @@
           "membershipStatus": {
             "description": "Status of the membership in this organization.",
             "enum": [
-              "INVITED",
               "ACTIVE",
-              "SUSPENDED"
+              "SUSPENDED",
+              "INVITED"
             ],
             "type": "string"
           },

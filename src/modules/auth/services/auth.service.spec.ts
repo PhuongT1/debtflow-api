@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as bcrypt from 'bcryptjs';
-import { AuthService } from './auth.service';
-import { AUTH_USER_SELECT } from '../queries/auth.select';
+import { AuthService } from './auth.service.js';
+import { AUTH_USER_SELECT } from '../queries/auth.select.js';
 
 function setup() {
   const user = {

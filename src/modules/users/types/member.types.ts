@@ -1,5 +1,5 @@
-import type { OrganizationMembership, OrganizationRole, Prisma } from '@generated/prisma';
-import type { MEMBER_INCLUDE } from '../queries/member.select';
+import type { OrganizationMembership, OrganizationRole, Prisma } from '#generated/prisma/client.js';
+import type { MEMBER_INCLUDE } from '../queries/member.select.js';
 
 type MemberIdentity = Pick<OrganizationMembership, 'userId' | 'role'>;
 export type Actor = MemberIdentity;

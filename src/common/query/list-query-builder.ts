@@ -1,6 +1,6 @@
-import { buildOrderBy, parseSortParams } from './parse-sort-params';
-import { buildWhere, parseFilterParams } from './parse-filter-params';
-import type { ListQueryConfig, ListQueryResult } from './list-query.types';
+import { buildOrderBy, parseSortParams } from './parse-sort-params.js';
+import { buildWhere, parseFilterParams } from './parse-filter-params.js';
+import type { ListQueryConfig, ListQueryResult } from './list-query.types.js';
 
 /**
  * Turns the raw query string object into a ready-to-use result (Vendure: `ListQueryBuilder.build`).

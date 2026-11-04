@@ -1,9 +1,9 @@
 import { INestApplication, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ListQueryAwareValidationPipe } from '@common/query';
-import { createValidationException } from '@common/validation/validation-exception.factory';
-import { configureSwagger } from '@common/swagger/swagger.setup';
-import { SWAGGER_PATHS } from '@common/swagger/swagger-ui';
+import { ListQueryAwareValidationPipe } from '#common/query/index.js';
+import { createValidationException } from '#common/validation/validation-exception.factory.js';
+import { configureSwagger } from '#common/swagger/swagger.setup.js';
+import { SWAGGER_PATHS } from '#common/swagger/swagger-ui.js';
 
 export function configureApp(app: INestApplication) {
   const config = app.get(ConfigService);

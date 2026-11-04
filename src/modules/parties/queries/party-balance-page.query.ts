@@ -1,9 +1,9 @@
-import { DebtStatus, DebtType, Prisma } from '@generated/prisma';
-import type { SortItem } from '@common/query';
-import type { Pagination } from '@common/utils/pagination.util';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
-import { PARTY_LIST_QUERY } from './parties.list-query';
-import { partyColumn, partyWhereSql } from './party-filter.sql';
+import { DebtStatus, DebtType, Prisma } from '#generated/prisma/client.js';
+import type { SortItem } from '#common/query/index.js';
+import type { Pagination } from '#common/utils/pagination.util.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { PARTY_LIST_QUERY } from './parties.list-query.js';
+import { partyColumn, partyWhereSql } from './party-filter.sql.js';
 
 const AGGREGATE_COLUMNS: Record<string, Prisma.Sql> = {
   receivable: Prisma.sql`COALESCE(totals.receivable, 0)`,

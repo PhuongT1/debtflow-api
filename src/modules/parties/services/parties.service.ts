@@ -1,27 +1,27 @@
-import { partyListInclude } from '../queries/party.select';
-import { buildPartyQuery } from '../queries/parties.query';
+import { partyListInclude } from '../queries/party.select.js';
+import { buildPartyQuery } from '../queries/parties.query.js';
 import type {
   PartyBalance,
   PartyBalanceRow,
   PartyListRecord,
   PartyWithBalance,
-} from '../types/party.types';
+} from '../types/party.types.js';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { badRequest, notFound } from '@common/errors/app-errors';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
-import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
-import type { ListQueryResult, SortItem } from '@common/query';
-import { getPagination, paginate, type Pagination } from '@common/utils/pagination.util';
-import { DebtStatus, DebtType, Prisma } from '@generated/prisma';
-import { OrganizationMembersService } from '@modules/users/public/users';
-import { PrismaService } from '@database/prisma.service';
-import { CreatePartyDto } from '../dto/create-party.dto';
-import { QueryPartiesDto } from '../dto/query-parties.dto';
-import { UpdatePartyDto } from '../dto/update-party.dto';
-import { buildPartyCreateData, buildPartyUpdateData } from '../mappers/party.mapper';
-import { partyBalancePageSql } from '../queries/party-balance-page.query';
-import { PARTY_LIST_QUERY } from '../queries/parties.list-query';
+import { badRequest, notFound } from '#common/errors/app-errors.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { AuditAction, emitAudit, scalarSnapshot } from '#common/events/audit-event.js';
+import type { ListQueryResult, SortItem } from '#common/query/index.js';
+import { getPagination, paginate, type Pagination } from '#common/utils/pagination.util.js';
+import { DebtStatus, DebtType, Prisma } from '#generated/prisma/client.js';
+import { OrganizationMembersService } from '#modules/users/public/users.js';
+import { PrismaService } from '#database/prisma.service.js';
+import { CreatePartyDto } from '../dto/create-party.dto.js';
+import { QueryPartiesDto } from '../dto/query-parties.dto.js';
+import { UpdatePartyDto } from '../dto/update-party.dto.js';
+import { buildPartyCreateData, buildPartyUpdateData } from '../mappers/party.mapper.js';
+import { partyBalancePageSql } from '../queries/party-balance-page.query.js';
+import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
 
 @Injectable()
 export class PartiesService {

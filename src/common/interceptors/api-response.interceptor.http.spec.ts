@@ -4,9 +4,9 @@ import { APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import type { Response } from 'express';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { SkipApiResponse } from '../decorators/api-response.decorator';
-import { I18nService } from '../i18n/i18n.service';
-import { ApiResponseInterceptor } from './api-response.interceptor';
+import { SkipApiResponse } from '../decorators/api-response.decorator.js';
+import { I18nService } from '../i18n/i18n.service.js';
+import { ApiResponseInterceptor } from './api-response.interceptor.js';
 
 const binary = Buffer.from([0x50, 0x4b, 0x00, 0xff]);
 

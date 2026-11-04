@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildWhere, isListQueryKey, parseFilterParams } from './parse-filter-params';
-import { errorOf, TEST_CONFIG } from './test-config';
+import { buildWhere, isListQueryKey, parseFilterParams } from './parse-filter-params.js';
+import { errorOf, TEST_CONFIG } from './test-config.js';
 
 const where = (query: Record<string, unknown>) =>
   buildWhere(parseFilterParams(query, TEST_CONFIG), TEST_CONFIG);

@@ -1,26 +1,26 @@
-import { PAYMENT_DETAILS_INCLUDE } from '../queries/payment.select';
-import type { PaymentWithDetails, PaymentAuditSource, VoucherInput } from '../types/payment.types';
-import { normalizeOptionalText } from '@common/utils/optional-text.util';
+import { PAYMENT_DETAILS_INCLUDE } from '../queries/payment.select.js';
+import type { PaymentWithDetails, PaymentAuditSource, VoucherInput } from '../types/payment.types.js';
+import { normalizeOptionalText } from '#common/utils/optional-text.util.js';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { forbidden } from '@common/errors/app-errors';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
-import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event';
-import type { ListQueryResult } from '@common/query';
-import { getPagination, paginate } from '@common/utils/pagination.util';
-import { DebtStatus, PaymentMethod, Prisma } from '@generated/prisma';
-import { PrismaService } from '@database/prisma.service';
-import { CreateAllocatedPaymentDto } from '../dto/create-allocated-payment.dto';
-import { CreatePaymentDto } from '../dto/create-payment.dto';
-import { QueryPaymentsDto } from '../dto/query-payments.dto';
+import { forbidden } from '#common/errors/app-errors.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { AuditAction, emitAudit, scalarSnapshot } from '#common/events/audit-event.js';
+import type { ListQueryResult } from '#common/query/index.js';
+import { getPagination, paginate } from '#common/utils/pagination.util.js';
+import { DebtStatus, PaymentMethod, Prisma } from '#generated/prisma/client.js';
+import { PrismaService } from '#database/prisma.service.js';
+import { CreateAllocatedPaymentDto } from '../dto/create-allocated-payment.dto.js';
+import { CreatePaymentDto } from '../dto/create-payment.dto.js';
+import { QueryPaymentsDto } from '../dto/query-payments.dto.js';
 
 import {
   allocatePayment,
   assertPayableDebt,
   paymentAmount,
-} from '../rules/payment-allocation.rules';
-import { buildPaymentsQuery } from '../queries/payments.query';
-import { debtPaymentState } from '@modules/debts/public/debts';
+} from '../rules/payment-allocation.rules.js';
+import { buildPaymentsQuery } from '../queries/payments.query.js';
+import { debtPaymentState } from '#modules/debts/public/debts.js';
 
 const ACTIVE_DEBT_STATUSES = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 

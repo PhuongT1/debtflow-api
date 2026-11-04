@@ -1,15 +1,15 @@
-import type { DashboardQueryDto } from '../dto/query-dashboard.dto';
+import type { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
 import { Injectable } from '@nestjs/common';
-import { badRequest } from '@common/errors/app-errors';
+import { badRequest } from '#common/errors/app-errors.js';
 import {
   addBusinessDays,
   formatBusinessDate,
   getBusinessDayRange,
-} from '@common/utils/business-date.util';
-import { DebtStatus, DebtType, Prisma } from '@generated/prisma';
-import { PrismaService } from '@database/prisma.service';
-import { requireOrganizationId } from '@common/validation/require-organization-id';
-import { getDashboardPeriod } from '../queries/dashboard.query';
+} from '#common/utils/business-date.util.js';
+import { DebtStatus, DebtType, Prisma } from '#generated/prisma/client.js';
+import { PrismaService } from '#database/prisma.service.js';
+import { requireOrganizationId } from '#common/validation/require-organization-id.js';
+import { getDashboardPeriod } from '../queries/dashboard.query.js';
 
 const ACTIVE_DEBT_STATUSES = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 const QUEUE_LIMIT = 6;

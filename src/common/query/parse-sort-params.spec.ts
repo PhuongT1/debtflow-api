@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildOrderBy, parseSortParams } from './parse-sort-params';
-import { errorOf, TEST_CONFIG } from './test-config';
+import { buildOrderBy, parseSortParams } from './parse-sort-params.js';
+import { errorOf, TEST_CONFIG } from './test-config.js';
 
 describe('parseSortParams', () => {
   it('returns an empty list when nothing is requested', () => {

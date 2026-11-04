@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import type { PayableDebt } from '../types/payment.types';
-import { allocatePayment, assertPayableDebt, paymentAmount } from './payment-allocation.rules';
+import { Prisma } from '#generated/prisma/client.js';
+import type { PayableDebt } from '../types/payment.types.js';
+import { allocatePayment, assertPayableDebt, paymentAmount } from './payment-allocation.rules.js';
 
 function debt(id: string, original: string, paid = '0'): PayableDebt {
   return {

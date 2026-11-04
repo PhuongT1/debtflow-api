@@ -3,9 +3,9 @@ import { HttpStatus, SetMetadata, type ExecutionContext, type Type } from '@nest
 import { Reflector } from '@nestjs/core';
 import { defer, lastValueFrom, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SKIP_API_RESPONSE_KEY, SkipApiResponse } from '../decorators/api-response.decorator';
-import { I18nService } from '../i18n/i18n.service';
-import { ApiResponseInterceptor } from './api-response.interceptor';
+import { SKIP_API_RESPONSE_KEY, SkipApiResponse } from '../decorators/api-response.decorator.js';
+import { I18nService } from '../i18n/i18n.service.js';
+import { ApiResponseInterceptor } from './api-response.interceptor.js';
 
 class WrappedController {
   result() {}

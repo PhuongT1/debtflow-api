@@ -1,33 +1,32 @@
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
-// `export =` module: the CommonJS form is required for Vercel's serverless bundle.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import express = require('express');
+import express from 'express';
 import type { Request, Response } from 'express';
-import { AppModule } from './app.module';
-import { configureApp } from './configure-app';
+import { AppModule } from './app.module.js';
+import { configureApp } from './configure-app.js';
 
-let cachedServer: express.Express | undefined;
+let serverPromise: Promise<express.Express> | undefined;
 
 async function bootstrapServer() {
-  if (cachedServer) {
-    return cachedServer;
-  }
-
   const server = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
     logger: ['error', 'warn', 'log'],
+    abortOnError: false,
   });
 
   configureApp(app);
   await app.init();
 
-  cachedServer = server;
-  return cachedServer;
+  return server;
 }
 
 export default async function handler(req: Request, res: Response) {
-  const server = await bootstrapServer();
+  // Concurrent cold-start requests share initialization; a failed attempt may retry.
+  serverPromise ??= bootstrapServer().catch((error: unknown) => {
+    serverPromise = undefined;
+    throw error;
+  });
+  const server = await serverPromise;
 
   return server(req, res);
 }

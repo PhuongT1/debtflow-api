@@ -1,6 +1,6 @@
-import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma';
-import type { MemberDto } from '../dto/user-response.dto';
-import type { MembershipWithUser } from '../types/member.types';
+import { OrganizationMembershipStatus, UserStatus } from '#generated/prisma/client.js';
+import type { MemberDto } from '../dto/user-response.dto.js';
+import type { MembershipWithUser } from '../types/member.types.js';
 
 /** One consistent member shape for list, create, update, suspend and reactivate. */
 export function toMemberDto({ user, ...membership }: MembershipWithUser): MemberDto {

@@ -1,13 +1,13 @@
-import { getDebtAgingRanges } from '../rules/debt-aging.rules';
-import { badRequest } from '@common/errors/app-errors';
+import { getDebtAgingRanges } from '../rules/debt-aging.rules.js';
+import { badRequest } from '#common/errors/app-errors.js';
 import {
   addBusinessDays,
   formatBusinessDate,
   getBusinessDayRange,
   getBusinessDayRangeForDate,
-} from '@common/utils/business-date.util';
-import type { Prisma } from '@generated/prisma';
-import type { QueryDebtsDto } from '../dto/query-debts.dto';
+} from '#common/utils/business-date.util.js';
+import type { Prisma } from '#generated/prisma/client.js';
+import type { QueryDebtsDto } from '../dto/query-debts.dto.js';
 
 /** Each selected date condition remains separate so later filters cannot overwrite it. */
 export function buildDebtDateFilters(query: QueryDebtsDto, now: Date): Prisma.DebtWhereInput[] {

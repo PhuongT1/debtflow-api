@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { badRequest } from '@common/errors/app-errors';
-import { Prisma } from '@generated/prisma';
+import { badRequest } from '#common/errors/app-errors.js';
+import { Prisma } from '#generated/prisma/client.js';
 
 type CatalogProduct = Prisma.ProductGetPayload<{ include: { brand: true; category: true } }>;
-import { PrismaService } from '@database/prisma.service';
-import { CreateDebtItemDto } from '../dto/items/create-debt-item.dto';
+import { PrismaService } from '#database/prisma.service.js';
+import { CreateDebtItemDto } from '../dto/items/create-debt-item.dto.js';
 
 @Injectable()
 export class DebtLineItemService {

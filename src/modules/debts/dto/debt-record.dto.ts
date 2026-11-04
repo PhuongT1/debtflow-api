@@ -1,4 +1,4 @@
-import { CollectionStatus, DebtStatus, DebtType, SalesChannel } from '@generated/prisma';
+import { CollectionStatus, DebtStatus, DebtType, SalesChannel } from '#generated/prisma/client.js';
 
 /** Public scalar debt contract; relations are added by the use-case response DTO. */
 export class DebtRecordDto {

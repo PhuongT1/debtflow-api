@@ -53,7 +53,7 @@ scripts/
 | `src/common`           | Shared DTOs, filters, validation helpers.                                                            |
 | `src/config`           | Environment validation and config helpers.                                                           |
 | `src/database`         | Prisma service and database module.                                                                  |
-| `src/generated/prisma` | Generated Prisma Client. Do not edit manually.                                                       |
+| `src/generated/prisma` | Generated native ESM Prisma Client. Do not edit manually.                                                       |
 | `prisma/models`        | Domain Prisma models and enums.                                                                      |
 | `prisma/migrations`    | Database migration history.                                                                          |
 | `.ai/core`             | Portable NestJS rules and default skills.                                                            |
@@ -249,3 +249,8 @@ names and plugin infrastructure are not a reason to add them to every DebtFlow f
 linted browser entry for authorization. `configureApp()` composes this adapter and returns the same
 OpenAPI document to the offline documentation generator. Follow the task-to-file table in
 [API and Swagger](./api-and-swagger.md) rather than adding another setup, token form or copied schema.
+
+Runtime/build ownership: Node 24 + native ESM, TypeScript 6 and Nest 12.
+[Import Aliases](import-aliases.md) defines import syntax; [Run Source](run-source.md) covers
+Vercel, Node and Docker artifacts. `src/generated/list-query/` is schema-generated metadata for
+list-query validation and is regenerated together with the Prisma client.

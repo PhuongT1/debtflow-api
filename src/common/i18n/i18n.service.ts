@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { AppLocale, DEFAULT_LOCALE, parseAcceptLanguage, SUPPORTED_LOCALES } from './i18n.types';
-import { enTranslations } from './locales/en';
-import { viTranslations } from './locales/vi';
+import { AppLocale, DEFAULT_LOCALE, parseAcceptLanguage, SUPPORTED_LOCALES } from './i18n.types.js';
+import { enTranslations } from './locales/en.js';
+import { viTranslations } from './locales/vi.js';
 
 const translations: Record<AppLocale, typeof viTranslations> = {
   vi: viTranslations,

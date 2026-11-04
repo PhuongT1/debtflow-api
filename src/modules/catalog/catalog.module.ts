@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { CatalogController } from './controllers/catalog.controller';
-import { CatalogService } from './services/catalog.service';
+import { CatalogController } from './controllers/catalog.controller.js';
+import { CatalogService } from './services/catalog.service.js';
 
 @Module({
   controllers: [CatalogController],

@@ -1,11 +1,11 @@
-import { badRequest } from '@common/errors/app-errors';
+import { badRequest } from '#common/errors/app-errors.js';
 import {
   validFieldsOf,
   type ListQueryConfig,
   type PrismaFragment,
   type SortDirection,
   type SortItem,
-} from './list-query.types';
+} from './list-query.types.js';
 
 export type RawSortParams = {
   /** Exactly one allow-listed field. */

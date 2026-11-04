@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import { PaymentsService } from './payments.service';
+import { Prisma } from '#generated/prisma/client.js';
+import { PaymentsService } from './payments.service.js';
 
 function setup() {
   const debt = {

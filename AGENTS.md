@@ -18,7 +18,9 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   user changes and keep unrelated work out of the diff and commits.
 - Work in this API repository. Sibling repositories, including Vendure, are references unless the
   user asks to change them. Their package managers, stacks and instruction files are not API policy.
-- Use npm and `package-lock.json`. Do not introduce another lockfile, package layout, framework or
+- Use Node 24 native ESM (`NodeNext`), npm and `package-lock.json`. Read
+  [import aliases](docs/guides/import-aliases.md) before changing imports; use `.js` suffixes and
+  native `#...` package imports. Do not introduce another lockfile, package layout, framework or
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
   routes, not public/protected folder trees. Search for existing helpers and callers before adding files.
@@ -29,7 +31,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   and unrelated document/CV scripts outside the repository, normally in the OS temporary directory
   or the user's explicitly requested destination. Do not move or delete existing unrelated files
   without authorization.
-- Do not hand-edit `src/generated/prisma/`, `dist/` or `docs/generated/`. Change their source and
+- Do not hand-edit `src/generated/prisma/`, `src/generated/list-query/`, `dist/` or `docs/generated/`. Change their source and
   regenerate. Keep browser artifacts and VitePress build/cache/temp output ignored.
 
 ## Security and business invariants

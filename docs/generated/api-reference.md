@@ -122,7 +122,7 @@ Paginated members of the current organization. `status` is the effective status;
 | `q` | query | string | no | Search over name, email and phone (case-insensitive). |
 | `role` | query | `OWNER` \| `ADMIN` \| `ACCOUNTANT` \| `VIEWER` | no | Only members with this role. |
 | `status` | query | `ACTIVE` \| `INACTIVE` | no | Effective status: `ACTIVE` = active membership of an active account, `INACTIVE` = anything else (suspended or invited membership, or a disabled account). |
-| `membershipStatus` | query | `INVITED` \| `ACTIVE` \| `SUSPENDED` | no | Exact membership status in this organization. |
+| `membershipStatus` | query | `ACTIVE` \| `SUSPENDED` \| `INVITED` | no | Exact membership status in this organization. |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
 | `sortBy` | query | `name` \| `email` \| `phone` \| `userStatus` \| `role` \| `membershipStatus` \| `joinedAt` \| `createdAt` | no | One field to sort by. Omit to use the endpoint default order. |

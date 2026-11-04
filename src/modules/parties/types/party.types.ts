@@ -1,5 +1,5 @@
-import type { Party, Prisma } from '@generated/prisma';
-import type { partyListInclude } from '../queries/party.select';
+import type { Party, Prisma } from '#generated/prisma/client.js';
+import type { partyListInclude } from '../queries/party.select.js';
 
 export type PartySearchSource = Pick<Party, 'name' | 'code' | 'phone' | 'taxCode'>;
 export type PartyWriteData = Pick<

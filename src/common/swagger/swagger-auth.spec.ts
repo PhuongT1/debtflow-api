@@ -66,7 +66,7 @@ function setup(savedToken?: string, blockedStorage = false) {
     onload: () => {},
     ui: undefined as unknown as ReturnType<typeof bundle>,
   };
-  const script = readFileSync(join(__dirname, 'swagger-auth.js'), 'utf8');
+  const script = readFileSync(join(import.meta.dirname, 'swagger-auth.js'), 'utf8');
   runInNewContext(script, {
     window,
     document: { getElementById: () => ({ dataset: { specUrl: '/docs-json' } }) },

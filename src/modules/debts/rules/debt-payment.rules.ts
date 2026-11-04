@@ -1,4 +1,4 @@
-import { DebtStatus, Prisma, type Debt } from '@generated/prisma';
+import { DebtStatus, Prisma, type Debt } from '#generated/prisma/client.js';
 
 /** Shared by payment application and reversal; preserve the existing nonnegative balance rule. */
 export function debtPaymentState(debt: Pick<Debt, 'originalAmount'>, paidAmount: Prisma.Decimal) {

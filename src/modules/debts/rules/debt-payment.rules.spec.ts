@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import { debtPaymentState } from './debt-payment.rules';
+import { Prisma } from '#generated/prisma/client.js';
+import { debtPaymentState } from './debt-payment.rules.js';
 
 describe('debt payment state shared by application and reversal', () => {
   it.each([

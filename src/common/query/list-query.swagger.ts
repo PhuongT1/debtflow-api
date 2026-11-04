@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiQuery } from '@nestjs/swagger';
-import { operatorsOf, validFieldsOf, type ListQueryConfig } from './list-query.types';
+import { operatorsOf, validFieldsOf, type ListQueryConfig } from './list-query.types.js';
 
 /** Documents the sort and filter parameters of a resource's allow-list in Swagger/OpenAPI. */
 export function ApiListQuery(config: ListQueryConfig) {

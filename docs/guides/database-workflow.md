@@ -148,3 +148,8 @@ page. This is query/migration-DDL evidence on synthetic data, not a full migrati
 transport, multi-connection concurrency or production latency test. The current verification also
 ran it through an isolated PGlite PostgreSQL engine installed outside the repository; PGlite is not
 a project dependency. Repeat against the deployment's native PostgreSQL before setting latency goals.
+
+`db:generate` regenerates both the ESM client (`src/generated/prisma/`) and the minimal list-query
+schema metadata (`src/generated/list-query/`). Both are ignored source artifacts compiled into
+`dist/`; do not edit them. The metadata generator receives Prisma schema data during generation
+and does not connect to a database.

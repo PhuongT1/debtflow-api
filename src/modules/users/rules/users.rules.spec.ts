@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { OrganizationMembershipStatus, OrganizationRole } from '@generated/prisma';
+import { OrganizationMembershipStatus, OrganizationRole } from '#generated/prisma/client.js';
 import {
   assertCanChangeAccess,
   assertCanEditProfile,
   assertCanGrantRole,
   assertCanReactivate,
   assertCanSuspend,
-} from './users.rules';
+} from './users.rules.js';
 
 const owner = { userId: 'u-owner', role: OrganizationRole.OWNER };
 const admin = { userId: 'u-admin', role: OrganizationRole.ADMIN };

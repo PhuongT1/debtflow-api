@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AUDIT_EVENT, AuditAction, emitAudit, scalarSnapshot } from './audit-event';
+import { AUDIT_EVENT, AuditAction, emitAudit, scalarSnapshot } from './audit-event.js';
 
 describe('scalarSnapshot', () => {
   it('returns null for a missing record', () => {

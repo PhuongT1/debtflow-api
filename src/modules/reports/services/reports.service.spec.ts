@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DebtStatus, Prisma } from '@generated/prisma';
-import { parseListQuery } from '@common/query';
-import { DEBT_LIST_QUERY } from '@modules/debts/queries/debts.list-query';
-import { ReportsService } from './reports.service';
+import { DebtStatus, Prisma } from '#generated/prisma/client.js';
+import { parseListQuery } from '#common/query/index.js';
+import { DEBT_LIST_QUERY } from '#modules/debts/queries/debts.list-query.js';
+import { ReportsService } from './reports.service.js';
 
 const now = new Date('2026-11-01T05:00:00Z');
 const day = 86_400_000;

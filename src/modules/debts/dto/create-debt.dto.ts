@@ -8,9 +8,9 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { DebtType, SalesChannel } from '@generated/prisma';
+import { DebtType, SalesChannel } from '#generated/prisma/client.js';
 import { Type } from 'class-transformer';
-import { CreateDebtItemDto } from './items/create-debt-item.dto';
+import { CreateDebtItemDto } from './items/create-debt-item.dto.js';
 
 export class CreateDebtDto {
   @IsEnum(DebtType)

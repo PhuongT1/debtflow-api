@@ -1,4 +1,4 @@
-import type { Prisma } from '@generated/prisma';
+import type { Prisma } from '#generated/prisma/client.js';
 
 export function partyListInclude(organizationId: string) {
   return {

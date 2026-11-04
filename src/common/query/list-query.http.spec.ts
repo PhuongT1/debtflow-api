@@ -3,12 +3,12 @@ import { Controller, Get, Query, type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
-import { ListQuery } from './list-query.decorator';
-import { ApiListQuery } from './list-query.swagger';
-import { ListQueryAwareValidationPipe } from './list-query.pipe';
-import type { ListQueryResult } from './list-query.types';
-import { TEST_CONFIG } from './test-config';
+import { PaginationQueryDto } from '../dto/pagination-query.dto.js';
+import { ListQuery } from './list-query.decorator.js';
+import { ApiListQuery } from './list-query.swagger.js';
+import { ListQueryAwareValidationPipe } from './list-query.pipe.js';
+import type { ListQueryResult } from './list-query.types.js';
+import { TEST_CONFIG } from './test-config.js';
 
 @Controller('sort-fixture')
 class SortFixtureController {

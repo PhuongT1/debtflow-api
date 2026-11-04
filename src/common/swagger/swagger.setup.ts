@@ -1,7 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'node:path';
-import { renderSwaggerHtml, SWAGGER_PATHS } from './swagger-ui';
+import { renderSwaggerHtml, SWAGGER_PATHS } from './swagger-ui.js';
 
 /** Register the documentation adapter and return the same document for offline generation. */
 export function configureSwagger(app: INestApplication) {
@@ -12,7 +12,7 @@ export function configureSwagger(app: INestApplication) {
     response.type('html').send(renderSwaggerHtml()),
   );
   adapter.get(SWAGGER_PATHS.authScript, (_request, response) => {
-    response.type('application/javascript').sendFile(join(__dirname, 'swagger-auth.js'));
+    response.type('application/javascript').sendFile(join(import.meta.dirname, 'swagger-auth.js'));
   });
   return document;
 }

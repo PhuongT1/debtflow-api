@@ -1,8 +1,8 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
-import { OptionalBlank } from '@common/validation/optional-blank.decorator';
-import { Trim } from '@common/validation/trim.decorator';
-import { PHONE_PATTERN } from '@common/validation/phone.constants';
-import { PartyType } from '@generated/prisma';
+import { OptionalBlank } from '#common/validation/optional-blank.decorator.js';
+import { Trim } from '#common/validation/trim.decorator.js';
+import { PHONE_PATTERN } from '#common/validation/phone.constants.js';
+import { PartyType } from '#generated/prisma/client.js';
 
 /** Non-negative amount with up to 2 decimals. */
 export const AMOUNT_PATTERN = /^\d{1,16}(\.\d{1,2})?$/;

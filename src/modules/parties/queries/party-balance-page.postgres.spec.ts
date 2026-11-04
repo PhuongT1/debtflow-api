@@ -3,12 +3,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import { parseListQuery } from '@common/query';
-import { partyBalancePageSql } from './party-balance-page.query';
-import { buildPartyQuery } from './parties.query';
-import { PARTY_LIST_QUERY } from './parties.list-query';
-import type { QueryPartiesDto } from '../dto/query-parties.dto';
+import { Prisma } from '#generated/prisma/client.js';
+import { parseListQuery } from '#common/query/index.js';
+import { partyBalancePageSql } from './party-balance-page.query.js';
+import { buildPartyQuery } from './parties.query.js';
+import { PARTY_LIST_QUERY } from './parties.list-query.js';
+import type { QueryPartiesDto } from '../dto/query-parties.dto.js';
 
 // Opt-in only: never fall back to DATABASE_URL. DDL/fixtures live in a fresh schema and roll back.
 const connectionString = process.env.PARTY_QUERY_TEST_DATABASE_URL;
@@ -66,7 +66,7 @@ describe.skipIf(!connectionString)('Party aggregate ordering on PostgreSQL', () 
     await client.query(
       readFileSync(
         resolve(
-          __dirname,
+          import.meta.dirname,
           '../../../../prisma/migrations/20261102100000_optimize_party_list_indexes/migration.sql',
         ),
         'utf8',

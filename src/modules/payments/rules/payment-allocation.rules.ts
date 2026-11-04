@@ -1,6 +1,6 @@
-import { badRequest } from '@common/errors/app-errors';
-import { DebtStatus, Prisma } from '@generated/prisma';
-import type { PayableDebt, VoucherInput } from '../types/payment.types';
+import { badRequest } from '#common/errors/app-errors.js';
+import { DebtStatus, Prisma } from '#generated/prisma/client.js';
+import type { PayableDebt, VoucherInput } from '../types/payment.types.js';
 
 export function paymentAmount(value: string): Prisma.Decimal {
   let amount: Prisma.Decimal;

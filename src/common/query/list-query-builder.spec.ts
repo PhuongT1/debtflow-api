@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applyListQuery, parseListQuery } from './list-query-builder';
-import { TEST_CONFIG } from './test-config';
+import { applyListQuery, parseListQuery } from './list-query-builder.js';
+import { TEST_CONFIG } from './test-config.js';
 
 describe('parseListQuery', () => {
   it('returns only what was requested', () => {

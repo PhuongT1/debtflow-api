@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { Prisma } from '@generated/prisma';
-import { parseListQuery, validFieldsOf, type FieldType } from '@common/query';
-import { partyBalancePageSql } from './party-balance-page.query';
-import { partyWhereSql } from './party-filter.sql';
-import { buildPartyQuery } from './parties.query';
-import { PARTY_LIST_QUERY } from './parties.list-query';
+import { Prisma } from '#generated/prisma/client.js';
+import { parseListQuery, validFieldsOf, type FieldType } from '#common/query/index.js';
+import { partyBalancePageSql } from './party-balance-page.query.js';
+import { partyWhereSql } from './party-filter.sql.js';
+import { buildPartyQuery } from './parties.query.js';
+import { PARTY_LIST_QUERY } from './parties.list-query.js';
 
 const pagination = { take: 20, skip: 40 };
 
