@@ -20,10 +20,18 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   user asks to change them. Their package managers, stacks and instruction files are not API policy.
 - Use Node 24 native ESM (`NodeNext`), npm and `package-lock.json`. Read
   [import aliases](docs/guides/import-aliases.md) before changing imports; use `.js` suffixes and
-  native `#...` package imports. Do not introduce another lockfile, package layout, framework or
+  the short `@auth/*`, `@common/*`, `@modules/*` and other configured aliases. Do not introduce another lockfile, package layout, framework or
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
   routes, not public/protected folder trees. Search for existing helpers and callers before adding files.
+- Keep one ordinary controller/service/query/mapper/types/rules file at the feature root. Create a
+  responsibility folder only for at least two related files. Keep `dto/`, `_test/`, `public/`,
+  `repositories/` and `infrastructure/` as explicit boundaries even when they contain one file.
+  Update imports, module bindings, tests and references together; never add filler or empty folders.
+- Features use `repositories/` contracts and `infrastructure/` Prisma adapters. Services/listeners
+  MUST NOT import the database layer, PrismaClient or concrete adapters. Modules own DI bindings.
+  See [Persistence architecture](docs/guides/persistence-architecture.md); transaction-scoped stores
+  keep dependent writes atomic without leaking Prisma clients into application services.
 - Put genuinely shared infrastructure in `src/common/`; it must not import feature or auth code.
   `src/config/` and `src/database/` also must not depend on features or auth. Controllers delegate
   persistence to services rather than importing the database layer or constructing a Prisma client.
@@ -88,11 +96,19 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 
 ## Verification and completion
 
+- For EVERY prompt/request (including questions, code, rules/config edits, review and commit),
+  default to the smallest relevant checks and affected test cases; reuse passing results when code
+  has not changed. Before a full suite (`npm test`, `npm run check`) or deep verification (broad
+  integration/e2e, database, load/performance or multi-runtime matrices), explain the reason and
+  proposed scope and wait for explicit user approval, unless that exact scope was already requested.
+  See [.ai/core/workflow/verification.md](.ai/core/workflow/verification.md#keep-verification-proportional).
+  The commands below apply when relevant; they are not an instruction to run every check per request.
+
 - Run `npm run check:architecture` and `npm run check:conventions` for backend structure/contract changes,
   and `npm run lint` for TypeScript. The conventions baseline contains only reviewed pre-existing response/
   query debt, locked per handler fingerprint. A changed/new handler must comply; remove stale entries.
   Do not broaden exemptions or put security/naming violations in that baseline to make checks pass.
-- Put every `src` spec/fixture in the owner's `_test/` folder; follow `.ai/core/testing.md` and
+- Put every `src` spec/fixture in the owner's `_test/` folder; follow `.ai/core/workflow/testing.md` and
   [test placement](docs/guides/backend-rules/testing-completion.md#test-placement).
 - Run meaningful targeted tests for changed behavior, especially tenant isolation, permissions,
   money, status transitions and failure paths. Extend existing suites when they own the scenario.

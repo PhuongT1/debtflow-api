@@ -1,16 +1,13 @@
-import { buildUsersQuery } from '../queries/users.query.js';
-import { MEMBER_INCLUDE } from '../queries/member.select.js';
-import { toMemberDto } from '../mappers/member.mapper.js';
-import type { Actor } from '../types/member.types.js';
+import { requireOrganizationId } from '@common/validation/require-organization-id.js';
+import { toMemberDto } from '../member.mapper.js';
+import type { Actor } from '../member.types.js';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcryptjs';
 import { notFound } from '@common/errors/app-errors.js';
 import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event.js';
 import type { ListQueryResult } from '@common/query/index.js';
-import { getPagination, paginate } from '@common/utils/pagination.util.js';
-import { PrismaService } from '@database/prisma.service.js';
-import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma/client.js';
+import { UsersRepository } from '../repositories/users.repository.js';
 import type { CreateUserDto } from '../dto/create-user.dto.js';
 import type { QueryUsersDto } from '../dto/query-users.dto.js';
 import type { UpdateUserDto } from '../dto/update-user.dto.js';
@@ -20,73 +17,34 @@ import {
   assertCanGrantRole,
   assertCanReactivate,
   assertCanSuspend,
-} from '../rules/users.rules.js';
+} from '../users.rules.js';
 
 const PASSWORD_ROUNDS = 12;
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: UsersRepository,
     private readonly events: EventEmitter2,
   ) {}
 
   async list(organizationId: string, query: QueryUsersDto, listQuery?: ListQueryResult) {
-    const pagination = getPagination(query);
-    const { where, orderBy } = buildUsersQuery(organizationId, query, listQuery);
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.organizationMembership.findMany({
-        where,
-        orderBy,
-        skip: pagination.skip,
-        take: pagination.take,
-        include: MEMBER_INCLUDE,
-      }),
-      this.prisma.organizationMembership.count({ where }),
-    ]);
-
-    return paginate(items.map(toMemberDto), total, pagination);
+    requireOrganizationId(organizationId);
+    const page = await this.repository.list(organizationId, query, listQuery);
+    return { ...page, items: page.items.map(toMemberDto) };
   }
-
-  async options(organizationId: string) {
-    const items = await this.prisma.organizationMembership.findMany({
-      where: {
-        organizationId,
-        status: OrganizationMembershipStatus.ACTIVE,
-        user: { status: UserStatus.ACTIVE },
-      },
-      orderBy: { user: { name: 'asc' } },
-      select: {
-        user: { select: { id: true, name: true, email: true, status: true } },
-        role: true,
-      },
-    });
-
-    return items.map(({ user, role }) => ({ ...user, role }));
+  options(organizationId: string) {
+    requireOrganizationId(organizationId);
+    return this.repository.options(organizationId);
   }
 
   /** Creates a new account and its ACTIVE membership in the actor's organization. */
   async create(organizationId: string, body: CreateUserDto, actor: Actor) {
+    requireOrganizationId(organizationId);
     assertCanGrantRole(actor, body.role);
 
     const passwordHash = await bcrypt.hash(body.password, PASSWORD_ROUNDS);
-    const membership = await this.prisma.organizationMembership.create({
-      data: {
-        organization: { connect: { id: organizationId } },
-        role: body.role,
-        status: OrganizationMembershipStatus.ACTIVE,
-        joinedAt: new Date(),
-        user: {
-          create: {
-            name: body.name,
-            email: body.email.toLowerCase(),
-            phone: body.phone ?? null,
-            passwordHash,
-          },
-        },
-      },
-      include: MEMBER_INCLUDE,
-    });
+    const membership = await this.repository.create(organizationId, body, passwordHash);
     const member = toMemberDto(membership);
 
     emitAudit(this.events, {
@@ -102,6 +60,7 @@ export class UsersService {
   }
 
   async update(organizationId: string, id: string, body: UpdateUserDto, actor: Actor) {
+    requireOrganizationId(organizationId);
     const membership = await this.findMembership(organizationId, id);
 
     assertCanChangeAccess(actor, { userId: id, role: membership.role }, { role: body.role });
@@ -109,30 +68,12 @@ export class UsersService {
     const editsProfile = body.name !== undefined || body.phone !== undefined;
 
     if (editsProfile) {
-      const membershipCount = await this.prisma.organizationMembership.count({
-        where: { userId: id },
-      });
+      const membershipCount = await this.repository.countMemberships(id);
       assertCanEditProfile(actor, id, membershipCount);
     }
 
     const before = toMemberDto(membership);
-    const updated = await this.prisma.organizationMembership.update({
-      where: { id: membership.id },
-      data: {
-        ...(body.role ? { role: body.role } : {}),
-        ...(editsProfile
-          ? {
-              user: {
-                update: {
-                  ...(body.name !== undefined ? { name: body.name } : {}),
-                  ...(body.phone !== undefined ? { phone: body.phone } : {}),
-                },
-              },
-            }
-          : {}),
-      },
-      include: MEMBER_INCLUDE,
-    });
+    const updated = await this.repository.update(organizationId, membership.id, body, editsProfile);
     const member = toMemberDto(updated);
 
     emitAudit(this.events, {
@@ -154,16 +95,13 @@ export class UsersService {
 
   /** Suspends the membership in this organization. The account itself is untouched. */
   async deactivate(organizationId: string, id: string, actor: Actor) {
+    requireOrganizationId(organizationId);
     const membership = await this.findMembership(organizationId, id);
 
     assertCanChangeAccess(actor, { userId: id, role: membership.role }, { suspend: true });
     assertCanSuspend(membership.status);
 
-    const suspended = await this.prisma.organizationMembership.update({
-      where: { id: membership.id },
-      data: { status: OrganizationMembershipStatus.SUSPENDED },
-      include: MEMBER_INCLUDE,
-    });
+    const suspended = await this.repository.suspend(organizationId, membership.id);
 
     emitAudit(this.events, {
       organizationId,
@@ -179,19 +117,17 @@ export class UsersService {
   }
 
   async reactivate(organizationId: string, id: string, actor: Actor) {
+    requireOrganizationId(organizationId);
     const membership = await this.findMembership(organizationId, id);
 
     assertCanChangeAccess(actor, { userId: id, role: membership.role }, {});
     assertCanReactivate(membership.status);
 
-    const active = await this.prisma.organizationMembership.update({
-      where: { id: membership.id },
-      data: {
-        status: OrganizationMembershipStatus.ACTIVE,
-        joinedAt: membership.joinedAt ?? new Date(),
-      },
-      include: MEMBER_INCLUDE,
-    });
+    const active = await this.repository.reactivate(
+      organizationId,
+      membership.id,
+      membership.joinedAt ?? new Date(),
+    );
 
     emitAudit(this.events, {
       organizationId,
@@ -207,10 +143,7 @@ export class UsersService {
   }
 
   private async findMembership(organizationId: string, userId: string) {
-    const membership = await this.prisma.organizationMembership.findFirst({
-      where: { organizationId, userId },
-      include: MEMBER_INCLUDE,
-    });
+    const membership = await this.repository.findMembership(organizationId, userId);
 
     if (!membership) throw notFound('users.MEMBER_NOT_FOUND');
 

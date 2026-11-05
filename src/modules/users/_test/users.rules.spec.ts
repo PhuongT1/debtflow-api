@@ -6,7 +6,7 @@ import {
   assertCanGrantRole,
   assertCanReactivate,
   assertCanSuspend,
-} from '../rules/users.rules.js';
+} from '../users.rules.js';
 
 const owner = { userId: 'u-owner', role: OrganizationRole.OWNER };
 const admin = { userId: 'u-admin', role: OrganizationRole.ADMIN };

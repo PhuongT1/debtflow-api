@@ -31,6 +31,14 @@ unrelated existing development server/browser session.
 
 ## TST-02 — select and run the actual checks
 
+Follow `.ai/core/workflow/verification.md` (repository source, section "Keep verification proportional").
+The commands below are a menu, not a per-request checklist. Default to affected specs/cases, for
+example `npx vitest run src/modules/parties/_test/party.mapper.spec.ts` (add `-t` for a specific case).
+Do not run `npm test` or `npm run check` automatically. Full-suite or deep verification requires
+explicit approval for the proposed scope; explain the reason and wait before starting. Existing
+CI remains unchanged. Reuse passing results for unchanged code, including commit-only work.
+Rules-only changes do not require application tests or backend builds.
+
 ```bash
 npm run check:architecture  # import layering
 npm run check:conventions   # naming and declarative API rules + exact legacy ratchet
@@ -44,7 +52,7 @@ npm run build
 
 Vitest executes transpiled tests; it does not establish that TypeScript accepts them. The Nest build
 excludes `*.spec.ts`. `npm run typecheck` checks those files with the actual root configuration and
-writes no output. DebtFlow uses native ESM on Node 24 with `NodeNext` and package imports (`#...`).
+writes no output. DebtFlow uses native ESM on Node 24 with `NodeNext` and short `@...` aliases rewritten during build.
 Use explicit `.js` suffixes for application imports (including `/index.js` for barrels),
 `import.meta.dirname` for file paths and `import.meta.url` when a module URL is needed.
 Tests that require emitted Nest constructor metadata load the compiled graph via
@@ -89,9 +97,9 @@ All specs and test-only helpers/fixtures in `src` live under an owning `_test/` 
 
 ```text
 src/modules/parties/
-  services/parties.service.ts
-  mappers/party.mapper.ts
-  queries/party-balance-page.query.ts
+  parties.service.ts
+  party.mapper.ts
+  infrastructure/queries/party-balance-page.query.ts
   _test/
     parties.service.spec.ts
     party.mapper.spec.ts

@@ -1,3 +1,2 @@
-/** Party resource access is owned by PartiesModule. */
-export { PartiesService } from '../services/parties.service.js';
+/** Response contract consumed by other features; application providers stay private. */
 export { PartyResponseDto } from '../dto/party-response.dto.js';

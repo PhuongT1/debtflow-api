@@ -32,6 +32,9 @@ Read the applicable rules and real neighboring implementation before editing. A 
 usually crosses all these boundaries; a message-only fix does not. Start with the current contract,
 not an invented generic repository/service framework or an unregistered sample module.
 
+Persistence and transaction boundaries are defined in
+[Persistence architecture](../persistence-architecture.md) and DB-06 in services/persistence.
+
 ## What automation enforces
 
 `npm run check:architecture` checks import layering. `npm run check:conventions` checks AST-level

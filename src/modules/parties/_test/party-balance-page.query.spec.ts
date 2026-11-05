@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery, validFieldsOf, type FieldType } from '@common/query/index.js';
-import { partyBalancePageSql } from '../queries/party-balance-page.query.js';
-import { partyWhereSql } from '../queries/party-filter.sql.js';
+import { partyBalancePageSql } from '../infrastructure/queries/party-balance-page.query.js';
+import { partyWhereSql } from '../infrastructure/queries/party-filter.sql.js';
 import { buildPartyQuery } from '../queries/parties.query.js';
 import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
 

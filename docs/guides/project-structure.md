@@ -82,7 +82,7 @@ Auth helpers live in:
 ```txt
 src/auth/decorators/auth-api.decorator.ts
 src/auth/auth.module.ts
-src/modules/auth/services/auth.service.ts
+src/modules/auth/auth.service.ts
 src/auth/decorators/current-user.decorator.ts
 src/auth/guards/jwt-auth.guard.ts
 src/auth/decorators/public.decorator.ts
@@ -105,16 +105,20 @@ The debt feature currently groups its cooperating providers, query builders and 
 ```text
 debts/
   debts.module.ts
-  controllers/debts.controller.ts
+  debts.controller.ts
   services/
     debts.service.ts
-    debts.service.spec.ts
     debt-line-item.service.ts
   queries/
     debts.list-query.ts
     debt-query.ts
-    debt-query.spec.ts
     debt-date-filters.ts
+  repositories/debts.repository.ts
+  infrastructure/prisma-debts.repository.ts
+  _test/
+    debts.service.spec.ts
+    prisma-debts.repository.spec.ts
+    debt-query.spec.ts
   dto/
     create-debt.dto.ts
     update-debt-collection.dto.ts
@@ -152,7 +156,7 @@ For example, a feature may evolve toward the following **when those responsibili
 ```text
 payments/
   payments.module.ts
-  controllers/payments.controller.ts
+  payments.controller.ts
   dto/
   services/
     payments.service.ts
@@ -224,14 +228,14 @@ changes; do not add a second implementation under a different entry point.
 Prisma; aggregate ordering is implemented by `party-balance-page.query.ts`, which accepts one
 `SortItem` and adds the internal ID tie-breaker. There is no multi-sort loop or projection registry.
 It reuses the supported Prisma predicate subset adapted by `party-filter.sql.ts`. This adapter is private to Parties, not a
-generic query framework. `PartiesService.list` owns the RepeatableRead boundary and bounded page
+generic query framework. `PrismaPartiesRepository.list` owns the RepeatableRead boundary and bounded page
 hydration; `party.select.ts` owns the scoped include, and payload types derive from it. Keep tests
 beside these owners. There is no separate JavaScript full-result sort or duplicate request parser.
 
 ## Payment responsibilities
 
-`payments/services/payments.service.ts` orchestrates scoped reads, voucher/debt writes in one transaction
-and audit after commit. `payments/rules/payment-allocation.rules.ts` owns pure amount/allocation
+`payments/payments.service.ts` orchestrates scoped reads, voucher/debt writes in one transaction
+and audit after commit. `payments/payment-allocation.rules.ts` owns pure amount/allocation
 checks; `payments/queries/payments.query.ts` owns list filters and stable default ordering. Shared
 balance-to-status calculation belongs to `debts/rules/debt-payment.rules.ts`, imported only through
 `debts/public/debts.ts`. It preserves the existing application/reversal semantics and is not a generic
@@ -266,3 +270,22 @@ Tests do not enter the production build; see the [testing contract](backend-rule
 project manifest. It is intentionally broader than `.ai-rules/`. Client folders remain generated
 installations. Rename this workspace only for a concrete requirement and update the installer,
 manifest, root guide, client adapters, ignore policy and portability tests together.
+
+
+## Persistence boundaries
+
+Features with database access keep their existing responsibility folders and add `repositories/`
+for abstract contracts and `infrastructure/` for Prisma implementations. Services own use cases and
+business decisions; read adapters own database projections. Modules register the implementation
+once using `provide`/`useClass`. See [Persistence architecture](persistence-architecture.md) for
+transaction stores, source references, permitted type dependencies and enforcement.
+
+
+## Compact ordinary responsibilities
+
+A single controller, service, mapper, query, rule or types file stays at the feature root. Group
+related files in a responsibility folder when there are at least two; move the existing file and
+its callers together when adding the second. Keep DTO/test/public/repository/infrastructure
+boundaries separate even for one file. Parties' root files are `parties.controller.ts`,
+`parties.service.ts`, `party.mapper.ts` and `party.types.ts`. Its multi-file queries and SQL helpers
+remain grouped. See OWN-01 for the canonical layout; do not create placeholder files or folders.

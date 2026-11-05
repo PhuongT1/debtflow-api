@@ -6,39 +6,35 @@ See source map entries V01–V03, V12, V29 and V19–V20. The REST file names be
 
 ## OWN-01 — choose the owner before creating a file
 
-Group feature files by responsibility; create only the folders with actual files:
+Use a compact feature layout. One ordinary responsibility stays at the feature root; a folder is
+created when it has at least **two related files**. Keep `dto/` separate even with one file. The
+explicit architecture boundaries `_test/`, `public/`, `repositories/` and `infrastructure/` also stay
+separate even with one file. Do not add filler files to satisfy the threshold.
 
 ```text
-src/modules/<plural-feature>/
-  <plural-feature>.module.ts       # Nest registration and explicit exports
-  controllers/
-    <plural-feature>.controller.ts # routes, context, policy, documentation
-  services/
-    <plural-feature>.service.ts      # use-case orchestration and persistence
-  _test/
-    <plural-feature>.service.spec.ts # observable service behavior
-  queries/                          # only when query responsibilities exist
-    <plural-feature>.list-query.ts   # public filter/sort capabilities
-    <singular>-query.ts              # shared query composition, when needed
+src/modules/parties/
+  parties.module.ts
+  parties.controller.ts
+  parties.service.ts
+  party.mapper.ts
+  party.types.ts
   dto/
-    create-<singular>.dto.ts       # create request, if supported
-    update-<singular>.dto.ts       # partial update, if supported
-    query-<plural-feature>.dto.ts  # resource-specific list parameters
-    <singular>-response.dto.ts    # related public response classes
+  repositories/parties.repository.ts
+  infrastructure/
+    prisma-parties.repository.ts
+    queries/                         # multiple SQL helpers
+  queries/                           # list config, projection, filter composition
+  public/parties.ts
+  _test/
 ```
 
-MUST create only files needed for the requested capability. Read-only features do not need fake
-create/update DTOs, and a two-line mapping does not require a mapper framework. Add a named
-`<responsibility>.service.ts` or helper when a distinct concern has callers/tests, not to satisfy a
-line-count target. Existing useful examples: `mappers/party.mapper.ts`, `rules/users.rules.ts`, `services/debt-line-item.service.ts`.
-Do not add `utils.ts`, `misc.ts`, `base.service.ts`, `generic.repository.ts` or a new top-level folder
-without identifying the concrete responsibility and why existing ownership is insufficient.
+When a second service/controller/mapper/types/rules/query file is needed, group the existing and
+new files in the relevant folder and update every import, Nest binding, test and reference in the
+same change. Debts, Dashboard and Users keep `services/` because they have cooperating providers.
+Use role suffixes (`*.controller.ts`, `*.service.ts`, `*.mapper.ts`, `*.types.ts`, etc.) so the root
+stays readable. Never create empty folders or a second definition just to justify a folder.
+A short helper does not require a framework, generic base service/repository or an extra layer.
 
-This template is not a closed list. A growing feature may use focused `services/`, `queries/`,
-`rules/`, `jobs/`, `integrations/` or child domain modules when the task needs them. Existing
-`DebtLineItemService` and `DashboardActionCenterService` demonstrate splitting by responsibility.
-Use responsibility folders consistently for small features too. Group cooperating providers in `services/`, list config
-and query/date builders in `queries/`, and nested document item inputs in `dto/items/` when present.
 All unit, HTTP and database specs and test-only fixtures MUST live in the owner's `_test/` folder:
 `src/modules/<feature>/_test/`, `src/auth/_test/`, `src/config/_test/`, or
 `src/common/<responsibility>/_test/`. Application composition tests live in `src/_test/`.
@@ -102,7 +98,9 @@ copying its central list of hundreds of providers into this single API is not re
 
 - `common`, `config` and `database` MUST NOT depend on features or auth. `src/auth` infrastructure MUST NOT depend on features. The architecture checker
   resolves aliases and relative imports to enforce this. Tests and generated files are excluded.
-- Controllers MUST delegate database access to services; enums/types from generated Prisma are fine.
+- Controllers delegate to services; services/listeners inject repository contracts. Only feature
+  `infrastructure/` imports the database layer or PrismaClient. Modules bind contract to adapter.
+  Generated enums/Decimal values and owned projection types remain allowed; see DB-06.
   Business use-case services under features/auth MUST NOT import controllers, Express `Request`/`Response`, `@nestjs/swagger` decorators or
   call HTTP `res.json`. The existing auth payload is bound at the route boundary, then pass the
   explicitly needed identity/context into the use case.

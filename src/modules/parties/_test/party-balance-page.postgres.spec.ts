@@ -5,7 +5,7 @@ import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery } from '@common/query/index.js';
-import { partyBalancePageSql } from '../queries/party-balance-page.query.js';
+import { partyBalancePageSql } from '../infrastructure/queries/party-balance-page.query.js';
 import { buildPartyQuery } from '../queries/parties.query.js';
 import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
 import type { QueryPartiesDto } from '../dto/query-parties.dto.js';

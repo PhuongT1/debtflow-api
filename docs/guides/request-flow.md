@@ -126,8 +126,10 @@ HTTP request
   -> src/configure-app.ts global prefix /api
   -> src/app.module.ts imports DashboardModule
   -> src/modules/dashboard/dashboard.module.ts
-  -> src/modules/dashboard/controllers/dashboard.controller.ts
+  -> src/modules/dashboard/dashboard.controller.ts
   -> src/modules/dashboard/services/dashboard.service.ts
+  -> DashboardRepository contract (bound by DashboardModule)
+  -> src/modules/dashboard/infrastructure/prisma-dashboard.repository.ts
   -> src/database/prisma.service.ts
   -> PostgreSQL / Neon database
   -> response JSON
@@ -158,7 +160,10 @@ src/modules/dashboard/dashboard.module.ts
 ```ts
 @Module({
   controllers: [DashboardController],
-  providers: [DashboardService],
+  providers: [
+    DashboardService, DashboardActionCenterService, PrismaDashboardActionCenter,
+    { provide: DashboardRepository, useClass: PrismaDashboardRepository },
+  ],
 })
 export class DashboardModule {}
 ```
@@ -166,14 +171,15 @@ export class DashboardModule {}
 Meaning:
 
 - `DashboardController` receives HTTP requests.
-- `DashboardService` contains business/query logic.
+- `DashboardService` validates inputs and orchestrates the query use case.
+- `DashboardRepository` is the contract; `PrismaDashboardRepository` owns database projections.
 
 ### 3. Controller receives request
 
 File:
 
 ```txt
-src/modules/dashboard/controllers/dashboard.controller.ts
+src/modules/dashboard/dashboard.controller.ts
 ```
 
 ```ts
@@ -214,27 +220,24 @@ src/modules/dashboard/services/dashboard.service.ts
 ```ts
 @Injectable()
 export class DashboardService {
-  constructor(protected readonly prisma: PrismaService) {}
+  constructor(
+    private readonly repository: DashboardRepository,
+    private readonly actionCenter: DashboardActionCenterService,
+  ) {}
 
-  async get() {
-    const [debts, recentPayments, topDebts] = await Promise.all([
-      this.prisma.debt.findMany(...),
-      this.prisma.payment.findMany(...),
-      this.prisma.debt.findMany(...),
-    ]);
-
-    return {
-      receivable,
-      payable,
-      overdueCount,
-      recentPayments,
-      topDebts,
-    };
+  async get(query: DashboardQueryDto, organizationId: string) {
+    requireOrganizationId(organizationId);
+    getDashboardPeriod(query);
+    const actionCenter = await this.actionCenter.get(query, organizationId);
+    const summary = await this.repository.summary(query, organizationId);
+    return { ...summary, actionCenter };
   }
 }
 ```
 
-The service uses `PrismaService` to read data from the database.
+The service calls the repository contract. Its Prisma implementation owns scoped database reads;
+the action-center service uses the same contract for its read projection. See
+[Persistence architecture](persistence-architecture.md).
 
 ### 5. Prisma service connects to database
 
@@ -256,7 +259,8 @@ src/database/prisma.service.ts
 export class DatabaseModule {}
 ```
 
-Because it is global, feature services can inject `PrismaService`.
+Because it is global, Prisma adapters can inject `PrismaService`. Application services inject
+repository contracts; the architecture gate rejects direct database imports there.
 
 `PrismaService` extends generated Prisma Client:
 
@@ -330,7 +334,7 @@ Flow:
 HTTP request
   -> src/modules/auth/controllers/auth.controller.ts
   -> LoginDto validation
-  -> src/modules/auth/services/auth.service.ts
+  -> src/modules/auth/auth.service.ts
   -> Prisma user lookup
   -> bcrypt password compare
   -> JWT access token created
@@ -388,13 +392,13 @@ Unknown fields are rejected.
 File:
 
 ```txt
-src/modules/auth/services/auth.service.ts
+src/modules/auth/auth.service.ts
 ```
 
 Steps:
 
 1. Lowercase email.
-2. Find user by email with Prisma.
+2. Call `AuthRepository.findForLogin`; its Prisma adapter selects the login record.
 3. If user/passwordHash missing, throw `UnauthorizedException`.
 4. If user status is not active, throw `UnauthorizedException`.
 5. Compare password with `bcrypt.compare`.

@@ -53,24 +53,56 @@ export function checkMaintainability(root = projectRoot) {
         [/\.controller\.ts$/, ['controllers', 'api']],
         [/\.service\.ts$/, ['services', 'jobs', 'integrations']],
         [/\.listener\.ts$/, ['listeners']],
-        [/\.list-query\.ts$|\.select\.ts$/, ['queries']],
+        [
+          /\.repository\.ts$/,
+          [path.split('/').at(-1).startsWith('prisma-') ? 'infrastructure' : 'repositories'],
+        ],
+        [/(?:\.list-query|\.select|\.query|-query|\.sql)\.ts$/, ['queries']],
         [/\.rules\.ts$/, ['rules']],
         [/\.types\.ts$/, ['types']],
         [/\.mapper\.ts$/, ['mappers']],
         [/\.dto\.ts$/, ['dto']],
       ];
       const role = roles.find(([pattern]) => pattern.test(path));
-      if (role && !role[1].some((folder) => folders.includes(folder)))
+      const mandatory =
+        role &&
+        role[1].some((folder) => ['dto', 'repositories', 'infrastructure'].includes(folder));
+      const boundaryFolders = new Set(['dto', '_test', 'public', 'repositories', 'infrastructure']);
+      const featurePrefix = `src/modules/${feature}/`;
+      const siblings = files
+        .map((name) => portable(relative(root, name)))
+        .filter((name) => name.startsWith(featurePrefix));
+      const groupSize = role
+        ? siblings.filter((name) => {
+            const parts = name.slice(featurePrefix.length).split('/');
+            return role[0].test(name) && (parts.length === 1 || role[1].includes(parts[0]));
+          }).length
+        : 0;
+      if (
+        role &&
+        ((mandatory && !role[1].some((folder) => folders.includes(folder))) ||
+          (!mandatory && folders.length && !role[1].some((folder) => folders.includes(folder))) ||
+          (!mandatory && !folders.length && groupSize >= 2))
+      )
         report(
           source,
           'responsibility-folder',
-          `Place this feature responsibility in ${role[1].join(' or ')}/.`,
+          `Use ${role[1].join(' or ')}/ for a mandatory boundary or multiple files; a single ordinary responsibility stays at the feature root.`,
         );
+      if (folders.length === 1 && !boundaryFolders.has(folders[0])) {
+        const directory = `${featurePrefix}${folders[0]}/`;
+        if (siblings.filter((name) => name.startsWith(directory)).length === 1)
+          report(
+            source,
+            'single-file-folder',
+            'Move this single-file responsibility to the feature root; keep DTO/test/public/persistence boundaries separate.',
+          );
+      }
       if (!folders.length && !path.endsWith('.module.ts') && !role)
         report(
           source,
           'feature-root',
-          'Keep composition at the feature root; group helpers in a named responsibility folder.',
+          'Use a named responsibility suffix; avoid generic types.ts, utils.ts or misc.ts at the feature root.',
         );
     }
 

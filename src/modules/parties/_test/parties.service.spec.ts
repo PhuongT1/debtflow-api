@@ -1,7 +1,9 @@
+import { PrismaUsersRepository } from '@modules/users/infrastructure/prisma-users.repository.js';
+import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery, validFieldsOf } from '@common/query/index.js';
-import { PartiesService } from '../services/parties.service.js';
+import { PartiesService } from '../parties.service.js';
 import { OrganizationMembersService } from '@modules/users/services/organization-members.service.js';
 import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
 
@@ -38,14 +40,16 @@ function setup() {
   const create = vi.fn();
   const events = { emit: vi.fn() };
   const service = new PartiesService(
-    {
+    new PrismaPartiesRepository({
       party: { findMany: rootRead, count: rootRead, create },
       debt: { groupBy: rootRead },
       $queryRaw: rootRead,
       $transaction: transaction,
-    } as never,
+    } as never),
     events as never,
-    new OrganizationMembersService({ organizationMembership: { findFirst } } as never),
+    new OrganizationMembersService(
+      new PrismaUsersRepository({ organizationMembership: { findFirst } } as never),
+    ),
   );
   return {
     service,
@@ -64,20 +68,13 @@ function setup() {
 afterEach(() => vi.useRealTimers());
 
 describe('PartiesService', () => {
-  it('checks an active party in the caller tenant using the supplied transaction', async () => {
-    const s = setup();
-    const findFirst = vi.fn().mockResolvedValue({ id: 'p1' });
-    const tx = { party: { findFirst } };
-    await s.service.assertActive('org-1', 'p1', tx as never);
-    expect(findFirst).toHaveBeenCalledWith({
-      where: { id: 'p1', organizationId: 'org-1', isActive: true },
-      select: { id: true },
-    });
-    findFirst.mockResolvedValue(null);
-    await expect(
-      s.service.assertActive('org-1', 'foreign-or-inactive', tx as never),
-    ).rejects.toMatchObject({ status: 404 });
-    expect(s.create).not.toHaveBeenCalled();
+  it('checks active party ownership through its repository contract', async () => {
+    const isActive = vi.fn().mockResolvedValue(true);
+    const service = new PartiesService({ isActive } as never, {} as never, {} as never);
+    await service.assertActive('org-1', 'p1');
+    expect(isActive).toHaveBeenCalledWith('org-1', 'p1');
+    isActive.mockResolvedValue(false);
+    await expect(service.assertActive('org-1', 'foreign')).rejects.toMatchObject({ status: 404 });
   });
   it.each(
     validFieldsOf(PARTY_LIST_QUERY, 'sortable')

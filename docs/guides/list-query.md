@@ -86,7 +86,7 @@ Each endpoint's allowed fields, their type and whether they can be sorted are li
 | `GET /parties`                                   | `src/modules/parties/queries/parties.list-query.ts`       |
 | `GET /payments`                                  | `src/modules/payments/queries/payments.list-query.ts`     |
 | `GET /users`                                     | `src/modules/users/queries/users.list-query.ts`           |
-| `GET /audit-logs`                                | `src/modules/audit-logs/queries/audit-logs.list-query.ts` |
+| `GET /audit-logs`                                | `src/modules/audit-logs/audit-logs.list-query.ts` |
 
 ## Extending it
 
