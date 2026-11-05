@@ -86,3 +86,5 @@ changes
 - Do not revert user changes unless the user explicitly asks.
 - Do not push unless the user explicitly asks.
 - If unrelated changes are present, ask or commit only the requested subset.
+
+Follow `.ai/core/workflow/verification.md#keep-verification-proportional`: select affected checks, reuse passing results, and obtain explicit approval before full-suite or deep verification.

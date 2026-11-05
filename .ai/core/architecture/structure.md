@@ -24,13 +24,13 @@
 - Follow the installed TypeScript/lint configuration. Do not silence errors with `any`, unchecked
   casts, `@ts-ignore` or blanket lint disables. Narrow `unknown` at untyped boundaries.
 
-Typical grouped shape for a feature with multiple responsibilities (adapt to the project):
+Typical compact feature (adapt to the project):
 
 ```text
 <feature-root>/orders/
   orders.module.ts
-  controllers/orders.controller.ts
-  services/orders.service.ts
+  orders.controller.ts
+  orders.service.ts
   _test/orders.service.spec.ts
   dto/create-order.dto.ts
   dto/update-order.dto.ts
@@ -42,8 +42,12 @@ only when the feature needs it. Verify Nest registration and actual consumers, n
 
 ## Grow by responsibility, not a fixed folder template
 
-The example is a starting point, not an exhaustive list of allowed files. Follow the project's folder
-convention for small features too; do not create unused scaffolding. As responsibilities emerge, use `services/`, `queries/`,
+The example is a starting point, not an exhaustive list of allowed files. Keep a single ordinary
+controller, service, mapper, query, rule or types file at the feature root. Create a responsibility
+folder when it has at least two related files; move the first file and update callers together when
+adding the second. Keep `dto/` separate even for one DTO. Retain project-defined architectural
+boundaries (`_test/`, `public/`, `repositories/`, `infrastructure/`) even with one file. Do not create
+empty folders or placeholders to reach the threshold. As responsibilities emerge, use `services/`, `queries/`,
 `rules/`, `jobs/`, `integrations/` or nested domain modules. Create only the folders needed by the task;
 do not impose controller/service/repository/domain/application layers on every feature.
 
@@ -65,10 +69,15 @@ Keeping `src/` in one application does not limit those options.
 
 Follow the project's test placement policy. Keep specs and test-only fixtures in the owner's
 `_test/` folder, outside production responsibility folders and build output. Moving tests requires
-updating imports, runners, references and documented commands together. See [Testing](testing.md).
+updating imports, runners, references and documented commands together. See [Testing](../workflow/testing.md).
 
 
 Place constants by owner and actual callers. Reuse the existing shared constants location for
 cross-feature contracts; keep feature-only values with the feature and private implementation values
 near their use. Do not create another constants folder/file or duplicate an enum without checking
 existing owners. Name constants for their meaning and functions for their actual input/output/action.
+
+
+If repository boundaries are selected by project policy, add `repositories/` for contracts and
+`infrastructure/` for database adapters. Keep existing feature folders; modules own DI bindings.
+Do not move business rules or authorization into an adapter just to remove an ORM import.

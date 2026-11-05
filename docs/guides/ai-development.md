@@ -121,3 +121,5 @@ handles implementation, `$review` stays read-only, and `$commit` needs an explic
 See [team AI setup](./ai-setup.md) for the client paths, safe regeneration, Git policy, official client
 documentation and how to copy the portable core into another NestJS project. Rules guide decisions;
 runtime guards, constraints, tests and required CI checks enforce the actual behavior.
+
+Verification scope: follow [proportional verification](./backend-rules/testing-completion.md). Run only affected checks by default; full-suite or deep verification needs explicit user approval before execution.

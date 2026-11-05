@@ -32,9 +32,10 @@ null, required-field or permission semantics; do not apply `PartialType` mechani
 
 ## Make the place to edit visible
 
-Follow the project's folder convention consistently. Keep module composition at the feature root;
-group actual transport, services, queries, types, mapping and business rules under named responsibility
-folders when the project uses them. Keep tests in the subject owner's `_test/` folder, following the project testing policy. Create only folders with real files.
+Follow the project's compact layout consistently: a single ordinary responsibility stays at the
+feature root; group related controllers, services, queries, types, mappers or rules when there are
+at least two files. Keep DTOs and project-defined architectural boundaries separate even with one
+file. File suffixes and dependency direction still apply to root-level files. Keep tests in the subject owner's `_test/` folder, following the project testing policy. Create only folders with real files.
 Use child domain modules when they have a coherent boundary or independent consumers.
 
 Shared contracts belong with their domain, not exported from executable service/controller files.

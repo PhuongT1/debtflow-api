@@ -27,3 +27,10 @@
 
 Verify rollback/no-success-event behavior, transaction propagation and relevant scope/status cases.
 Real isolation/constraint/concurrency claims require an authorized disposable database test.
+
+
+When the project chooses repository ports, put abstract contracts and concrete persistence adapters
+in the project's documented folders. Services depend on the port; module composition binds its
+implementation. A port exposes use-case operations, not a renamed ORM client or arbitrary query
+arguments. Keep dependent writes in one transaction through a scoped store; never give every
+repository an unrelated transaction. Preserve typed results without cloning every database model.

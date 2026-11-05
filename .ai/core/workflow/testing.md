@@ -13,6 +13,12 @@ an existing behavior does not authorize changing that behavior, production data 
 - Add cases that observe behavior: valid input, the relevant failure path, boundary values and any
   access/resource or transaction invariant affected. Do not mirror implementation statements.
 
+## Verification scope
+
+Follow [proportional verification](verification.md#keep-verification-proportional): default to the
+affected cases/suites, reuse passing results and ask before full-suite or deep verification. A
+request to test one behavior does not authorize testing the whole application.
+
 ## Execute and report
 
 - Use deterministic dates and sanitized fixtures. Mock external boundaries when the test is about
