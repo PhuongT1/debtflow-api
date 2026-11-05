@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-dev/
 
 # Real environment values are private; sanitized examples remain versioned.
 .env

@@ -38,3 +38,10 @@ Standalone seed/import scripts run through `tsx`, which reads the same TypeScrip
 the generated client source explicitly; running them requires authorization for the target database.
 Use `import.meta.dirname`/`import.meta.url` instead of CommonJS globals. Prefer native `import`;
 `createRequire(import.meta.url)` is reserved for a dependency or compiled test graph that needs it.
+
+Dev/watch uses `tsconfig.dev.json` and emits to `dist-dev/` with its own incremental state. Production
+builds emit to `dist/`. Do not point both at the same output: a separate build can remove `main.js`
+while an incremental watcher only re-emits changed files, causing Nest to fall back to `dist/main`.
+The alias pre-start hook selects the matching tsconfig from the compiled entrypoint. Asset output
+follows the active compiler output directory rather than a hard-coded `dist` asset destination.
+Restart an already-running watcher after updating this configuration.

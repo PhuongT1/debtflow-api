@@ -17,7 +17,6 @@
     "assets": [
       {
         "include": "common/swagger/swagger-auth.js",
-        "outDir": "dist",
         "watchAssets": true
       }
     ],
