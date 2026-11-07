@@ -1,5 +1,7 @@
 import { DebtRecordDto } from '@modules/debts/public/debt-records.js';
-import { PartyType } from '@generated/prisma/client.js';
+import { ApiProperty, PickType } from '@nestjs/swagger';
+import { PartyBase } from '@generated/response-models/party-base.js';
+import { PARTY_RESPONSE_FIELDS } from '../queries/party.select.js';
 import { UserSummaryDto } from '@modules/users/public/users.js';
 
 export class PartyBalanceDto {
@@ -13,30 +15,11 @@ export class PartyDebtCountDto {
   debts!: number;
 }
 
-export class PartyResponseDto {
-  id!: string;
-  organizationId!: string;
-  type!: PartyType;
-  code!: string | null;
-  name!: string;
-  searchText!: string;
-  phone!: string | null;
-  email!: string | null;
-  taxCode!: string | null;
-  address!: string | null;
-  address2!: string | null;
-  note!: string | null;
-  provinceCode!: string | null;
-  provinceName!: string | null;
+/** Shared scalar contract; only the money representation differs from the generated base. */
+export class PartyResponseDto extends PickType(PartyBase, PARTY_RESPONSE_FIELDS) {
   /** Decimal string. */
+  @ApiProperty({ type: String, nullable: true })
   creditLimit!: string | null;
-  imageUrl!: string | null;
-  /** False after the party was deactivated. */
-  isActive!: boolean;
-  createdById!: string | null;
-  assignedToId!: string | null;
-  createdAt!: Date;
-  updatedAt!: Date;
 }
 
 export class PartyListItemDto extends PartyResponseDto {

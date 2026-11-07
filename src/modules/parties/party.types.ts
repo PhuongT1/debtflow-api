@@ -1,22 +1,11 @@
 import type { Party, Prisma } from '@generated/prisma/client.js';
+import type { CreatePartyDto } from './dto/create-party.dto.js';
 import type { partyListInclude } from './queries/party.select.js';
 
 export type PartySearchSource = Pick<Party, 'name' | 'code' | 'phone' | 'taxCode'>;
 export type PartyWriteData = Pick<
   Prisma.PartyUncheckedCreateInput,
-  | 'type'
-  | 'code'
-  | 'name'
-  | 'searchText'
-  | 'phone'
-  | 'email'
-  | 'taxCode'
-  | 'address'
-  | 'provinceCode'
-  | 'provinceName'
-  | 'note'
-  | 'creditLimit'
-  | 'assignedToId'
+  keyof CreatePartyDto | 'searchText'
 >;
 export type PartyBalance = { receivable: Prisma.Decimal; payable: Prisma.Decimal };
 export type PartyListRecord = Prisma.PartyGetPayload<{

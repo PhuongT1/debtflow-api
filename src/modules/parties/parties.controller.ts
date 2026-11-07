@@ -1,3 +1,4 @@
+import { toPartyResponse, toPartyListItem, toPartyDetailResponse } from './party.mapper.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import {
@@ -49,7 +50,10 @@ export class PartiesController {
     @Query() q: QueryPartiesDto,
     @ListQuery(PARTY_LIST_QUERY) listQuery: ListQueryResult,
   ) {
-    return this.service.list(u.organizationId, q, listQuery);
+    return this.service.list(u.organizationId, q, listQuery).then((page) => ({
+      ...page,
+      items: page.items.map(toPartyListItem),
+    }));
   }
 
   @ApiOperation({
@@ -65,7 +69,7 @@ export class PartiesController {
   @Post()
   @Roles(...WRITERS)
   create(@CurrentUser() u: JwtAuthPayload, @Body() b: CreatePartyDto) {
-    return this.service.create(u.organizationId, u.sub, b);
+    return this.service.create(u.organizationId, u.sub, b).then(toPartyResponse);
   }
 
   @ApiOperation({
@@ -77,7 +81,7 @@ export class PartiesController {
   @ID_PARAM
   @Get(API_ROUTES.PARTIES.BY_ID)
   detail(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
-    return this.service.detail(u.organizationId, id);
+    return this.service.detail(u.organizationId, id).then(toPartyDetailResponse);
   }
 
   @ApiOperation({
@@ -96,7 +100,7 @@ export class PartiesController {
   @Patch(API_ROUTES.PARTIES.BY_ID)
   @Roles(...WRITERS)
   update(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string, @Body() b: UpdatePartyDto) {
-    return this.service.update(u.organizationId, id, b, u.sub);
+    return this.service.update(u.organizationId, id, b, u.sub).then(toPartyResponse);
   }
 
   @ApiOperation({
@@ -112,6 +116,6 @@ export class PartiesController {
   @Delete(API_ROUTES.PARTIES.BY_ID)
   @Roles(...WRITERS)
   remove(@CurrentUser() u: JwtAuthPayload, @Param('id') id: string) {
-    return this.service.deactivate(u.organizationId, id, u.sub);
+    return this.service.deactivate(u.organizationId, id, u.sub).then(toPartyResponse);
   }
 }

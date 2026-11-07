@@ -307,6 +307,23 @@ describe('domain module composition and HTTP access', () => {
     expect(parties.create).not.toHaveBeenCalled();
   });
 
+  it('maps Party response fields before wrapping and keeps full Decimal precision', async () => {
+    membership.mockResolvedValue(activeMember('ADMIN'));
+    parties.create.mockResolvedValueOnce({
+      id: 'test-party',
+      name: 'Example',
+      type: 'CUSTOMER',
+      creditLimit: { toString: () => '9999999999999999.99' },
+      internalNote: 'must not leave the server',
+    });
+    const response = await request('parties', { name: 'Example', type: 'CUSTOMER' }, true);
+    expect(response).toMatchObject({
+      status: 201,
+      body: { success: true, data: { id: 'test-party', creditLimit: '9999999999999999.99' } },
+    });
+    expect(response.body.data).not.toHaveProperty('internalNote');
+  });
+
   it('preserves create status, validation and server-owned tenant/actor arguments', async () => {
     membership.mockResolvedValue(activeMember('ADMIN'));
     expect(

@@ -1,4 +1,11 @@
-import type { PartyWriteData, PartySearchSource } from './party.types.js';
+import { PARTY_RESPONSE_FIELDS } from './queries/party.select.js';
+import type {
+  PartyRecord,
+  PartyDetail,
+  PartyWithBalance,
+  PartyWriteData,
+  PartySearchSource,
+} from './party.types.js';
 import { normalizeOptionalText } from '@common/utils/optional-text.util.js';
 import { Prisma } from '@generated/prisma/client.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
@@ -73,4 +80,30 @@ export function buildPartyUpdateData(
   }
 
   return data;
+}
+
+/** Same allow-list as Swagger. Never spread an unfiltered database record into an API response. */
+export function toPartyResponse(party: PartyRecord) {
+  // Object.fromEntries loses literal keys; every key/value here comes from the typed allow-list.
+  const fields = Object.fromEntries(PARTY_RESPONSE_FIELDS.map((key) => [key, party[key]])) as Pick<
+    PartyRecord,
+    (typeof PARTY_RESPONSE_FIELDS)[number]
+  >;
+  return { ...fields, creditLimit: party.creditLimit?.toString() ?? null };
+}
+
+export function toPartyListItem(party: PartyWithBalance) {
+  return {
+    ...toPartyResponse(party),
+    assignedTo: party.assignedTo,
+    _count: party._count,
+    balance: {
+      receivable: party.balance.receivable.toString(),
+      payable: party.balance.payable.toString(),
+    },
+  };
+}
+
+export function toPartyDetailResponse(party: PartyDetail) {
+  return { ...toPartyResponse(party), assignedTo: party.assignedTo, debts: party.debts };
 }
