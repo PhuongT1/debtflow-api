@@ -10,6 +10,12 @@ generator listQueryMetadata {
   output = "../src/generated/list-query"
 }
 
+generator responseModels {
+  provider = "node ./scripts/generate-response-models.mjs"
+  output   = "../src/generated/response-models"
+  model    = "Party"
+}
+
 generator markdown {
   provider = "prisma-markdown"
   output   = "../docs/generated/database.md"

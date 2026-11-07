@@ -10,6 +10,7 @@ dist-dev/
 .DS_Store
 /src/generated/prisma/
 /src/generated/list-query/
+/src/generated/response-models/
 docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp/

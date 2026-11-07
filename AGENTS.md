@@ -39,7 +39,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   and unrelated document/CV scripts outside the repository, normally in the OS temporary directory
   or the user's explicitly requested destination. Do not move or delete existing unrelated files
   without authorization.
-- Do not hand-edit `src/generated/prisma/`, `src/generated/list-query/`, `dist/` or `docs/generated/`. Change their source and
+- Do not hand-edit `src/generated/prisma/`, `src/generated/list-query/`, `src/generated/response-models/`, `dist/` or `docs/generated/`. Change their source and
   regenerate. Keep browser artifacts and VitePress build/cache/temp output ignored.
 
 ## Security and business invariants
