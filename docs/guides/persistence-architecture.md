@@ -7,6 +7,9 @@ This decision applies to Auth, Users, Parties, Debts, Payments, Catalog, Dashboa
 Audit Logs. Exports already consumes Debts' public service. Imports remains a documented scaffold;
 add its own contract/adapter when implementing database operations, not empty folders now.
 
+For a concrete module walkthrough and current limitations, see
+[Party implementation example](./party-architecture.md).
+
 ## Feature layout and dependency direction
 
 ```text
@@ -36,7 +39,7 @@ Those remaining type/value dependencies mean this is not a completely ORM-indepe
 
 ## Transactions and business decisions
 
-Payments and Debts expose `inTransaction(work)`. The Prisma implementation creates one interactive
+Payments, Debts and Parties expose `inTransaction(work)`. The Prisma implementation creates one interactive
 transaction and constructs a plain, transaction-scoped store whose methods close over the same `tx`.
 The application callback checks business invariants and composes those operations. No root Prisma
 client or `TransactionClient` crosses this port. There is no global mutable transaction context.
@@ -50,6 +53,13 @@ Callbacks must therefore be replay-safe: audit, files, network calls and other e
 remain outside the transaction. A live concurrency guarantee needs real database verification;
 mock tests establish orchestration/retry behavior only. Sequential debt codes retain their existing
 unique constraint; an unhandled unique conflict is not silently retried as a business success.
+
+Party updates read the scalar snapshot, derive searchText and write through one serializable store;
+conflict retries recompute from the new snapshot. Party deactivation checks unsettled debts and writes
+in that same boundary. Debt creation also uses Serializable: both writers must retain it so concurrent
+creation/deactivation retries and rechecks the business rule. Audit stays after commit. Native PostgreSQL
+opt-in tests cover both commit orders and concurrent PATCH; they do not cover arbitrary SQL/import writers.
+Party detail scopes both the parent and debt relation to the tenant.
 
 Parties read-model pagination keeps RepeatableRead and computed sorts in the database. Reports
 retain full-filtered-set aggregates. Dashboard/Catalog read adapters own projections; do not invent

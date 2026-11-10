@@ -16,6 +16,10 @@ These rules follow a source review of Vendure commit
 file is a perfect template. Read the [source map](./vendure-source-map.md) for the examined symbols,
 what they establish, and what changes when adapting GraphQL/TypeORM to REST/Prisma 7.
 
+New developers: start with [architecture](../../02-architecture.md),
+[request flow](../request-flow.md), [Party example](../party-architecture.md) and
+[module development](../module-development.md). The sections below remain the canonical policy.
+
 ## Select by change
 
 | Change                                     | Required sections                                                                                     |

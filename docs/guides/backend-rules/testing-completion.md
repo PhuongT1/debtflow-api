@@ -99,11 +99,11 @@ All specs and test-only helpers/fixtures in `src` live under an owning `_test/` 
 src/modules/parties/
   parties.service.ts
   party.mapper.ts
-  infrastructure/queries/party-balance-page.query.ts
+  infrastructure/sql/party-balance-page.sql.ts
   _test/
     parties.service.spec.ts
     party.mapper.spec.ts
-    party-balance-page.query.spec.ts
+    party-balance-page.sql.spec.ts
     party-balance-page.postgres.spec.ts
 src/common/query/_test/        # parser tests and test-config.ts
 src/auth/_test/                # auth infrastructure

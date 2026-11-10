@@ -9,7 +9,8 @@ project-specific decisions below specialize it.
 Domain ownership comes first: `src/modules/<feature>/`. Keep a single ordinary responsibility at the
 feature root with its explicit role suffix. Group related controllers, services, queries, mappers,
 types or rules when there are at least two files. DTO, test, public, repository and infrastructure
-boundaries remain separate even with one file. Module composition stays at the feature root.
+boundaries remain separate even with one file when needed. DTO/type-only contracts do not require
+a separate `public/` forwarding file. Module composition stays at the feature root.
 Follow OWN-01; do not add filler files or empty folders to justify a template.
 
 This is a NestJS ownership convention. It does not use Next.js file-based routes. Neither folder
@@ -28,7 +29,7 @@ ownership; route decorators and service invariants define access.
 | Response envelope types             | `common/http/api-response.types.ts` reuses the DTO owner; do not create another pagination/error-field definition                                                                                                                                   |
 | Optional text and phone format      | `common/utils/optional-text.util.ts`, `common/validation/phone.constants.ts`; no feature-specific clones                                                                                                                                            |
 | Debt filters for list/report/export | `debts/queries/debt-query.ts`; preserve scope and intersect overlapping constraints                                                                                                                                                                 |
-| Party/member list filters           | `parties/queries/parties.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                         |
+| Party/member list filters           | `parties/queries/party.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                         |
 | Payment allocation and debt status  | `payments/payment-allocation.rules.ts` owns allocation/amount checks; `debts/rules/debt-payment.rules.ts` owns state derivation and is exposed through `debts/public/debts.ts`                                                                |
 | Payment list composition            | `payments/queries/payments.query.ts`; tenant and named filters intersect with shared dynamic filters; retain a unique sort tie-breaker                                                                                                              |
 | Swagger setup and browser helper    | `common/swagger/swagger.setup.ts` owns the document/routes; `swagger-ui.ts` owns HTML/paths; `swagger-auth.js` owns browser authorization and is linted/tested as an asset. Follow the [owner table](../api-and-swagger.md#where-to-make-changes).  |
@@ -69,17 +70,22 @@ is empty; do not add a waiver for a new or changed handler. DTO annotations docu
 they do not sanitize output. Money remains serialized as decimal strings.
 
 Party list count, page and balances share a RepeatableRead snapshot. Aggregate sorting is owned
-by `parties/infrastructure/queries/party-balance-page.query.ts`; `party-filter.sql.ts` adapts the canonical Prisma
+by `parties/infrastructure/sql/party-balance-page.sql.ts`; `party-filter.sql.ts` adapts the canonical Prisma
 where subset rather than parsing requests again. Extend its SQL and database regression tests when
-adding a Party filter or sort. `partyListInclude(organizationId)` owns the tenant-scoped relation count.
+adding a Party filter or sort. `partyListSelect(organizationId)` owns the Prisma projection and tenant-scoped relation count.
+List, detail and scalar record types derive from their actual `select` through `Prisma.PartyGetPayload`;
+only the computed balance is added separately. Do not copy Prisma scalar/relation field types.
 XLSX exports remain capped at 1000 rows, and audit delivery remains best-effort in-process. These are explicit behavior/scale limits, not solved by creating more folders.
 Mocked persistence tests do not establish live database isolation, concurrency safety or migration safety.
 
 ## Cross-feature calls and API implementation
 
-Only `public/` named exports and the owning Nest module are entry points for another feature.
-Controllers, services, mappers, queries, rules and DTO files remain implementation details unless
-explicitly re-exported. `public/` describes a TypeScript contract, not anonymous HTTP access. Do not
+Provider entry points are named `public/` exports and the owning Nest module. Named exported DTO
+classes may be imported directly from `dto/*.dto.ts`; named exported types/interfaces may be imported
+with `import type` from `*.types.ts`. These contract owners do not permit importing helper functions,
+constants, namespace objects or hidden providers. A one-symbol forwarding barrel is not required.
+Controllers, services, mappers, query builders and rules remain private unless explicitly exposed
+through a named provider/public contract. Direct DTO/type imports follow the narrow rules above. `public/` describes a TypeScript contract, not anonymous HTTP access. Do not
 use `export *`, register another feature's provider again or call this API over HTTP from a service
 in the same process. Import the owning module and inject its exported provider. Pure read builders
 and response DTOs may be reused through named public exports without a provider import.

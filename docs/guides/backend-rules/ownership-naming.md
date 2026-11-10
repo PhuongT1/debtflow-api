@@ -8,8 +8,9 @@ See source map entries V01–V03, V12, V29 and V19–V20. The REST file names be
 
 Use a compact feature layout. One ordinary responsibility stays at the feature root; a folder is
 created when it has at least **two related files**. Keep `dto/` separate even with one file. The
-explicit architecture boundaries `_test/`, `public/`, `repositories/` and `infrastructure/` also stay
-separate even with one file. Do not add filler files to satisfy the threshold.
+explicit architecture boundaries `_test/`, `repositories/` and `infrastructure/` also stay
+separate even with one file. Keep `public/` for deliberate provider contracts where used; DTO/type-only
+contracts can be imported from their actual owner without a forwarding file. Do not add filler files to satisfy the threshold.
 
 ```text
 src/modules/parties/
@@ -24,7 +25,6 @@ src/modules/parties/
     prisma-parties.repository.ts
     queries/                         # multiple SQL helpers
   queries/                           # list config, projection, filter composition
-  public/parties.ts
   _test/
 ```
 
@@ -50,6 +50,20 @@ differently protected route. Reuse the owning provider with explicit context/pol
 not secure background callers. Small modules may register controllers and providers in one Nest module. When an
 independent worker must import only use-case providers, split that domain's HTTP adapter module from
 its provider module; the worker imports the latter. Do not create those extra modules before needed.
+
+## File responsibility headers and documentation helpers
+
+Controller and module files MUST start with a brief header containing about two descriptive lines.
+Describe the actual endpoint responsibility/delegated service, or registered providers/module bindings.
+Do not claim a module exports/imports providers it does not, and update the header when its role changes.
+
+Shared Swagger-only decorators live in `src/common/swagger/decorators/` and retain Nest's `Api` prefix:
+`ApiEnvelope`/`ApiErrorEnvelopes` describe responses; `ApiListQuery` describes allowed query parameters.
+Import them from this namespace, not the runtime query barrel. Keep `ListQuery`, its parser and pipe in
+`common/query/`, and actual response wrapping in `common/interceptors/api-response.interceptor.ts`.
+Shared envelope DTOs remain in `common/http/` because runtime response type aliases also reuse them.
+`auth-api.decorator.ts` stays auth-owned: `PublicApi` has runtime metadata while `ProtectedApi` documents
+security/error responses. Global guards enforce access; Swagger decorators do not.
 
 ## OWN-02 — names communicate the role
 
@@ -157,3 +171,22 @@ Vendure illustrates both scopes: `packages/core/src/common/constants.ts` holds s
 values, while `health-check/constants.ts`, `job-queue/constants.ts` and `api/constants.ts` stay with
 their respective owners. DebtFlow uses its existing shared constants directory for the public REST
 path/tag contract; it does not import Vendure's constants or assume its GraphQL paths match REST.
+
+## Read-query file names
+
+Name pure read helpers by their output: `*.list-query.ts` for the HTTP filter/sort capability
+configuration, `*.query.ts` for Prisma argument composition, `*.select.ts` for typed Prisma
+projections, and `*.sql.ts` for TypeScript functions producing SQL fragments/statements. SQL builders
+belong to the owning feature's infrastructure; repository adapters execute them. A `.sql.ts` suffix
+still denotes TypeScript, not a standalone `.sql` file or Prisma TypedSQL. Do not imply CQRS
+QueryBus/QueryHandler usage when the feature only has pure query builders.
+
+For Parties, `infrastructure/sql/party-balance-page.sql.ts` builds the aggregate/page statement;
+`party-filter.sql.ts` adapts the canonical Prisma predicate subset. Both are executed/consumed through
+the owning Prisma repository, with no additional provider or database connection.
+
+Keep shared capability definitions, Prisma argument builders and projections in the feature's
+`queries/` folder when multiple files are needed. Put private PostgreSQL fragment/statement builders
+in `infrastructure/sql/`, rather than another folder called `queries/`. Repository adapters execute
+those statements. Shared DTOs/mappers/types must not depend on infrastructure just to reuse
+projection keys or inferred payloads. Keep one projection source, not a forwarding or duplicate copy.

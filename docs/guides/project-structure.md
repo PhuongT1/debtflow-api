@@ -210,12 +210,14 @@ query projections, reuse examples and the current audit limits.
 
 ## Public feature contracts
 
-Cross-feature imports use `public/` named exports and `*.module.ts`. For an injectable provider,
+Cross-feature providers use `public/` named exports and `*.module.ts`. DTO classes can be imported
+by name from their `dto/*.dto.ts` owner; type/interface contracts use named type-only imports from
+`*.types.ts`. Do not add a forwarding barrel merely for one data contract. For an injectable provider,
 import the owning module as well; importing its class alone does not make it injectable. Do not call
 another controller or issue HTTP requests back to this application to reuse a use case. Keep pure
 record DTO contracts separate from relation response contracts when that avoids runtime import cycles.
-`check:maintainability` rejects imports/re-exports into another feature's private folders and blanket
-public exports. Tests may reach their subject directly. `public/` is unrelated to HTTP access policy.
+`check:maintainability` rejects private implementation imports, fake DTO functions, helper imports
+through DTO/type owners, namespace contract imports and blanket public exports. Tests may reach their subject directly. `public/` is unrelated to HTTP access policy.
 
 `OrganizationMembersService` belongs to Users, active party access belongs to Parties, collection
 PATCH mapping, shared aging and debt payment-state derivation belong to Debts. Payments owns
@@ -224,13 +226,42 @@ changes; do not add a second implementation under a different entry point.
 
 ## Party list query ownership
 
-`parties/queries/parties.query.ts` composes the canonical authorized filters. Ordinary ordering uses
-Prisma; aggregate ordering is implemented by `party-balance-page.query.ts`, which accepts one
+For the full layer map, request/write flows, change checklist and audit gaps, see
+[Party implementation example](./party-architecture.md).
+
+Shared read definitions and PostgreSQL SQL builders have distinct names and dependency boundaries:
+
+```text
+parties/
+  queries/
+    party.list-query.ts                 # public filter/sort capabilities and computed aliases
+    party.query.ts                      # canonical Prisma where/orderBy and balance statuses
+    party.select.ts                     # shared typed projections and response field keys
+  infrastructure/
+    prisma-parties.repository.ts        # DB calls, transaction and page hydration
+    sql/
+      party-balance-page.sql.ts         # aggregate, sort and pagination SQL
+      party-filter.sql.ts              # canonical Prisma predicates → SQL fragments
+  _test/
+    party-balance-page.sql.spec.ts
+    party-balance-page.postgres.spec.ts # opt-in PostgreSQL result checks
+```
+
+`queries/` owns definitions reused by the controller, DTOs, mapper and repository. `infrastructure/sql/`
+is private PostgreSQL implementation. Both build arguments/fragments only; the repository executes
+them. Shared payload types derive from the actual projection rather than redeclaring database fields.
+`outstandingDocuments` is a legacy sort alias for `_count.debts` (all tenant debts, including paid and
+cancelled). It is not a Party column or a separate response property. Balances aggregate only
+OPEN/PARTIAL debts. The computed alias registry is shared with a complete typed sort-aggregate map.
+
+
+`parties/queries/party.query.ts` composes the canonical authorized filters. Ordinary ordering uses
+Prisma; aggregate ordering is implemented by `party-balance-page.sql.ts`, which accepts one
 `SortItem` and adds the internal ID tie-breaker. There is no multi-sort loop or projection registry.
 It reuses the supported Prisma predicate subset adapted by `party-filter.sql.ts`. This adapter is private to Parties, not a
 generic query framework. `PrismaPartiesRepository.list` owns the RepeatableRead boundary and bounded page
-hydration; `party.select.ts` owns the scoped include, and payload types derive from it. Keep tests
-beside these owners. There is no separate JavaScript full-result sort or duplicate request parser.
+hydration; `party.select.ts` owns the scoped projection, and payload types derive from it. Keep tests
+in the feature's `_test/` folder. There is no separate JavaScript full-result sort or duplicate request parser.
 
 ## Payment responsibilities
 
@@ -289,3 +320,8 @@ its callers together when adding the second. Keep DTO/test/public/repository/inf
 boundaries separate even for one file. Parties' root files are `parties.controller.ts`,
 `parties.service.ts`, `party.mapper.ts` and `party.types.ts`. Its multi-file queries and SQL helpers
 remain grouped. See OWN-01 for the canonical layout; do not create placeholder files or folders.
+
+Party computed list reads rank the complete filtered set using only the requested sort aggregate,
+then compute both response balances for the selected page. Scalar sorts keep paginated Prisma reads.
+Mutation snapshots use `PartiesRepository.findRecord` with the scalar projection; update/deactivate
+must not fetch the detail endpoint's debt history merely for normalization or audit snapshots.

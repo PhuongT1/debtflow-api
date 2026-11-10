@@ -83,7 +83,7 @@ Each endpoint's allowed fields, their type and whether they can be sorted are li
 | Endpoint                                         | Definition                                                |
 | ------------------------------------------------ | --------------------------------------------------------- |
 | `GET /debts`, `/reports/aging`, `/exports/debts` | `src/modules/debts/queries/debts.list-query.ts`           |
-| `GET /parties`                                   | `src/modules/parties/queries/parties.list-query.ts`       |
+| `GET /parties`                                   | `src/modules/parties/queries/party.list-query.ts`       |
 | `GET /payments`                                  | `src/modules/payments/queries/payments.list-query.ts`     |
 | `GET /users`                                     | `src/modules/users/queries/users.list-query.ts`           |
 | `GET /audit-logs`                                | `src/modules/audit-logs/audit-logs.list-query.ts` |
@@ -143,10 +143,41 @@ Date-only filters reject impossible calendar dates (such as February 30). Party 
 `createdTo` also use Vietnam business-day boundaries regardless of the server timezone; explicit
 dates take precedence over the `createdRange` shortcut.
 
+### Reuse sorting: date, number, money, text, enum and boolean
+
+For an ordinary DateTime column, add `createdAt: { type: 'date' }` to the resource's existing
+`defineListQuery({ model, fields })` configuration. Do not add a `sortDate()` helper, a controller
+switch or an in-memory `.sort()`; the shared parser and Prisma builder already support it.
+The same applies to `string`, `number`, `decimal`, `enum` and `boolean` fields.
+
+The endpoint binds `@ListQuery(CONFIG)` and delegates to its service/repository. The repository uses
+`applyListQuery` to combine the parsed sort with its tenant-scoped base arguments and default ordering.
+For example, `?sortBy=createdAt&sortOrder=desc` produces:
+
+```ts
+[{ createdAt: 'desc' }, { id: 'asc' }]
+```
+
+- Missing `sortOrder` means `asc`; missing `sortBy` retains the endpoint default. Its default ordering
+  must also include the unique ID tie-breaker.
+- Unknown/disabled fields, invalid directions and repeated/multiple sort fields are rejected.
+- Dates are ordered by the stored timestamp, including time. Formatting for display does not change
+  the order. Sorting by Vietnam calendar date only is a separate computed requirement.
+- Nullable columns keep PostgreSQL defaults: ASC puts null last; DESC puts null first. A resource
+  requiring another rule must use an explicit typed sort hook and test it; do not silently change
+  all endpoints' null ordering.
+- Strings follow database collation; this does not promise accent-insensitive, Vietnamese linguistic
+  or natural numeric ordering. Enums follow their database enum order, not display-label alphabet.
+- A to-one relation field uses `path`, e.g. `party.name`. A custom relation count uses a `sort` hook.
+  Computed balances need a feature-owned DB query before pagination, as Party does.
+
+The shared capability declaration and parser are reusable; the database performs the sorting. Keep
+only public fields in the allow-list and use matching indexes where actual query plans justify them.
+
 ### Add a new operator
 
 1. Add the name to `FILTER_OPERATORS` and to the right types in `OPERATORS_BY_TYPE` (`list-query.types.ts`).
-2. Map it in `toCondition` (`parse-filter-params.ts`) and add a case to `parse-filter-params.spec.ts`.
+2. Map it in `toCondition` (`list-query-filter.ts`) and add a case to `list-query-filter.spec.ts`.
 3. The Swagger description and the error message pick it up automatically.
 
 ### Add a new list endpoint
@@ -174,10 +205,10 @@ list(
   return this.products.list(user.organizationId, query, listQuery);
 }
 
-// products.service.ts: keep the tenant condition in the base `where`
+// infrastructure/prisma-products.repository.ts: preserve the trusted tenant condition
 const { where, orderBy } = applyListQuery<Prisma.ProductWhereInput, Prisma.ProductOrderByWithRelationInput[]>(
   listQuery,
-  { where: { organizationId }, orderBy: [{ name: 'asc' }] },
+  { where: { organizationId }, orderBy: [{ name: 'asc' }, { id: 'asc' }] },
 );
 this.prisma.product.findMany({ where, orderBy, skip, take });
 ```
@@ -185,7 +216,7 @@ this.prisma.product.findMany({ where, orderBy, skip, take });
 ### Beyond flat AND/OR (nested groups)
 
 The internal contract is a tree (`FilterGroup { operator, conditions: Array<FilterCondition | FilterGroup> }`,
-like Vendure's `_and`/`_or`), and `buildWhere` already handles nesting. Only the query-string syntax is
+like Vendure's `_and`/`_or`), and `buildPrismaWhere` already handles nesting. Only the query-string syntax is
 flat today. A future transport (GraphQL, a JSON `filter` body) can produce nested groups without touching
 the builder.
 
@@ -193,16 +224,54 @@ the builder.
 
 ```text
 src/common/query/
-  list-query.types.ts        contract: operators, ListQueryField, ListQueryOptions, FilterGroup
+  list-query.types.ts        types and operator constants; no runtime helper functions
+  list-query.helpers.ts      shared capability lookups, group guard and nested Prisma paths
   define-list-query.ts       defineListQuery + startup check against the Prisma schema
-  parse-sort-params.ts       sort / sortBy+sortOrder -> SortItem[] -> Prisma orderBy
-  parse-filter-params.ts     filter[...] + filterOperator -> FilterGroup -> Prisma where
+  list-query-sort.ts       sortBy+sortOrder -> SortItem[] -> Prisma orderBy
+  list-query-filter.ts     filter[...] + filterOperator -> FilterGroup -> Prisma where
   list-query-builder.ts      parseListQuery (pure) and applyListQuery (merge with service args)
   list-query.decorator.ts    @ListQuery(config) parameter decorator
   list-query.pipe.ts         validation pipe that lets these keys through DTO validation
-  list-query.swagger.ts      @ApiListQuery(config) OpenAPI documentation
-  *.spec.ts                  unit tests next to the code (npm test)
+  _test/                     owning unit and HTTP suites
 ```
 
-Parsing and building are pure functions with no database or Nest dependency, which is why they are
-covered by plain unit tests.
+`src/common/swagger/decorators/api-list-query.decorator.ts` owns `@ApiListQuery(config)` metadata.
+It is imported separately from the runtime query helpers.
+
+Parsing/building make no DB calls and are tested directly. Invalid inputs use the shared Nest HTTP
+error contract. Only the decorator and validation pipe access the HTTP request boundary.
+
+### Which function should a developer change?
+
+| Responsibility | Owner |
+| --- | --- |
+| Declare/check a resource capability configuration | `defineListQuery` in `define-list-query.ts` |
+| Validate `sortBy` / `sortOrder` | `parseSortParams` in `list-query-sort.ts` |
+| Compile validated sort into Prisma ordering | `buildPrismaOrderBy` in `list-query-sort.ts` |
+| Parse/coerce HTTP filter parameters | `parseFilterParams` in `list-query-filter.ts` |
+| Compile a validated filter tree into Prisma predicates | `buildPrismaWhere` in `list-query-filter.ts` |
+| Operators, field names, group guard, nested path objects | `list-query.helpers.ts` |
+| Orchestrate parse/build and combine trusted base scope | `parseListQuery` / `applyListQuery` in `list-query-builder.ts` |
+| Read HTTP query or integrate DTO validation | decorator / pipe |
+
+Feature code normally imports `defineListQuery`, `ListQuery`, `applyListQuery` and types from
+`@common/query/index.js`; it does not need to call individual parser/compiler helpers. There is no
+filter-to-sort import: both use the shared nested-path helper. Keep runtime helpers out of the types
+file and do not introduce compatibility forwarding files for renamed internal modules.
+
+### Type ownership and reuse
+
+`SortDirection` reuses `Prisma.SortOrder`; resource model names use `Prisma.ModelName`. Model-name
+typos are rejected by TypeScript as well as the existing startup metadata guard. `ListQueryResult`
+reuses `sort` with `Pick<ListQueryOptions, 'sort'>`.
+
+HTTP filter operators, capability definitions and filter groups are API contracts, not copies of a
+Prisma model. Raw request values stay `unknown` until validated; do not type them as already trusted
+Prisma inputs. Dynamic nested fragments remain `Record<string, unknown>` because the shared parser
+handles multiple models; the assertions in `applyListQuery` bridge this dynamic boundary and do not
+prove every fragment matches a model at compile time. Preserve allow-list/schema validation and
+behavioral tests. Do not replace fragments with JSON types: filters can contain Date and Decimal.
+
+Functions reuse the parser/builder/helpers by composition. Add `Pick`, `Omit` or inheritance only
+when it expresses the same existing contract; do not add a base class or mirror a database model to
+make this pipeline look more abstract.

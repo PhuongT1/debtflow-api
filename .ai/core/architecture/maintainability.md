@@ -39,6 +39,9 @@ file. File suffixes and dependency direction still apply to root-level files. Ke
 Use child domain modules when they have a coherent boundary or independent consumers.
 
 Shared contracts belong with their domain, not exported from executable service/controller files.
+When the project allows direct named DTO or type-only contract imports, use the actual contract owner;
+do not create a forwarding barrel merely for a single data contract. Runtime provider boundaries
+still use the owning module and the project's explicit provider entry points.
 Do not borrow a constant/function from another feature's request DTO. A genuinely shared validation
 constant belongs in shared validation infrastructure; a domain-specific rule stays in its domain.
 Avoid global catch-all `types.ts`, `utils.ts`, base services and repositories that hide ownership.

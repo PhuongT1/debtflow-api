@@ -69,8 +69,10 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
 
 For provider, DTO, type, query or structure changes, read
 [Maintainability and reuse](docs/guides/backend-rules/maintainability.md) and its portable core topic.
-Cross-feature imports use named `public/` contracts and owning Nest modules, never private implementation
-folders or HTTP calls back to this application. Search existing owners/callers before defining another
+Cross-feature providers use named `public/` contracts and owning Nest modules, never private implementation
+folders or HTTP calls back to this application. DTO classes may be imported by name directly from their
+`dto/*.dto.ts` owner; named types/interfaces may be imported with `import type` from `*.types.ts`.
+Do not add a forwarding barrel merely to re-export one data contract. Search existing owners/callers before defining another
 contract/helper. Run `npm run check:maintainability`;
 do not bypass it with duplicated types, renamed clones or a new exemption.
 
@@ -92,6 +94,8 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 | Audit events | [Audit Log](docs/guides/audit-log.md) and existing emit/listener code |
 | Response or validation | [API Response Format](docs/guides/api-response-format.md) and [Localization](docs/guides/localization.md) |
 | Swagger UI, OpenAPI or generated API documentation | [API and Swagger](docs/guides/api-and-swagger.md), especially its task-to-file owner table |
+| Architecture onboarding or module development | [Backend architecture](docs/02-architecture.md), [request flow](docs/guides/request-flow.md), then [module development](docs/guides/module-development.md) |
+| Party example or workflow | [Party implementation example](docs/guides/party-architecture.md), including current audit gaps |
 | Architecture or new file placement | [Project Structure](docs/guides/project-structure.md) and [Vendure Reference](docs/guides/vendure-reference.md) |
 
 ## Verification and completion

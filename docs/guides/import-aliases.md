@@ -14,13 +14,15 @@ import { CreatePartyDto } from '../dto/create-party.dto.js';
 ```
 
 Directory barrels require `/index.js`. Bare package imports such as `@nestjs/common` keep their
-package names. Cross-feature imports still require the owning module and its named `public/` contract.
+package names. Cross-feature providers require the owning module and its named `public/` contract. DTO classes
+may be imported directly from their DTO owner; named type-only contracts from `*.types.ts`.
 
 Absolute internal imports use short owner aliases: `@auth/*`, `@common/*`, `@config/*`,
 `@database/*`, `@generated/*` and `@modules/*`. `tsconfig.json` → `compilerOptions.paths` owns their
 source mapping. Vitest maps the same prefixes to source. Do not introduce `#` aliases, a project-name
 prefix or a second spelling such as `@/common/*`. Relative imports remain appropriate inside a feature.
-Cross-feature imports still use named `public/` contracts and the owning Nest module.
+Private services, repositories and helpers remain behind named `public/` contracts and the owning
+Nest module; direct DTO/type-only contracts do not expose those implementations.
 
 TypeScript does not rewrite aliases in emitted JavaScript. `scripts/rewrite-build-aliases.mjs` uses
 `tsc-alias` to rewrite compiled imports and declarations to relative paths with `.js` extensions.

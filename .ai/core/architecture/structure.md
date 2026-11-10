@@ -1,5 +1,10 @@
 # Structure, naming and Nest ownership
 
+- Begin controller and module files with a short header (about two descriptive lines) stating their
+  concrete responsibility and delegation/composition boundary. Keep it current; avoid generic filler.
+- Group documentation-only OpenAPI helpers in the project's documentation namespace. Make imports
+  distinguish schema metadata from runtime validation, parsing, authorization and serialization.
+  A composite decorator that also affects runtime behavior must describe both responsibilities.
 - MUST locate business code in the owning feature, using the project's configured layout. Search
   existing helpers/callers first. Create only files needed for the requested behavior.
 - Use kebab-case files with responsibility suffixes: `orders.controller.ts`, `orders.service.ts`,

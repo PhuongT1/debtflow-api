@@ -1,163 +1,85 @@
-# 2. Architecture
+# Kiến trúc backend
 
-## System context (C4 level 1)
+DebtFlow là một NestJS REST API, dùng Prisma và PostgreSQL. Code được chia theo **nghiệp vụ** trong
+`src/modules/<feature>/`. Mỗi module có một owner; service phối hợp nghiệp vụ, adapter thực thi DB.
+Nền tảng hosting PostgreSQL không quyết định cách chia module.
 
-```mermaid
-flowchart LR
-    user([Business user<br/>Owner / Admin / Accountant / Viewer])
-    subgraph web[debtflow-web monorepo]
-        shell[apps/shell<br/>Next.js host + BFF /api proxy]
-        partner[apps/partner-ops<br/>Next.js partner workspace]
-        payments[apps/payments<br/>Angular payments MFE]
-    end
-    api[debtflow-api<br/>NestJS REST API]
-    db[(PostgreSQL<br/>Neon)]
+Các API nghiệp vụ dùng ba tầng: **Presentation → Application → Infrastructure**. PostgreSQL là
+cơ sở dữ liệu mà ứng dụng kết nối để đọc và ghi dữ liệu. Guards, pipes, interceptor và exception filter là pipeline HTTP dùng
+chung; chúng không phải các tầng nghiệp vụ mới.
 
-    user --> shell
-    shell --- partner
-    shell --- payments
-    shell -- "server-side, Bearer token" --> api
-    partner -- "same-origin /api" --> shell
-    payments -- "same-origin /api" --> shell
-    api --> db
-```
-
-The browser only talks to the shell's same-origin `/api/*` route. The BFF reads the access token from the
-encrypted NextAuth session cookie and calls `API_BASE_URL` (`http://localhost:<PORT>/api`) with
-`Authorization: Bearer ...`. The backend URL is never exposed through a `NEXT_PUBLIC_*` variable.
-
-## Containers and deployment (C4 level 2)
+## Các layer và quan hệ phụ thuộc
 
 ```mermaid
-flowchart TB
-    subgraph vercel[Vercel]
-        fn["api/index.js<br/>serverless function"] --> ts["src/vercel.ts<br/>cached Express + Nest app"]
-    end
-    local["src/main.ts<br/>npm run dev / npm start"] --> app
-    ts --> app["AppModule"]
-    app --> pg[("PostgreSQL via Prisma + pg adapter")]
+flowchart TD
+  FE["FE / API client / BFF"] --> HTTP["Presentation: Controller + request DTO"]
+  HTTP --> APP["Application: Service + nghiệp vụ"]
+  APP --> PORT["Repository contract: các thao tác cần dùng"]
+  IMPL["Infrastructure: Prisma repository"] -. "implements" .-> PORT
+  IMPL --> CLIENT["Database infrastructure: PrismaService + PrismaPg / pg"]
+  CLIENT --> DB[(PostgreSQL)]
+  MOD["Nest Module: provide / useClass"] -. "bind contract với adapter" .-> IMPL
 ```
 
-- **Local / server**: `src/main.ts` boots Nest and listens on `PORT` (default `4000`).
-- **Vercel**: `src/vercel.ts` builds the Express app once per warm instance and reuses it.
-- Both call `configureApp()` ([src/configure-app.ts](../src/configure-app.ts)), which sets the `/api` global
-  prefix, CORS, the global `ValidationPipe` and the Swagger routes (`/docs`, `/docs-json`).
-- Migrations are **not** part of the Vercel build. Run `npm run db:deploy` against production before
-  promoting a release that contains a new migration.
+Đây là sơ đồ kiến trúc, không phải thứ tự runtime của một request. Mũi tên liền thể hiện nơi dùng hoặc truy cập; mũi tên `implements` là quan hệ triển khai.
+Khi chạy, service gọi repository được Nest inject; adapter Prisma là đối tượng thực thi.
+Module binding xảy ra khi khởi động ứng dụng, không phải một bước chạy lại cho mỗi request.
 
-## Module map (C4 level 3)
+| Layer / thành phần | Làm gì? | Không làm gì? |
+| --- | --- | --- |
+| Controller | Route, role metadata, nhận context/DTO, gọi service, map response, khai báo Swagger | Gọi Prisma hoặc tính nghiệp vụ |
+| Request DTO | Validate/transform dữ liệu đầu vào; update DTO có thể kế thừa create DTO khi phù hợp | Query DB hoặc quyết định quyền |
+| Service | Điều phối use case, kiểm tra tenant/trạng thái/related IDs, gọi repository, phát audit sau thành công | Import PrismaService, concrete adapter hoặc SQL |
+| Repository contract | Khai báo thao tác nghiệp vụ cần, như `list`, `findRecord`, `create` | Expose PrismaClient hoặc nhận SQL bất kỳ |
+| Prisma adapter | Query DB, transaction, projection, batch read và aggregate | Đọc request HTTP hoặc tạo response envelope |
+| Mapper / rules | Chuyển đổi dữ liệu hoặc tính quy tắc thuần, tái sử dụng trong feature | Tự query DB hoặc phát event |
+| Module | Đăng ký controller/providers, bind contract với adapter, import module cần dùng | Chứa logic request |
 
-```mermaid
-flowchart TB
-    AppModule --> ConfigModule
-    AppModule --> I18nModule
-    AppModule --> DatabaseModule
-    AppModule --> AuthModule
-    AppModule --> AuthApiModule
-    AuthApiModule --> AuthController["AuthController<br/>login, refresh, switch-organization"]
-    AuthApiModule --> AuthModule
-    AppModule --> Account & Users & Parties & Catalog & Debts & Payments
-    AppModule --> Dashboard & Reports & Exports & Imports & AuditLogs
-    Debts --> Payments
-    Reports --> DebtQuery["Shared debt query builder"]
-    Exports --> Debts
-```
+Đây là modular architecture có ranh giới persistence. Types/DTO và `Prisma.Decimal` có thể được tái
+sử dụng theo contract hiện tại; không coi đây là domain hoàn toàn độc lập NestJS/Prisma.
+Chỉ thêm layer, lớp cha hoặc submodule khi có trách nhiệm thực tế cần tách.
 
-Modules are owned by **business domain**; public/protected access is declared on each route:
+Với Party hiện tại, **Application do `PartiesService` đảm nhiệm**: `list()` kiểm tra tenant rồi
+ủy quyền cho repository; các method ghi kiểm tra nghiệp vụ và phát audit sau thành công.
+Không có lớp `UseCase` hay domain entity riêng trong module này. `PartiesRepository` là contract
+mà service sử dụng; `PrismaPartiesRepository` mới là implementation thuộc infrastructure.
+DTO thuộc đầu vào HTTP, mapper response được controller gọi; không gom chúng vào Application chỉ
+để sơ đồ có thêm thành phần.
+
+
+## Code nằm ở đâu?
 
 ```text
 src/
-  main.ts, vercel.ts, app.module.ts, configure-app.ts
-  auth/            JwtAuthGuard, RolesGuard, @Roles, @PublicApi, @ProtectedApi, @CurrentUser
-  common/          envelope interceptor, exception filter, i18n, errors, events (audit), query (sort/filter), pagination, validation, utils
-  config/          environment validation (DATABASE_URL, JWT_SECRET are required)
-  database/        PrismaService (PrismaClient + pg adapter)
-  generated/prisma Generated client (do not edit)
-  modules/
-    auth/          login/refresh (public), switch-organization (authenticated)
-    account/, users/, parties/, catalog/, debts/, payments/
-    dashboard/, reports/, exports/, imports/, audit-logs/
-prisma/            schema.prisma, models/*.prisma, migrations/, seed.ts
-scripts/           import-parties.ts, generate-api-docs.ts
-docs/              this documentation
+  modules/<feature>/   # HTTP, use case và persistence do feature sở hữu
+  auth/               # JWT, current user, global guards và role metadata
+  common/             # validation, list query, response/error handling, i18n, Swagger
+  database/           # Prisma client dùng chung, lifecycle và transaction infrastructure
+  config/             # cấu hình môi trường
+  generated/          # code sinh tự động; sửa source/generator rồi generate
 ```
 
-Inside a feature module, DTOs validate HTTP input and controllers bind context/policy before calling
-services for business rules and persistence. Jobs and other adapters reuse the same owned services.
-`AppModule` composes the HTTP application; reusable domain modules do not import it.
+Trong feature, các file thông thường ở gốc khi chỉ có một file cùng trách nhiệm.
+Giữ `dto/`, `_test/`, `repositories/`, `infrastructure/` làm ranh giới rõ ràng.
+Không tạo sẵn `services/`, `rules/`, `queries/` nếu chưa có nhiều file cần nhóm.
+Xem [Project structure](./guides/project-structure.md) khi cần quy tắc đặt file chi tiết.
 
-## Request lifecycle
+## Những phần dùng chung
 
-```mermaid
-sequenceDiagram
-    participant C as Client (BFF)
-    participant G as JwtAuthGuard
-    participant R as RolesGuard
-    participant P as ValidationPipe
-    participant H as Controller + Service
-    participant I as ApiResponseInterceptor
-    participant F as ApiExceptionFilter
-    participant DB as PostgreSQL
+- **Auth:** global guards xác thực token và quyền hiện tại. Tenant/actor lấy từ authenticated context.
+- **Validation:** DTO và bộ list-query chung kiểm tra input trước khi gọi handler.
+- **Response:** controller mapper chọn dữ liệu trả ra; interceptor tạo envelope. Swagger mô tả contract.
+- **Persistence:** một Prisma provider cho mỗi app instance; adapter tái sử dụng provider, không tạo client trong từng request.
+- **Giao tiếp giữa feature:** dùng public provider contract + module của owner. DTO/type có thể import từ owner theo quy tắc dự án.
 
-    C->>G: HTTP request + Bearer token
-    G->>G: skip if @Public, else verify JWT (type=access, organizationId, membershipId)
-    G->>R: request.user = payload
-    R->>R: compare @Roles(...) with payload.role
-    R->>P: allowed
-    P->>H: validated DTO (whitelist, forbidNonWhitelisted)
-    H->>DB: query scoped by organizationId
-    DB-->>H: rows
-    H-->>I: plain data or paginated result
-    I-->>C: { success, statusCode, code, message, data, meta?, timestamp, path }
-    Note over G,F: Any thrown error goes to ApiExceptionFilter,<br/>which returns the error envelope
-```
+`common/`, `database/`, `config/` không phụ thuộc ngược vào feature. Controller/service không gọi
+HTTP ngược vào ứng dụng này để tái sử dụng nghiệp vụ.
 
-Details of each step live in the guides: [request-flow](./guides/request-flow.md),
-[validation-and-errors](./guides/validation-and-errors.md),
-[api-response-format](./guides/api-response-format.md).
+## Cách đọc tiếp
 
-## Authentication and multi-tenancy
+1. [Xem sơ đồ một request từ FE đến DB](./guides/request-flow.md).
+2. [Lần theo ví dụ Party trong source](./guides/party-architecture.md).
+3. [Sửa chức năng hoặc thêm module mới](./guides/module-development.md).
 
-- A **User** is global; business data belongs to an **Organization**. A user reaches an organization
-  through an **OrganizationMembership** (role + status).
-- `POST /auth/login` verifies the password, picks an ACTIVE membership in an ACTIVE organization (the
-  requested `organizationId`, otherwise the oldest membership) and signs two JWTs with `JWT_SECRET`:
-  an access token (`JWT_EXPIRES_IN`, default 15m) and a refresh token (`JWT_REFRESH_EXPIRES_IN`, default 7d).
-- The access token payload is `{ sub, email, systemRole, organizationId, membershipId, role, type: 'access' }`.
-- Controllers pass `user.organizationId` into every service call and every query filters on it. This
-  `organizationId` column on each business table is the **only** tenant isolation mechanism (no
-  row-level security in PostgreSQL).
-- `POST /auth/refresh` re-checks that the user and membership are still active, so suspending a member
-  takes effect at the next refresh. The role inside an already-issued access token stays valid until it expires.
-- `POST /auth/switch-organization` issues a new token pair for another organization the user belongs to.
-
-## How the frontend talks to the API
-
-| Concern         | Implementation (debtflow-web)                                                                                                                                                                        |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Proxy           | `apps/shell/src/app/api/[...path]/route.ts` forwards GET/POST/PATCH/PUT/DELETE to `API_BASE_URL`, adds the Bearer token and `Accept-Language`; 401 if no session, 503 if the backend is unreachable. |
-| Session         | NextAuth with JWT sessions; access and refresh tokens live in the encrypted session cookie, not in local storage.                                                                                    |
-| Login / refresh | `apps/shell/src/lib/auth/session.ts` calls `POST /auth/login` and `POST /auth/refresh` (refreshes 60 s before expiry).                                                                               |
-| Browser client  | `apps/shell/src/lib/api/client.ts` unwraps the envelope, maps errors and field errors, handles timeouts.                                                                                             |
-| Server client   | `apps/shell/src/lib/api/server.ts` calls the API directly from server components.                                                                                                                    |
-| Shared types    | `packages/platform/contracts` holds the envelope and payment types. There is no generated OpenAPI client.                                                                                            |
-| Other apps      | `apps/partner-ops` and `apps/payments` call same-origin `/api/*`, which the shell proxies.                                                                                                           |
-
-Endpoints the frontend uses today: `/auth/login`, `/auth/refresh`, `/catalog/options`, `/dashboard`,
-`/users`, `/users/options`, `/debts` (list, detail, create, update), `/parties` (list, detail, update),
-`/debts/{id}/payments`, `/payments/auto-allocate`, `/payments` (list, delete), `/imports/debts`.
-`/auth/me`, `/auth/switch-organization`, `/reports/aging`, `/exports/debts` and `/audit-logs` are not called by
-the frontend yet.
-
-## Cross-cutting conventions
-
-| Topic         | Convention                                                                                                                                                                                                                                         |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Response      | Global envelope; set `@SkipApiResponse()` for binary responses (Excel export).                                                                                                                                                                     |
-| Pagination    | `page` (default 1) and `pageSize` (default 20, max 1000); result in `data` + `meta.pagination`.                                                                                                                                                    |
-| Sort / filter | single-field `sortBy`+`sortOrder`, `filter[field][op]=value`, `filterOperator=AND\|OR` on every list endpoint, validated against a per-resource allow-list ([guide](./guides/list-query.md), modeled on [Vendure](./guides/vendure-reference.md)). |
-| Validation    | Global `ValidationPipe`: `whitelist`, `forbidNonWhitelisted`, `transform`, stops at the first error.                                                                                                                                               |
-| Money         | `Decimal(18,2)` in the database; amounts travel as numeric **strings** (`@IsNumberString`).                                                                                                                                                        |
-| Dates         | ISO 8601 strings; dashboard period boundaries use the `+07:00` (Vietnam) offset.                                                                                                                                                                   |
-| Imports       | TypeScript aliases rewritten at build time: `@auth`, `@common`, `@config`, `@database`, `@generated`, `@modules` ([guide](./guides/import-aliases.md)).                                                                                                                           |
-| Localization  | `Accept-Language: en\|vi` (default `vi`) localizes `message` and validation errors; services throw translation keys, never text ([guide](./guides/localization.md)).                                                                               |
+Quy tắc bắt buộc: [Backend Rules](./guides/backend-rules/index.md).
+Chi tiết transaction và dependency: [Persistence architecture](./guides/persistence-architecture.md).
