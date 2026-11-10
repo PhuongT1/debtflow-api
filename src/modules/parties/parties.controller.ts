@@ -1,3 +1,8 @@
+/**
+ * Exposes counterparty list, detail, creation, updates and deactivation.
+ * Delegates use cases to PartiesService and maps results into API responses.
+ */
+import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
 import { toPartyResponse, toPartyListItem, toPartyDetailResponse } from './party.mapper.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
@@ -17,8 +22,11 @@ import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
 import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
 import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
 import { Roles } from '@auth/decorators/roles.decorator.js';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import {
+  ApiEnvelope,
+  ApiErrorEnvelopes,
+} from '@common/swagger/decorators/api-envelope.decorator.js';
+import { ListQuery, type ListQueryResult } from '@common/query/index.js';
 import { OrganizationRole } from '@generated/prisma/client.js';
 import { CreatePartyDto } from './dto/create-party.dto.js';
 import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from './dto/party-response.dto.js';

@@ -1,3 +1,7 @@
+/**
+ * Provides shared locale resolution and translated API messages.
+ * Exports I18nService for response and error handling across features.
+ */
 import { Global, Module } from '@nestjs/common';
 import { I18nService } from './i18n.service.js';
 

@@ -1,3 +1,7 @@
+/**
+ * Registers authentication/account HTTP handlers and the AuthService use cases.
+ * Binds AuthRepository to its Prisma adapter and composes shared authentication infrastructure.
+ */
 import { AuthRepository } from './repositories/auth.repository.js';
 import { PrismaAuthRepository } from './infrastructure/prisma-auth.repository.js';
 import { Module } from '@nestjs/common';

@@ -1,3 +1,7 @@
+/**
+ * Swagger-only decorators describing success/error envelopes and pagination schemas.
+ * Runtime response wrapping belongs to ApiResponseInterceptor; these decorators do not transform data.
+ */
 import { applyDecorators, HttpStatus, type Type } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -7,7 +11,7 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { ApiErrorResponseDto, PaginationMetaDto } from './api-envelope.dto.js';
+import { ApiErrorResponseDto, PaginationMetaDto } from '../../http/api-envelope.dto.js';
 
 type EnvelopeOptions = {
   /** HTTP status, 200 by default. */

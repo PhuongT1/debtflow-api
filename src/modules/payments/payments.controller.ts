@@ -1,11 +1,16 @@
+/**
+ * Exposes payment listing, allocations and reversal operations.
+ * Delegates to PaymentsService with validated input and authenticated tenant/actor context.
+ */
+import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/swagger/decorators/api-envelope.decorator.js';
 import { PaymentResponseDto, PaymentReversalResponseDto } from './dto/payment-response.dto.js';
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import { ListQuery, type ListQueryResult } from '@common/query/index.js';
 import { PAYMENT_LIST_QUERY } from './queries/payments.list-query.js';
 import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
 import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';

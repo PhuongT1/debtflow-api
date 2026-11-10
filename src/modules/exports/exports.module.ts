@@ -1,3 +1,7 @@
+/**
+ * Registers the debt export HTTP handler and spreadsheet-generation service.
+ * Imports debt providers through their owning Nest module.
+ */
 import { Module } from '@nestjs/common';
 import { ExportsController } from './exports.controller.js';
 import { DebtsModule } from '@modules/debts/debts.module.js';

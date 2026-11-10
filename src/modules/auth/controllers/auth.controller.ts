@@ -1,6 +1,10 @@
+/**
+ * Exposes credential login, token refresh and organization-switch HTTP endpoints.
+ * Binds validated requests to AuthService; route metadata defines public/authenticated access.
+ */
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/swagger/decorators/api-envelope.decorator.js';
 import { SessionResponseDto } from '../dto/auth-response.dto.js';
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';

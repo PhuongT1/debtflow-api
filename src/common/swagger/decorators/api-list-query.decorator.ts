@@ -1,7 +1,14 @@
+/**
+ * Swagger-only decorator describing the resource's allowed sort and filter query parameters.
+ * Runtime parsing and validation belong to ListQuery and ListQueryAwareValidationPipe.
+ */
 import { applyDecorators } from '@nestjs/common';
 import { ApiQuery } from '@nestjs/swagger';
-import { getAllowedFilterOperators, getListQueryFieldNames } from './list-query.helpers.js';
-import type { ListQueryConfig } from './list-query.types.js';
+import {
+  getAllowedFilterOperators,
+  getListQueryFieldNames,
+} from '../../query/list-query.helpers.js';
+import type { ListQueryConfig } from '../../query/list-query.types.js';
 
 /** Documents the sort and filter parameters of a resource's allow-list in Swagger/OpenAPI. */
 export function ApiListQuery(config: ListQueryConfig) {

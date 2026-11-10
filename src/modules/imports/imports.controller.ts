@@ -1,7 +1,11 @@
+/**
+ * Exposes the placeholder debt-import HTTP endpoint.
+ * Delegates to the documented scaffold response; no parser or database import is implemented.
+ */
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/swagger/decorators/api-envelope.decorator.js';
 import { ImportScaffoldResponseDto } from './dto/import-scaffold-response.dto.js';
 import { Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';

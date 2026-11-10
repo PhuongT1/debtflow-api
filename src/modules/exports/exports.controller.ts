@@ -1,8 +1,13 @@
+/**
+ * Exposes the debt spreadsheet download endpoint.
+ * Delegates workbook generation to DebtExportService and sets binary download headers.
+ */
+import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags, ApiOkResponse } from '@nestjs/swagger';
-import { ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
+import { ApiErrorEnvelopes } from '@common/swagger/decorators/api-envelope.decorator.js';
 import type { Response } from 'express';
 import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
 import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
@@ -11,7 +16,7 @@ import { SkipApiResponse } from '@common/decorators/api-response.decorator.js';
 import { DebtExportService } from './debt-export.service.js';
 import { QueryDebtsDto } from '@modules/debts/public/debts.js';
 import { DEBT_LIST_QUERY } from '@modules/debts/public/debts.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import { ListQuery, type ListQueryResult } from '@common/query/index.js';
 
 @ApiTags(API_TAGS.EXPORTS)
 @ProtectedApi()

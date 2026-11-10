@@ -1,6 +1,13 @@
+/**
+ * Exposes dashboard summary and action-center HTTP endpoints.
+ * Delegates to dashboard application services for tenant-scoped metrics.
+ */
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
+import {
+  ApiEnvelope,
+  ApiErrorEnvelopes,
+} from '@common/swagger/decorators/api-envelope.decorator.js';
 import { DashboardResponseDto } from './dto/dashboard-response.dto.js';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';

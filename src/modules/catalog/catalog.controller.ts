@@ -1,6 +1,10 @@
+/**
+ * Exposes product, category and brand lookup endpoints.
+ * Delegates to CatalogService for tenant-scoped catalog reads.
+ */
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/swagger/decorators/api-envelope.decorator.js';
 import { CatalogOptionsResponseDto } from './dto/catalog-response.dto.js';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';

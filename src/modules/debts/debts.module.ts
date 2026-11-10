@@ -1,3 +1,7 @@
+/**
+ * Registers debt HTTP handlers, application services and line-item rules.
+ * Binds DebtsRepository to its Prisma adapter and exports intended debt providers.
+ */
 import { DebtsRepository } from './repositories/debts.repository.js';
 import { PrismaDebtsRepository } from './infrastructure/prisma-debts.repository.js';
 import { Module } from '@nestjs/common';

@@ -1,3 +1,8 @@
+/**
+ * Exposes organization member listing, invitations and membership changes.
+ * Delegates to member application services with authenticated tenant/actor context.
+ */
+import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import {
@@ -17,8 +22,11 @@ import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
 import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
 import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
 import { Roles } from '@auth/decorators/roles.decorator.js';
-import { ApiErrorEnvelopes, ApiEnvelope } from '@common/http/api-envelope.decorator.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import {
+  ApiErrorEnvelopes,
+  ApiEnvelope,
+} from '@common/swagger/decorators/api-envelope.decorator.js';
+import { ListQuery, type ListQueryResult } from '@common/query/index.js';
 import { OrganizationRole } from '@generated/prisma/client.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { QueryUsersDto } from './dto/query-users.dto.js';

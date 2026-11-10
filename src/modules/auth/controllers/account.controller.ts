@@ -1,6 +1,10 @@
+/**
+ * Exposes the authenticated account profile HTTP endpoint.
+ * Delegates account and organization membership reads to AuthService.
+ */
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator.js';
+import { ApiEnvelope } from '@common/swagger/decorators/api-envelope.decorator.js';
 import { CurrentUserResponseDto } from '../dto/auth-response.dto.js';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';

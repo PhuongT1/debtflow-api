@@ -1,7 +1,15 @@
+/**
+ * Exposes debt listing, detail, creation and collection/status changes.
+ * Delegates to DebtsService with validated input and authenticated tenant/actor context.
+ */
+import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { HttpStatus } from '@nestjs/common';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
+import {
+  ApiEnvelope,
+  ApiErrorEnvelopes,
+} from '@common/swagger/decorators/api-envelope.decorator.js';
 import { DebtRecordDto } from './dto/debt-record.dto.js';
 import {
   DebtWithPartyDto,
@@ -12,7 +20,7 @@ import {
 import { PaymentResponseDto } from '@modules/payments/public/payments.js';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
+import { ListQuery, type ListQueryResult } from '@common/query/index.js';
 import { DEBT_LIST_QUERY } from './queries/debts.list-query.js';
 import { CurrentUser } from '@auth/decorators/current-user.decorator.js';
 import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';

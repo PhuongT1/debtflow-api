@@ -1,3 +1,7 @@
+/**
+ * Registers organization member HTTP handlers and application services.
+ * Binds UsersRepository to its Prisma adapter and exports intended member-access providers.
+ */
 import { UsersRepository } from './repositories/users.repository.js';
 import { PrismaUsersRepository } from './infrastructure/prisma-users.repository.js';
 import { Module } from '@nestjs/common';

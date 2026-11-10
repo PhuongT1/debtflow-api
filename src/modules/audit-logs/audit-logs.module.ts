@@ -1,3 +1,7 @@
+/**
+ * Registers audit-log HTTP handlers, read service and the audit event listener.
+ * Binds AuditLogsRepository to its Prisma adapter for audit reads and persistence.
+ */
 import { AuditLogsRepository } from './repositories/audit-logs.repository.js';
 import { PrismaAuditLogsRepository } from './infrastructure/prisma-audit-logs.repository.js';
 import { Module } from '@nestjs/common';

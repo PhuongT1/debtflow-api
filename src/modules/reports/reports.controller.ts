@@ -1,3 +1,8 @@
+/**
+ * Exposes debt reporting HTTP endpoints.
+ * Delegates to ReportsService with validated filters and authenticated tenant context.
+ */
+import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import { Controller, Get, Query } from '@nestjs/common';
@@ -7,8 +12,11 @@ import type { JwtAuthPayload } from '@auth/types/auth-context.types.js';
 import { ProtectedApi } from '@auth/decorators/auth-api.decorator.js';
 import { ReportsService } from './reports.service.js';
 import { DEBT_LIST_QUERY } from '@modules/debts/public/debts.js';
-import { ApiListQuery, ListQuery, type ListQueryResult } from '@common/query/index.js';
-import { ApiEnvelope, ApiErrorEnvelopes } from '@common/http/api-envelope.decorator.js';
+import { ListQuery, type ListQueryResult } from '@common/query/index.js';
+import {
+  ApiEnvelope,
+  ApiErrorEnvelopes,
+} from '@common/swagger/decorators/api-envelope.decorator.js';
 import { QueryDebtsDto } from '@modules/debts/public/debts.js';
 import { AgingReportResponseDto } from './dto/aging-report-response.dto.js';
 
