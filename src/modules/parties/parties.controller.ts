@@ -32,7 +32,7 @@ import { CreatePartyDto } from './dto/create-party.dto.js';
 import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from './dto/party-response.dto.js';
 import { QueryPartiesDto } from './dto/query-parties.dto.js';
 import { UpdatePartyDto } from './dto/update-party.dto.js';
-import { PARTY_LIST_QUERY } from './queries/parties.list-query.js';
+import { PARTY_LIST_QUERY } from './queries/party.list-query.js';
 import { PartiesService } from './parties.service.js';
 
 const ID_PARAM = ApiParam({ name: 'id', description: 'Party id.' });

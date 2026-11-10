@@ -2,10 +2,11 @@ import { PrismaUsersRepository } from '@modules/users/infrastructure/prisma-user
 import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
-import { parseListQuery, validFieldsOf } from '@common/query/index.js';
+import { parseListQuery, getListQueryFieldNames } from '@common/query/index.js';
 import { PartiesService } from '../parties.service.js';
+import type { PartyWriteStore } from '../repositories/parties.repository.js';
 import { OrganizationMembersService } from '@modules/users/services/organization-members.service.js';
-import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
+import { PARTY_LIST_QUERY } from '../queries/party.list-query.js';
 
 function setup() {
   const findMany = vi.fn().mockResolvedValue([
@@ -65,9 +66,232 @@ function setup() {
   };
 }
 
+function transactionRepository(store: Partial<PartyWriteStore>) {
+  return {
+    inTransaction: vi.fn(async (work: (store: PartyWriteStore) => Promise<unknown>) =>
+      work(store as PartyWriteStore),
+    ),
+  };
+}
+
 afterEach(() => vi.useRealTimers());
 
 describe('PartiesService', () => {
+  it('reads only scalar fields for mutation snapshots', async () => {
+    const findFirstOrThrow = vi.fn().mockResolvedValue({ id: 'p1' });
+    const transaction = vi.fn(async (work) => work({ party: { findFirstOrThrow } }));
+    const rootRead = vi.fn(() => {
+      throw new Error('Read outside transaction');
+    });
+    const repository = new PrismaPartiesRepository({
+      $transaction: transaction,
+      party: { findFirstOrThrow: rootRead },
+    } as never);
+    await repository.inTransaction((store) => store.findRecord('org-1', 'p1'));
+    expect(rootRead).not.toHaveBeenCalled();
+    expect(transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'Serializable',
+    });
+    const args = findFirstOrThrow.mock.calls[0][0];
+    expect(args.where).toEqual({ id: 'p1', organizationId: 'org-1' });
+    expect(args.select).not.toHaveProperty('debts');
+    expect(args.select).not.toHaveProperty('assignedTo');
+  });
+
+  it('updates without loading the detail debt history and preserves the audit snapshot', async () => {
+    const before = { id: 'p1', name: 'Before', code: null, phone: null, taxCode: null };
+    const after = { ...before, name: 'After' };
+    const store = {
+      findRecord: vi.fn().mockResolvedValue(before),
+      update: vi.fn().mockResolvedValue(after),
+    };
+    const repository = transactionRepository(store);
+    const events = { emit: vi.fn() };
+    const service = new PartiesService(repository as never, events as never, {} as never);
+    expect(await service.update('org-1', 'p1', { name: 'After' }, 'actor-1')).toEqual(after);
+    expect(store.findRecord).toHaveBeenCalledWith('org-1', 'p1');
+    expect(events.emit).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ before, after }),
+    );
+  });
+
+  it('deactivates from a scalar snapshot and rejects parties with active debts', async () => {
+    const before = { id: 'p1', name: 'Before' };
+    const store = {
+      findRecord: vi.fn().mockResolvedValue(before),
+      countActiveDebts: vi.fn().mockResolvedValue(1),
+      deactivate: vi.fn().mockResolvedValue(before),
+    };
+    const repository = transactionRepository(store);
+    const events = { emit: vi.fn() };
+    const service = new PartiesService(repository as never, events as never, {} as never);
+    await expect(service.deactivate('org-1', 'p1', 'actor-1')).rejects.toMatchObject({
+      status: 400,
+    });
+    expect(store.deactivate).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
+    store.countActiveDebts.mockResolvedValue(0);
+    await service.deactivate('org-1', 'p1', 'actor-1');
+    expect(store.deactivate).toHaveBeenCalledWith('org-1', 'p1');
+  });
+
+  it('scopes the detail debt relation to the same tenant as its parent', async () => {
+    const read = vi.fn().mockResolvedValue({ id: 'p1', debts: [] });
+    const repository = new PrismaPartiesRepository({ party: { findFirstOrThrow: read } } as never);
+    await repository.detail('org-1', 'p1');
+    expect(read).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'p1', organizationId: 'org-1' },
+        select: expect.objectContaining({
+          debts: { where: { organizationId: 'org-1' }, orderBy: { dueDate: 'asc' } },
+        }),
+      }),
+    );
+  });
+
+  it('uses only the scoped client for write-store reads, checks and writes', async () => {
+    const find = vi.fn().mockResolvedValue({ id: 'p1' });
+    const update = vi.fn().mockResolvedValue({ id: 'p1' });
+    const count = vi.fn().mockResolvedValue(0);
+    const member = vi.fn().mockResolvedValue({ id: 'member-1' });
+    const rootAccess = vi.fn(() => {
+      throw new Error('Access outside transaction');
+    });
+    const transaction = vi.fn(async (work) =>
+      work({
+        party: { findFirstOrThrow: find, update },
+        debt: { count },
+        organizationMembership: { findFirst: member },
+      }),
+    );
+    const repository = new PrismaPartiesRepository({
+      $transaction: transaction,
+      party: { findFirstOrThrow: rootAccess, update: rootAccess },
+      debt: { count: rootAccess },
+      organizationMembership: { findFirst: rootAccess },
+    } as never);
+    await repository.inTransaction(async (store) => {
+      await store.findRecord('org-1', 'p1');
+      await store.hasActiveMember('org-1', 'user-1');
+      await store.update('org-1', 'p1', { name: 'Updated' });
+      await store.countActiveDebts('org-1', 'p1');
+      await store.deactivate('org-1', 'p1');
+    });
+    expect(transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'Serializable',
+    });
+    expect(find.mock.calls[0][0].where).toEqual({ id: 'p1', organizationId: 'org-1' });
+    expect(member.mock.calls[0][0].where).toEqual({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      status: 'ACTIVE',
+      user: { status: 'ACTIVE' },
+      organization: { status: 'ACTIVE' },
+    });
+    expect(count).toHaveBeenCalledWith({
+      where: {
+        organizationId: 'org-1',
+        partyId: 'p1',
+        status: { notIn: ['PAID', 'CANCELLED'] },
+      },
+    });
+    expect(update).toHaveBeenNthCalledWith(1, {
+      where: { id: 'p1', organizationId: 'org-1' },
+      data: { name: 'Updated' },
+    });
+    expect(update).toHaveBeenNthCalledWith(2, {
+      where: { id: 'p1', organizationId: 'org-1' },
+      data: { isActive: false },
+    });
+    expect(rootAccess).not.toHaveBeenCalled();
+  });
+
+  it('recomputes searchText from fresh state after a conflict and audits only the committed attempt', async () => {
+    const before = { id: 'p1', name: 'Before', code: 'old', phone: null, taxCode: null };
+    const fresh = { ...before, code: 'fresh' };
+    const events = { emit: vi.fn() };
+    const find = vi.fn().mockResolvedValueOnce(before).mockResolvedValueOnce(fresh);
+    const update = vi.fn(async ({ data }) => ({ ...fresh, ...data }));
+    let attempts = 0;
+    const transaction = vi.fn(async (work) => {
+      const result = await work({ party: { findFirstOrThrow: find, update } });
+      expect(events.emit).not.toHaveBeenCalled();
+      if (attempts++ === 0)
+        throw new Prisma.PrismaClientKnownRequestError('conflict', {
+          code: 'P2034',
+          clientVersion: 'test',
+        });
+      return result;
+    });
+    const service = new PartiesService(
+      new PrismaPartiesRepository({ $transaction: transaction } as never),
+      events as never,
+      {} as never,
+    );
+    const result = await service.update('org-1', 'p1', { name: 'After' }, 'actor-1');
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(update.mock.calls[0][0].data.searchText).toContain('old');
+    expect(update.mock.calls[1][0].data.searchText).toContain('fresh');
+    expect(result).toMatchObject({ name: 'After', code: 'fresh' });
+    expect(events.emit).toHaveBeenCalledOnce();
+    expect(events.emit).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ before: fresh, after: result }),
+    );
+  });
+
+  it('checks a changed assignee in the write transaction and never writes or audits on rejection', async () => {
+    const store = {
+      findRecord: vi.fn().mockResolvedValue({ name: 'Party' }),
+      hasActiveMember: vi.fn().mockResolvedValue(false),
+      update: vi.fn(),
+    };
+    const events = { emit: vi.fn() };
+    const rootMemberCheck = vi.fn(() => {
+      throw new Error('Member lookup outside transaction');
+    });
+    const service = new PartiesService(
+      transactionRepository(store) as never,
+      events as never,
+      { isActive: rootMemberCheck } as never,
+    );
+    await expect(
+      service.update('org-1', 'p1', { assignedToId: 'foreign-user' }),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(store.hasActiveMember).toHaveBeenCalledWith('org-1', 'foreign-user');
+    expect(store.update).not.toHaveBeenCalled();
+    expect(rootMemberCheck).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
+  });
+
+  it.each(['update', 'deactivate'] as const)(
+    'does not audit %s when commit fails',
+    async (operation) => {
+      const before = { id: 'p1', name: 'Before', code: null, phone: null, taxCode: null };
+      const store = {
+        findRecord: vi.fn().mockResolvedValue(before),
+        update: vi.fn().mockResolvedValue(before),
+        countActiveDebts: vi.fn().mockResolvedValue(0),
+        deactivate: vi.fn().mockResolvedValue(before),
+      };
+      const events = { emit: vi.fn() };
+      const repository = {
+        inTransaction: async (work: (store: PartyWriteStore) => Promise<unknown>) => {
+          await work(store as never);
+          throw new Error('commit failed');
+        },
+      };
+      const service = new PartiesService(repository as never, events as never, {} as never);
+      const request =
+        operation === 'update'
+          ? service.update('org-1', 'p1', { name: 'After' })
+          : service.deactivate('org-1', 'p1');
+      await expect(request).rejects.toThrow('commit failed');
+      expect(events.emit).not.toHaveBeenCalled();
+    },
+  );
+
   it('checks active party ownership through its repository contract', async () => {
     const isActive = vi.fn().mockResolvedValue(true);
     const service = new PartiesService({ isActive } as never, {} as never, {} as never);
@@ -77,7 +301,7 @@ describe('PartiesService', () => {
     await expect(service.assertActive('org-1', 'foreign')).rejects.toMatchObject({ status: 404 });
   });
   it.each(
-    validFieldsOf(PARTY_LIST_QUERY, 'sortable')
+    getListQueryFieldNames(PARTY_LIST_QUERY, 'sortable')
       .filter((field) => !PARTY_LIST_QUERY.fields[field].computed)
       .flatMap((field) => ['asc', 'desc'].map((direction) => ({ field, direction }))),
   )(
@@ -111,10 +335,11 @@ describe('PartiesService', () => {
     expect(result.total).toBe(3);
     expect(s.findMany).toHaveBeenCalledWith({
       where: { organizationId: 'org-1', isActive: true, id: { in: ['p2'] } },
-      include: expect.any(Object),
+      select: expect.any(Object),
     });
     const sql = s.queryRaw.mock.calls[0][0] as Prisma.Sql;
-    expect(sql.values.slice(-2)).toEqual([1, 1]);
+    const bounds = sql.text.match(/LIMIT \$(\d+) OFFSET \$(\d+)/)!;
+    expect(bounds.slice(1).map((index) => sql.values[Number(index) - 1])).toEqual([1, 1]);
     expect(s.groupBy).not.toHaveBeenCalled();
     expect(s.rootRead).not.toHaveBeenCalled();
     expect(s.transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -162,7 +387,7 @@ describe('PartiesService', () => {
       skip: 0,
       take: 2,
       where: { organizationId: 'org-1' },
-      include: { _count: { select: { debts: { where: { organizationId: 'org-1' } } } } },
+      select: { _count: { select: { debts: { where: { organizationId: 'org-1' } } } } },
     });
     expect(s.groupBy.mock.calls[0][0].where).toMatchObject({
       organizationId: 'org-1',

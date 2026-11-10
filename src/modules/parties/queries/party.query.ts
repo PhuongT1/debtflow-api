@@ -1,3 +1,7 @@
+/**
+ * Builds tenant-scoped Prisma where/orderBy arguments for Party lists.
+ * Named filters and validated dynamic filters are combined here; this file does not execute DB queries.
+ */
 import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
 import { badRequest } from '@common/errors/app-errors.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
@@ -9,6 +13,9 @@ import {
 } from '@common/utils/business-date.util.js';
 import { DebtStatus, Prisma } from '@generated/prisma/client.js';
 import type { QueryPartiesDto } from '../dto/query-parties.dto.js';
+
+/** Shared by the Prisma balance aggregate, SQL page aggregate and balance-type filter. */
+export const PARTY_BALANCE_STATUSES: DebtStatus[] = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 
 /** Compose Prisma arguments only; no database calls. Omitted filters add no conditions. */
 export function buildPartyQuery(
@@ -24,7 +31,7 @@ export function buildPartyQuery(
     where.debts = {
       some: {
         organizationId,
-        status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] },
+        status: { in: PARTY_BALANCE_STATUSES },
         type: query.balanceType,
       },
     };

@@ -13,6 +13,41 @@ function tokens(text) {
 }
 
 /** Structural gates plus exact helper clones; semantic reuse still requires review. */
+// Contract imports may target their actual owner without a forwarding barrel.
+// Only named exported DTO classes or type-only exported type/interface declarations qualify.
+function isDirectContractImport(statement, targetPath, targetFile) {
+  if (!ts.isImportDeclaration(statement)) return false;
+  const clause = statement.importClause;
+  const bindings = clause?.namedBindings;
+  if (!bindings || !ts.isNamedImports(bindings) || clause.name) return false;
+  const dto = targetPath.includes('/dto/') && targetPath.endsWith('.dto.ts');
+  const types = targetPath.endsWith('.types.ts');
+  if (!dto && !types) return false;
+  const source = ts.createSourceFile(
+    targetFile,
+    readFileSync(targetFile, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  return (
+    bindings.elements.length > 0 &&
+    bindings.elements.every((item) => {
+      const name = (item.propertyName ?? item.name).text;
+      return source.statements.some((declaration) => {
+        if (
+          !declaration.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
+        )
+          return false;
+        if (declaration.name?.text !== name) return false;
+        return dto
+          ? name.endsWith('Dto') && ts.isClassDeclaration(declaration)
+          : (clause.isTypeOnly || item.isTypeOnly) &&
+              (ts.isTypeAliasDeclaration(declaration) || ts.isInterfaceDeclaration(declaration));
+      });
+    })
+  );
+}
+
 export function checkMaintainability(root = projectRoot) {
   root = resolve(root);
   const config = ts.readConfigFile(resolve(root, 'tsconfig.json'), ts.sys.readFile);
@@ -57,7 +92,8 @@ export function checkMaintainability(root = projectRoot) {
           /\.repository\.ts$/,
           [path.split('/').at(-1).startsWith('prisma-') ? 'infrastructure' : 'repositories'],
         ],
-        [/(?:\.list-query|\.select|\.query|-query|\.sql)\.ts$/, ['queries']],
+        [/\.sql\.ts$/, ['sql']],
+        [/(?:\.list-query|\.select|\.query|-query)\.ts$/, ['queries']],
         [/\.rules\.ts$/, ['rules']],
         [/\.types\.ts$/, ['types']],
         [/\.mapper\.ts$/, ['mappers']],
@@ -167,12 +203,13 @@ export function checkMaintainability(root = projectRoot) {
         targetPath.startsWith('src/modules/') &&
         targetPath.split('/')[2] !== feature &&
         !targetPath.includes('/public/') &&
-        !targetPath.endsWith('.module.ts')
+        !targetPath.endsWith('.module.ts') &&
+        !isDirectContractImport(statement, targetPath, target.resolvedFileName)
       )
         report(
           statement,
           'feature-public-contract',
-          'Cross-feature imports/re-exports must use the owning feature public/ contracts or Nest module; do not reach into private implementation folders.',
+          'Cross-feature imports must use named DTO/type-only contracts, public/ provider contracts or the owning Nest module; private implementations remain forbidden.',
         );
       if (
         !targetPath.startsWith('src/modules/') ||

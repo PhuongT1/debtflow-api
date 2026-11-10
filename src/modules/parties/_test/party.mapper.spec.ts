@@ -53,6 +53,38 @@ describe('buildPartyCreateData', () => {
 });
 
 describe('buildPartyUpdateData', () => {
+  it.each([
+    'code',
+    'phone',
+    'email',
+    'taxCode',
+    'address',
+    'note',
+    'provinceCode',
+    'provinceName',
+    'assignedToId',
+  ] as const)(
+    'preserves an omitted %s and clears it only when explicitly sent blank/null',
+    (field) => {
+      expect(buildPartyUpdateData({ [field]: undefined }, current)).toEqual({});
+      expect(buildPartyUpdateData({ [field]: '   ' }, current)[field]).toBeNull();
+      expect(buildPartyUpdateData({ [field]: null }, current)[field]).toBeNull();
+    },
+  );
+
+  it('maps only writable fields and keeps a zero credit limit instead of clearing it', () => {
+    const input = {
+      organizationId: 'foreign-org',
+      createdById: 'other-user',
+      isActive: false,
+      creditLimit: '0',
+    };
+    const data = buildPartyUpdateData(input, current);
+    expect(Object.keys(data)).toEqual(['creditLimit']);
+    expect(data.creditLimit).toBeInstanceOf(Prisma.Decimal);
+    expect(String(data.creditLimit)).toBe('0');
+  });
+
   it('changes only the keys that were sent (no wiping of other columns)', () => {
     expect(buildPartyUpdateData({ note: 'only note' }, current)).toEqual({ note: 'only note' });
     expect(buildPartyUpdateData({}, current)).toEqual({});

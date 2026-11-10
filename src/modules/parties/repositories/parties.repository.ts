@@ -1,12 +1,16 @@
 import type { ListQueryResult } from '@common/query/index.js';
 import type { PaginatedResult } from '@common/utils/pagination.util.js';
 import type { QueryPartiesDto } from '../dto/query-parties.dto.js';
-import type {
-  PartyRecord,
-  PartyDetail,
-  PartyWriteData,
-  PartyWithBalance,
-} from '../party.types.js';
+import type { PartyRecord, PartyDetail, PartyWriteData, PartyWithBalance } from '../party.types.js';
+
+/** Operations bound to one write transaction; no Prisma client crosses this contract. */
+export type PartyWriteStore = {
+  findRecord(organizationId: string, id: string): Promise<PartyRecord>;
+  hasActiveMember(organizationId: string, userId: string): Promise<boolean>;
+  update(organizationId: string, id: string, data: Partial<PartyWriteData>): Promise<PartyRecord>;
+  countActiveDebts(organizationId: string, partyId: string): Promise<number>;
+  deactivate(organizationId: string, id: string): Promise<PartyRecord>;
+};
 
 export abstract class PartiesRepository {
   abstract list(
@@ -21,11 +25,5 @@ export abstract class PartiesRepository {
     userId: string,
     data: PartyWriteData,
   ): Promise<PartyRecord>;
-  abstract update(
-    organizationId: string,
-    id: string,
-    data: Partial<PartyWriteData>,
-  ): Promise<PartyRecord>;
-  abstract countActiveDebts(organizationId: string, partyId: string): Promise<number>;
-  abstract deactivate(organizationId: string, id: string): Promise<PartyRecord>;
+  abstract inTransaction<T>(work: (store: PartyWriteStore) => Promise<T>): Promise<T>;
 }

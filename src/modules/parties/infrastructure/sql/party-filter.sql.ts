@@ -1,3 +1,7 @@
+/**
+ * Converts the supported canonical Party Prisma predicates into bound SQL fragments.
+ * Used by the balance-page SQL builder; unsupported columns/operators are rejected explicitly.
+ */
 import { Prisma } from '@generated/prisma/client.js';
 
 // Only this feature's canonical PartyWhereInput subset is supported. Values are always bound.
@@ -18,7 +22,7 @@ const COLUMNS = {
   createdAt: Prisma.sql`p."createdAt"`,
   updatedAt: Prisma.sql`p."updatedAt"`,
   searchText: Prisma.sql`p."searchText"`,
-};
+} satisfies Partial<Record<Prisma.PartyScalarFieldEnum, Prisma.Sql>>;
 
 type ValueKind =
   'text' | 'numeric' | 'boolean' | 'timestamp' | 'PartyType' | 'DebtType' | 'DebtStatus';

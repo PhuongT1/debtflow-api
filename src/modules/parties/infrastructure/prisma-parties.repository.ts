@@ -2,13 +2,18 @@ import type { ListQueryResult, SortItem } from '@common/query/index.js';
 import { getPagination, paginate, type Pagination } from '@common/utils/pagination.util.js';
 import { requireOrganizationId } from '@common/validation/require-organization-id.js';
 import { PrismaService } from '@database/prisma.service.js';
-import { DebtStatus, DebtType, Prisma } from '@generated/prisma/client.js';
+import { serializableTransaction } from '@database/serializable-transaction.js';
+import { DebtType, Prisma } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
 import { QueryPartiesDto } from '../dto/query-parties.dto.js';
-import { PARTY_LIST_QUERY } from '../queries/parties.list-query.js';
-import { buildPartyQuery } from '../queries/parties.query.js';
-import { partyBalancePageSql } from './queries/party-balance-page.query.js';
-import { partyListInclude } from '../queries/party.select.js';
+import { PARTY_LIST_QUERY } from '../queries/party.list-query.js';
+import { buildPartyQuery, PARTY_BALANCE_STATUSES } from '../queries/party.query.js';
+import { partyBalancePageSql } from './sql/party-balance-page.sql.js';
+import {
+  partyListSelect,
+  partyDetailSelect,
+  PARTY_DEFAULT_SELECT,
+} from '../queries/party.select.js';
 import type {
   PartyBalance,
   PartyBalanceRow,
@@ -16,8 +21,7 @@ import type {
   PartyWithBalance,
 } from '../party.types.js';
 
-import { PARTY_DETAIL_INCLUDE } from '../queries/party.select.js';
-import { PartiesRepository } from '../repositories/parties.repository.js';
+import { PartiesRepository, type PartyWriteStore } from '../repositories/parties.repository.js';
 import type { PartyWriteData } from '../party.types.js';
 
 @Injectable()
@@ -44,7 +48,7 @@ export class PrismaPartiesRepository extends PartiesRepository {
             orderBy,
             skip: pagination.skip,
             take: pagination.take,
-            include: partyListInclude(organizationId),
+            select: partyListSelect(organizationId),
           });
           items = await this.withBalances(page, organizationId, tx);
         }
@@ -67,7 +71,7 @@ export class PrismaPartiesRepository extends PartiesRepository {
     if (rows.length === 0) return [];
     const items = await tx.party.findMany({
       where: { organizationId, isActive: true, id: { in: rows.map(({ id }) => id) } },
-      include: partyListInclude(organizationId),
+      select: partyListSelect(organizationId),
     });
     const byId = new Map(items.map((item) => [item.id, item]));
     return rows.map(({ id, receivable, payable }) => {
@@ -96,7 +100,7 @@ export class PrismaPartiesRepository extends PartiesRepository {
   detail(organizationId: string, id: string) {
     return this.prisma.party.findFirstOrThrow({
       where: { id, organizationId },
-      include: PARTY_DETAIL_INCLUDE,
+      select: partyDetailSelect(organizationId),
     });
   }
   async isActive(organizationId: string, id: string) {
@@ -110,16 +114,38 @@ export class PrismaPartiesRepository extends PartiesRepository {
   create(organizationId: string, userId: string, data: PartyWriteData) {
     return this.prisma.party.create({ data: { organizationId, createdById: userId, ...data } });
   }
-  update(organizationId: string, id: string, data: Partial<PartyWriteData>) {
-    return this.prisma.party.update({ where: { id, organizationId }, data });
-  }
-  countActiveDebts(organizationId: string, partyId: string) {
-    return this.prisma.debt.count({
-      where: { organizationId, partyId, status: { notIn: ['PAID', 'CANCELLED'] } },
-    });
-  }
-  deactivate(organizationId: string, id: string) {
-    return this.prisma.party.update({ where: { id, organizationId }, data: { isActive: false } });
+  /** Same serializable boundary as debt creation: retry the entire read/check/write on conflict. */
+  inTransaction<T>(work: (store: PartyWriteStore) => Promise<T>): Promise<T> {
+    return serializableTransaction(this.prisma, (tx) =>
+      work({
+        findRecord: (organizationId, id) =>
+          tx.party.findFirstOrThrow({
+            where: { id, organizationId },
+            select: PARTY_DEFAULT_SELECT,
+          }),
+        hasActiveMember: async (organizationId, userId) =>
+          Boolean(
+            await tx.organizationMembership.findFirst({
+              where: {
+                organizationId,
+                userId,
+                status: 'ACTIVE',
+                user: { status: 'ACTIVE' },
+                organization: { status: 'ACTIVE' },
+              },
+              select: { id: true },
+            }),
+          ),
+        update: (organizationId, id, data) =>
+          tx.party.update({ where: { id, organizationId }, data }),
+        countActiveDebts: (organizationId, partyId) =>
+          tx.debt.count({
+            where: { organizationId, partyId, status: { notIn: ['PAID', 'CANCELLED'] } },
+          }),
+        deactivate: (organizationId, id) =>
+          tx.party.update({ where: { id, organizationId }, data: { isActive: false } }),
+      }),
+    );
   }
   private async getBalances(
     partyIds: string[],
@@ -133,7 +159,7 @@ export class PrismaPartiesRepository extends PartiesRepository {
       where: {
         partyId: { in: partyIds },
         organizationId,
-        status: { in: [DebtStatus.OPEN, DebtStatus.PARTIAL] },
+        status: { in: PARTY_BALANCE_STATUSES },
       },
       by: ['partyId', 'type'],
       _sum: { originalAmount: true, paidAmount: true },

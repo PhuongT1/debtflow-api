@@ -1,3 +1,4 @@
+import type { PartyResponseDto, PartyListItemDto } from './dto/party-response.dto.js';
 import { PARTY_RESPONSE_FIELDS } from './queries/party.select.js';
 import type {
   PartyRecord,
@@ -12,78 +13,66 @@ import { partySearchText } from '@common/utils/search-normalization.util.js';
 import type { CreatePartyDto } from './dto/create-party.dto.js';
 import type { UpdatePartyDto } from './dto/update-party.dto.js';
 
-const toCreditLimit = (value: string | null | undefined) => {
-  const text = normalizeOptionalText(value);
+const OPTIONAL_TEXT_FIELDS = [
+  'code',
+  'phone',
+  'email',
+  'taxCode',
+  'address',
+  'note',
+  'provinceCode',
+  'provinceName',
+  'assignedToId',
+] as const;
 
-  return text === null ? null : new Prisma.Decimal(text);
-};
+/** Shared writable-field normalization. PATCH never normalizes or writes an omitted field. */
+function normalizePartyOptionalFields(input: UpdatePartyDto, mode: 'create' | 'update') {
+  const data: Partial<PartyWriteData> = {};
+  for (const field of OPTIONAL_TEXT_FIELDS) {
+    if (mode === 'update' && input[field] === undefined) continue;
+    let value = normalizeOptionalText(input[field]);
+    if (field === 'email') value = value?.toLowerCase() ?? null;
+    if (field === 'provinceCode') value = value?.toUpperCase() ?? null;
+    data[field] = value;
+  }
+  if (mode === 'create' || input.creditLimit !== undefined) {
+    const value = normalizeOptionalText(input.creditLimit);
+    data.creditLimit = value === null ? null : new Prisma.Decimal(value);
+  }
+  return data;
+}
 
 /** Full column set for a new party. Optional values that are blank are stored as null. */
 export function buildPartyCreateData(input: CreatePartyDto): PartyWriteData {
+  const data = normalizePartyOptionalFields(input, 'create');
   const name = input.name.trim();
-  const code = normalizeOptionalText(input.code);
-  const phone = normalizeOptionalText(input.phone);
-  const taxCode = normalizeOptionalText(input.taxCode);
-
   return {
+    ...data,
     type: input.type,
-    code,
     name,
-    searchText: partySearchText(name, code, phone, taxCode),
-    phone,
-    email: normalizeOptionalText(input.email)?.toLowerCase() ?? null,
-    taxCode,
-    address: normalizeOptionalText(input.address),
-    provinceCode: normalizeOptionalText(input.provinceCode)?.toUpperCase() ?? null,
-    provinceName: normalizeOptionalText(input.provinceName),
-    note: normalizeOptionalText(input.note),
-    creditLimit: toCreditLimit(input.creditLimit),
-    assignedToId: normalizeOptionalText(input.assignedToId),
+    searchText: partySearchText(name, data.code, data.phone, data.taxCode),
   };
 }
 
-/**
- * Columns to change for a PATCH. Only keys present in the request are touched: an absent key keeps
- * the stored value, a blank or null value clears an optional column. `name` and `type` cannot be cleared.
- */
+/** PATCH preserves omitted fields; null/blank clears optional fields, never name/type. */
 export function buildPartyUpdateData(
   input: UpdatePartyDto,
   current: PartySearchSource,
 ): Partial<PartyWriteData> {
-  const data: Partial<PartyWriteData> = {};
-  const has = (key: keyof UpdatePartyDto) => input[key] !== undefined;
-
-  // An explicit null cannot clear these two required columns: it is treated as "not sent".
+  const data = normalizePartyOptionalFields(input, 'update');
+  // Preserve the existing API's no-op semantics for null required fields.
   if (input.type != null) data.type = input.type;
-  if (input.name != null) data.name = String(input.name).trim();
-  if (has('code')) data.code = normalizeOptionalText(input.code);
-  if (has('phone')) data.phone = normalizeOptionalText(input.phone);
-  if (has('email')) data.email = normalizeOptionalText(input.email)?.toLowerCase() ?? null;
-  if (has('taxCode')) data.taxCode = normalizeOptionalText(input.taxCode);
-  if (has('address')) data.address = normalizeOptionalText(input.address);
-  if (has('note')) data.note = normalizeOptionalText(input.note);
-  if (has('provinceCode'))
-    data.provinceCode = normalizeOptionalText(input.provinceCode)?.toUpperCase() ?? null;
-  if (has('provinceName')) data.provinceName = normalizeOptionalText(input.provinceName);
-  if (has('creditLimit')) data.creditLimit = toCreditLimit(input.creditLimit);
-  if (has('assignedToId')) data.assignedToId = normalizeOptionalText(input.assignedToId);
+  if (input.name != null) data.name = input.name.trim();
 
-  const searchChanged = input.name != null || has('code') || has('phone') || has('taxCode');
-
-  if (searchChanged) {
-    data.searchText = partySearchText(
-      data.name ?? current.name,
-      has('code') ? data.code : current.code,
-      has('phone') ? data.phone : current.phone,
-      has('taxCode') ? data.taxCode : current.taxCode,
-    );
+  if (['name', 'code', 'phone', 'taxCode'].some((field) => Object.hasOwn(data, field))) {
+    const merged = { ...current, ...data };
+    data.searchText = partySearchText(merged.name, merged.code, merged.phone, merged.taxCode);
   }
-
   return data;
 }
 
 /** Same allow-list as Swagger. Never spread an unfiltered database record into an API response. */
-export function toPartyResponse(party: PartyRecord) {
+export function toPartyResponse(party: PartyRecord): PartyResponseDto {
   // Object.fromEntries loses literal keys; every key/value here comes from the typed allow-list.
   const fields = Object.fromEntries(PARTY_RESPONSE_FIELDS.map((key) => [key, party[key]])) as Pick<
     PartyRecord,
@@ -92,7 +81,7 @@ export function toPartyResponse(party: PartyRecord) {
   return { ...fields, creditLimit: party.creditLimit?.toString() ?? null };
 }
 
-export function toPartyListItem(party: PartyWithBalance) {
+export function toPartyListItem(party: PartyWithBalance): PartyListItemDto {
   return {
     ...toPartyResponse(party),
     assignedTo: party.assignedTo,

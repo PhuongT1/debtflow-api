@@ -194,3 +194,57 @@ test('requires grouping when a second ordinary provider is added', () => {
     },
   );
 });
+
+test('accepts direct named DTO classes and type-only owned types without a forwarding barrel', () => {
+  fixture(
+    {
+      'src/modules/a/dto/a-response.dto.ts': 'export class AResponseDto { id!: string; }',
+      'src/modules/a/a.types.ts':
+        'export type ARecord = { id: string }; export interface AShape { name: string; }',
+      'src/modules/b/b.service.ts':
+        "import { AResponseDto as Output } from '@modules/a/dto/a-response.dto'; import type { ARecord } from '../a/a.types'; import { type AShape } from '@modules/a/a.types'; export class BService {}",
+    },
+    ({ check }) => assert.deepEqual(check().violations, []),
+  );
+});
+
+test('does not allow namespace imports, runtime helpers or fake DTO functions through contract owners', () => {
+  fixture(
+    {
+      'src/modules/a/dto/a-response.dto.ts':
+        'export class AResponseDto {} export function FakeDto() {} export const LIMIT = 10;',
+      'src/modules/a/a.types.ts':
+        'export type ARecord = { id: string }; export const build = () => 1; export class HiddenService {}',
+      'src/modules/b/b.service.ts': 'export class BService {}',
+    },
+    ({ check, write }) => {
+      for (const statement of [
+        "import * as Outputs from '@modules/a/dto/a-response.dto';",
+        "import { FakeDto } from '@modules/a/dto/a-response.dto';",
+        "import { LIMIT } from '@modules/a/dto/a-response.dto';",
+        "import { build } from '@modules/a/a.types';",
+        "import type { HiddenService } from '@modules/a/a.types';",
+        "export { AResponseDto } from '@modules/a/dto/a-response.dto';",
+      ]) {
+        write('src/modules/b/b.service.ts', statement + ' export class BService {}');
+        assert.ok(
+          check().violations.some((issue) => issue.rule === 'feature-public-contract'),
+          statement,
+        );
+      }
+    },
+  );
+});
+
+test('separates shared query definitions from private SQL builders without waiving placement', () => {
+  fixture({
+    'src/modules/orders/queries/order.query.ts': 'export const ORDER_QUERY = {};',
+    'src/modules/orders/queries/order.select.ts': 'export const ORDER_SELECT = {};',
+    'src/modules/orders/infrastructure/sql/order-page.sql.ts': 'export const PAGE_SQL = {};',
+    'src/modules/orders/infrastructure/sql/order-filter.sql.ts': 'export const FILTER_SQL = {};',
+  }, ({ check, write }) => {
+    assert.deepEqual(check().violations, []);
+    write('src/modules/orders/helpers/order-balance.sql.ts', 'export const BALANCE_SQL = {};');
+    assert.ok(check().violations.some(({ rule }) => rule === 'responsibility-folder'));
+  });
+});

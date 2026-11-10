@@ -51,11 +51,15 @@ export class PartiesService {
   }
 
   async update(organizationId: string, id: string, input: UpdatePartyDto, actorId?: string) {
-    const before = await this.detail(organizationId, id);
-    const data = buildPartyUpdateData(input, before);
-    if (data.assignedToId) await this.assertAssignee(organizationId, data.assignedToId);
-
-    const party = await this.repository.update(organizationId, id, data);
+    requireOrganizationId(organizationId);
+    const { before, party } = await this.repository.inTransaction(async (store) => {
+      const before = await store.findRecord(organizationId, id);
+      const data = buildPartyUpdateData(input, before);
+      if (data.assignedToId && !(await store.hasActiveMember(organizationId, data.assignedToId)))
+        throw badRequest('parties.ASSIGNEE_NOT_FOUND');
+      const party = await store.update(organizationId, id, data);
+      return { before, party };
+    });
 
     emitAudit(this.events, {
       organizationId,
@@ -71,14 +75,14 @@ export class PartiesService {
   }
 
   async deactivate(organizationId: string, id: string, actorId?: string) {
-    const before = await this.detail(organizationId, id);
-    const activeDebtCount = await this.repository.countActiveDebts(organizationId, id);
-
-    if (activeDebtCount > 0) {
-      throw badRequest('parties.CANNOT_DELETE_ACTIVE_DEBTS');
-    }
-
-    const party = await this.repository.deactivate(organizationId, id);
+    requireOrganizationId(organizationId);
+    const { before, party } = await this.repository.inTransaction(async (store) => {
+      const before = await store.findRecord(organizationId, id);
+      const activeDebtCount = await store.countActiveDebts(organizationId, id);
+      if (activeDebtCount > 0) throw badRequest('parties.CANNOT_DELETE_ACTIVE_DEBTS');
+      const party = await store.deactivate(organizationId, id);
+      return { before, party };
+    });
 
     emitAudit(this.events, {
       organizationId,
