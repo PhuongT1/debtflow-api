@@ -1,11 +1,14 @@
+/** Parses/validates HTTP filters and compiles the validated tree into Prisma where fragments. */
 import { badRequest } from '@common/errors/app-errors.js';
 import { getBusinessDayRangeForDate } from '@common/utils/business-date.util.js';
-import { nest } from './parse-sort-params.js';
+import {
+  buildNestedPath,
+  isFilterGroup,
+  getAllowedFilterOperators,
+  getListQueryFieldNames,
+} from './list-query.helpers.js';
 import {
   FILTER_OPERATORS,
-  isGroup,
-  operatorsOf,
-  validFieldsOf,
   type FilterCondition,
   type FilterGroup,
   type FilterNode,
@@ -60,7 +63,7 @@ export function parseFilterParams(query: RawQuery, config: ListQueryConfig): Fil
 
     const repeated = Array.isArray(raw);
     const operator = (explicitOperator ?? (repeated ? 'in' : 'eq')) as FilterOperator;
-    const allowed = operatorsOf(field);
+    const allowed = getAllowedFilterOperators(field);
 
     if (!FILTER_OPERATORS.includes(operator) || !allowed.includes(operator)) {
       throw badRequest('query.INVALID_FILTER_OPERATOR', {
@@ -82,7 +85,7 @@ export function parseFilterParams(query: RawQuery, config: ListQueryConfig): Fil
 }
 
 /** Compiles a filter tree to a Prisma `where` fragment, or undefined when there is nothing to filter. */
-export function buildWhere(
+export function buildPrismaWhere(
   group: FilterGroup,
   config: ListQueryConfig,
 ): PrismaFragment | undefined {
@@ -94,7 +97,7 @@ export function buildWhere(
 }
 
 function buildNode(node: FilterNode, config: ListQueryConfig): PrismaFragment | undefined {
-  if (isGroup(node)) return buildWhere(node, config);
+  if (isFilterGroup(node)) return buildPrismaWhere(node, config);
 
   const field = config.fields[node.field];
 
@@ -104,14 +107,14 @@ function buildNode(node: FilterNode, config: ListQueryConfig): PrismaFragment | 
 
   // Prisma has no negated `contains` on a scalar filter; negate the whole condition instead.
   if (node.operator === 'notContains') {
-    return { NOT: nest(path, { contains: node.value, mode: 'insensitive' }) };
+    return { NOT: buildNestedPath(path, { contains: node.value, mode: 'insensitive' }) };
   }
 
-  return nest(path, toCondition(node));
+  return buildNestedPath(path, toCondition(node));
 }
 
 function validFilterFields(config: ListQueryConfig) {
-  return validFieldsOf(config, 'filterable').filter(
+  return getListQueryFieldNames(config, 'filterable').filter(
     (name) => !config.fields[name].computed || config.fields[name].filter,
   );
 }

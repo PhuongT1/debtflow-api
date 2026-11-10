@@ -1,10 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiQuery } from '@nestjs/swagger';
-import { operatorsOf, validFieldsOf, type ListQueryConfig } from './list-query.types.js';
+import { getAllowedFilterOperators, getListQueryFieldNames } from './list-query.helpers.js';
+import type { ListQueryConfig } from './list-query.types.js';
 
 /** Documents the sort and filter parameters of a resource's allow-list in Swagger/OpenAPI. */
 export function ApiListQuery(config: ListQueryConfig) {
-  const sortable = validFieldsOf(config, 'sortable');
+  const sortable = getListQueryFieldNames(config, 'sortable');
   const decorators = [
     ApiQuery({
       name: 'sortBy',
@@ -39,7 +40,7 @@ export function ApiListQuery(config: ListQueryConfig) {
         type: String,
         description:
           `${field.description ?? ''} Type: ${field.type}.${values} ` +
-          `Use \`filter[${name}][op]=value\`, op: ${operatorsOf(field).join(', ')} ` +
+          `Use \`filter[${name}][op]=value\`, op: ${getAllowedFilterOperators(field).join(', ')} ` +
           `(no op means eq; \`in\`, \`notIn\` and \`between\` take comma-separated values).`,
       }),
     );

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { buildWhere, isListQueryKey, parseFilterParams } from '../parse-filter-params.js';
+import { buildPrismaWhere, isListQueryKey, parseFilterParams } from '../list-query-filter.js';
 import { errorOf, TEST_CONFIG } from './test-config.js';
 
 const where = (query: Record<string, unknown>) =>
-  buildWhere(parseFilterParams(query, TEST_CONFIG), TEST_CONFIG);
+  buildPrismaWhere(parseFilterParams(query, TEST_CONFIG), TEST_CONFIG);
 
 type DateCondition = Record<string, Record<string, Date>>;
 const firstCondition = (query: Record<string, unknown>) =>
   (where(query) as { AND: DateCondition[] }).AND[0];
 
-describe('parseFilterParams + buildWhere', () => {
+describe('parseFilterParams + buildPrismaWhere', () => {
   it('returns nothing when there is no filter', () => {
     expect(where({})).toBeUndefined();
     expect(where({ page: '1', q: 'x' })).toBeUndefined();

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildOrderBy, parseSortParams } from '../parse-sort-params.js';
+import { buildPrismaOrderBy, parseSortParams } from '../list-query-sort.js';
+import { parseListQuery, applyListQuery } from '../list-query-builder.js';
 import { errorOf, TEST_CONFIG } from './test-config.js';
 
 describe('parseSortParams', () => {
@@ -51,21 +52,46 @@ describe('parseSortParams', () => {
   );
 });
 
-describe('buildOrderBy', () => {
+describe('buildPrismaOrderBy', () => {
+  it.each(['dueDate', 'createdAt', 'code', 'status', 'amount', 'quantity', 'isActive', 'note'])(
+    'reuses the same parser/builder for %s in both directions',
+    (field) => {
+      for (const direction of ['asc', 'desc'] as const) {
+        const parsed = parseListQuery({ sortBy: field, sortOrder: direction }, TEST_CONFIG);
+        expect(parsed.sort).toEqual([{ field, direction }]);
+        expect(parsed.orderBy).toEqual([{ [field]: direction }, { id: 'asc' }]);
+        const applied = applyListQuery(parsed, {
+          where: { organizationId: 'org-1' },
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        });
+        expect(applied.where).toEqual({ organizationId: 'org-1' });
+        expect(applied.orderBy).toEqual(parsed.orderBy);
+      }
+    },
+  );
+
+  it('retains the endpoint default ordering when no sort is requested', () => {
+    const base = {
+      where: { organizationId: 'org-1' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+    };
+    expect(applyListQuery(parseListQuery({}, TEST_CONFIG), base)).toEqual(base);
+  });
+
   it('maps fields, nests relation paths and appends the id tie-breaker', () => {
-    const orderBy = buildOrderBy([{ field: 'partyName', direction: 'desc' }], TEST_CONFIG);
+    const orderBy = buildPrismaOrderBy([{ field: 'partyName', direction: 'desc' }], TEST_CONFIG);
 
     expect(orderBy).toEqual([{ party: { name: 'desc' } }, { id: 'asc' }]);
   });
 
   it('uses the field sort hook', () => {
-    expect(buildOrderBy([{ field: 'docs', direction: 'desc' }], TEST_CONFIG)).toEqual([
+    expect(buildPrismaOrderBy([{ field: 'docs', direction: 'desc' }], TEST_CONFIG)).toEqual([
       { debts: { _count: 'desc' } },
       { id: 'asc' },
     ]);
   });
 
   it('produces nothing for a computed field so the service can sort it', () => {
-    expect(buildOrderBy([{ field: 'balance', direction: 'asc' }], TEST_CONFIG)).toEqual([]);
+    expect(buildPrismaOrderBy([{ field: 'balance', direction: 'asc' }], TEST_CONFIG)).toEqual([]);
   });
 });

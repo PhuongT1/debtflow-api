@@ -4,6 +4,8 @@
  * Prisma builder consumes them, so another transport (GraphQL, CSV import, ...) can reuse the builder.
  */
 
+import type { Prisma } from '@generated/prisma/client.js';
+
 export const FILTER_OPERATORS = [
   'eq',
   'notEq',
@@ -47,7 +49,8 @@ export const OPERATORS_BY_TYPE: Record<FieldType, readonly FilterOperator[]> = {
   boolean: ['eq', 'notEq', 'isNull'],
 };
 
-export type SortDirection = 'asc' | 'desc';
+/** Reuse the ordering accepted by the generated Prisma client. */
+export type SortDirection = Prisma.SortOrder;
 export type LogicalOperator = 'AND' | 'OR';
 
 export type PrismaFragment = Record<string, unknown>;
@@ -81,7 +84,7 @@ export type ListQueryField = {
 
 export type ListQueryConfig = {
   /** Prisma model name. When set, the fields are verified against the Prisma schema at startup. */
-  model?: string;
+  model?: Prisma.ModelName;
   fields: Record<string, ListQueryField>;
 };
 
@@ -96,30 +99,18 @@ export type ListQueryOptions = {
   filter: FilterGroup;
 };
 
-export type ListQueryResult = {
+/** Shares the requested sort contract instead of maintaining a second declaration. */
+export type ListQueryResult = Pick<ListQueryOptions, 'sort'> & {
   options: ListQueryOptions;
   /** Prisma `where` fragment to AND with the service's own conditions. Undefined if nothing to filter. */
   where?: PrismaFragment;
   /** Prisma `orderBy` list with a stable `id` tie-breaker. Undefined when the client sent no sort. */
   orderBy?: PrismaFragment[];
-  /** The requested sort, including computed fields that the service has to apply itself. */
-  /** Zero or one client-selected field; database ordering may append an internal ID tie-breaker. */
-  sort: SortItem[];
 };
 
-export const isGroup = (node: FilterNode): node is FilterGroup => 'conditions' in node;
-
-export function operatorsOf(field: ListQueryField): readonly FilterOperator[] {
-  const base = field.operators ?? OPERATORS_BY_TYPE[field.type];
-
-  return base.filter((operator) => operator !== 'isNull' || field.nullable);
-}
-
-export function validFieldsOf(
-  config: ListQueryConfig,
-  capability: 'sortable' | 'filterable',
-): string[] {
-  return Object.entries(config.fields)
-    .filter(([, field]) => field[capability] !== false)
-    .map(([name]) => name);
-}
+export type RawSortParams = {
+  /** Exactly one allow-listed field. */
+  sortBy?: unknown;
+  /** `asc` or `desc` (case-insensitive), default `asc`. */
+  sortOrder?: unknown;
+};
