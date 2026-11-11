@@ -62,6 +62,12 @@ test('copied core installs offline in a different project for all clients withou
     assert.deepEqual(setupAi(root, { check: true }), { skills: 3, changed: 0 });
   }));
 
+test('requires grouped workflow rules when installing a copied core', () =>
+  fixture(({ root }) => {
+    rmSync(join(root, '.ai/core/workflow/verification.md'));
+    assert.throws(() => setupAi(root, { init: true }), /workflow\/verification\.md/);
+  }));
+
 test('rerunning setup is idempotent and check performs no writes', () =>
   fixture(({ root, read }) => {
     setupAi(root, { init: true });

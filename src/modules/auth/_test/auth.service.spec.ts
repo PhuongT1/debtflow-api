@@ -1,7 +1,8 @@
+import { PrismaAuthRepository } from '../infrastructure/prisma-auth.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import * as bcrypt from 'bcryptjs';
-import { AuthService } from '../services/auth.service.js';
-import { AUTH_USER_SELECT } from '../queries/auth.select.js';
+import { AuthService } from '../auth.service.js';
+import { AUTH_USER_SELECT } from '../auth.select.js';
 
 function setup() {
   const user = {
@@ -37,7 +38,11 @@ function setup() {
     membership,
     prisma,
     jwt,
-    service: new AuthService(prisma as never, jwt as never, config as never),
+    service: new AuthService(
+      new PrismaAuthRepository(prisma as never),
+      jwt as never,
+      config as never,
+    ),
   };
 }
 

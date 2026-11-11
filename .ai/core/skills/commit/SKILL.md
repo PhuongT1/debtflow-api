@@ -3,7 +3,7 @@ name: commit
 description: Prepare or create scoped Git commits when the user asks to commit or prepare a commit. Use for commit work, not ordinary implementation.
 ---
 
-Read `AGENTS.md` and `.ai/core/verification.md`. Inspect status, staged/unstaged diffs and project checks.
+Read `AGENTS.md` and `.ai/core/workflow/verification.md`. Inspect status, staged/unstaged diffs and project checks.
 Separate unrelated work and exclude secrets, local AI outputs and generated noise. Run proportional
 verification. Stage/create a commit only for the explicitly requested scope; preparing a message is
 not permission to commit. Commit requests authorize local work only: do not contact remotes, pull,
@@ -19,3 +19,5 @@ and titles, then stage explicit paths/hunks and review one staged group at a tim
 intermediate snapshots; do not split required wiring away from a move or force one commit per file.
 Use a Conventional Commit subject of at most 72 characters. Default to no body; add only a brief
 reason when needed. Keep long change inventories and validation reports in the final response.
+
+Follow `.ai/core/workflow/verification.md#keep-verification-proportional`: select affected checks, reuse passing results, and obtain explicit approval before full-suite or deep verification.

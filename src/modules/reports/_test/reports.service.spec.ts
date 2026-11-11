@@ -1,8 +1,9 @@
+import { PrismaReportsRepository } from '../infrastructure/prisma-reports.repository.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebtStatus, Prisma } from '@generated/prisma/client.js';
 import { parseListQuery } from '@common/query/index.js';
 import { DEBT_LIST_QUERY } from '@modules/debts/queries/debts.list-query.js';
-import { ReportsService } from '../services/reports.service.js';
+import { ReportsService } from '../reports.service.js';
 
 const now = new Date('2026-11-01T05:00:00Z');
 const day = 86_400_000;
@@ -44,7 +45,9 @@ function setup(rows: Row[] = []) {
     });
   });
   const transaction = vi.fn((queries: Promise<unknown>[]) => Promise.all(queries));
-  const service = new ReportsService({ debt: { aggregate }, $transaction: transaction } as never);
+  const service = new ReportsService(
+    new PrismaReportsRepository({ debt: { aggregate }, $transaction: transaction } as never),
+  );
   return { service, aggregate, transaction };
 }
 

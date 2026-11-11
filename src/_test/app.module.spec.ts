@@ -30,6 +30,7 @@ const sessions = {
   getCurrentUser: vi.fn(),
 };
 const prisma = {
+  party: { findFirst: vi.fn().mockResolvedValue({ id: 'test-party' }) },
   organizationMembership: { findFirst: membership },
   debt: {
     aggregate: aggregateDebt,
@@ -73,11 +74,11 @@ describe('domain module composition and HTTP access', () => {
       '../../dist/src/database/prisma.service.js',
     ) as typeof import('../database/prisma.service.js');
     const { AuthService } = requireCompiled(
-      '../../dist/src/modules/auth/services/auth.service.js',
-    ) as typeof import('../modules/auth/services/auth.service.js');
+      '../../dist/src/modules/auth/auth.service.js',
+    ) as typeof import('../modules/auth/auth.service.js');
     const { PartiesService } = requireCompiled(
-      '../../dist/src/modules/parties/services/parties.service.js',
-    ) as typeof import('../modules/parties/services/parties.service.js');
+      '../../dist/src/modules/parties/parties.service.js',
+    ) as typeof import('../modules/parties/parties.service.js');
     const { configureApp } = requireCompiled(
       '../../dist/src/configure-app.js',
     ) as typeof import('../configure-app.js');
@@ -104,7 +105,7 @@ describe('domain module composition and HTTP access', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    membership.mockResolvedValue(activeMember());
+    membership.mockReset().mockResolvedValue(activeMember());
     aggregateDebt.mockResolvedValue({
       _sum: { originalAmount: null, paidAmount: null },
       _count: { _all: 0 },
@@ -306,6 +307,23 @@ describe('domain module composition and HTTP access', () => {
     expect(parties.create).not.toHaveBeenCalled();
   });
 
+  it('maps Party response fields before wrapping and keeps full Decimal precision', async () => {
+    membership.mockResolvedValue(activeMember('ADMIN'));
+    parties.create.mockResolvedValueOnce({
+      id: 'test-party',
+      name: 'Example',
+      type: 'CUSTOMER',
+      creditLimit: { toString: () => '9999999999999999.99' },
+      internalNote: 'must not leave the server',
+    });
+    const response = await request('parties', { name: 'Example', type: 'CUSTOMER' }, true);
+    expect(response).toMatchObject({
+      status: 201,
+      body: { success: true, data: { id: 'test-party', creditLimit: '9999999999999999.99' } },
+    });
+    expect(response.body.data).not.toHaveProperty('internalNote');
+  });
+
   it('preserves create status, validation and server-owned tenant/actor arguments', async () => {
     membership.mockResolvedValue(activeMember('ADMIN'));
     expect(
@@ -331,7 +349,7 @@ describe('domain module composition and HTTP access', () => {
     membership.mockResolvedValue(null);
     expect(await request('parties', undefined, true)).toMatchObject({ status: 401 });
     expect(parties.list).not.toHaveBeenCalled();
-    membership.mockResolvedValue(activeMember());
+    membership.mockReset().mockResolvedValue(activeMember());
     expect(
       await request('auth/switch-organization', { organizationId: 'another-test-org' }, true),
     ).toMatchObject({ status: 201, body: { success: true } });
@@ -407,8 +425,8 @@ describe('domain module composition and HTTP access', () => {
       '../../dist/src/modules/payments/payments.module.js',
     ) as typeof import('../modules/payments/payments.module.js');
     const { PaymentsService } = requireCompiled(
-      '../../dist/src/modules/payments/services/payments.service.js',
-    ) as typeof import('../modules/payments/services/payments.service.js');
+      '../../dist/src/modules/payments/payments.service.js',
+    ) as typeof import('../modules/payments/payments.service.js');
     const { DatabaseModule } = requireCompiled(
       '../../dist/src/database/database.module.js',
     ) as typeof import('../database/database.module.js');

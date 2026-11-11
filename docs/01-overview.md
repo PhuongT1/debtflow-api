@@ -8,7 +8,7 @@ helps a sales business track **who owes it money (receivables)** and **whom it o
 
 It is a standalone NestJS REST API. The web frontend ([debtflow-web](../../debtflow-web)) never calls
 it directly from the browser: a Next.js BFF in `apps/shell` forwards requests server-side and attaches
-the access token (see [Architecture](./02-architecture.md#how-the-frontend-talks-to-the-api)).
+the access token (see [Request flow](./guides/request-flow.md)).
 
 | Item           | Value                                                           |
 | -------------- | --------------------------------------------------------------- |

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-dev/
 
 # Real environment values are private; sanitized examples remain versioned.
 .env
@@ -9,6 +10,7 @@ dist/
 .DS_Store
 /src/generated/prisma/
 /src/generated/list-query/
+/src/generated/response-models/
 docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp/

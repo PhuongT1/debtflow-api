@@ -8,3 +8,5 @@ requested diff, surrounding implementation and callers. Do not edit, fix, commit
 Report concrete introduced defects with severity, path/line and a failing scenario. Prioritize access,
 data integrity and contract regressions. Omit speculative/style-only findings. If none qualify, state
 that and name remaining verification gaps; passing static checks do not prove authorization or race safety.
+
+Follow `.ai/core/workflow/verification.md#keep-verification-proportional`: select affected checks, reuse passing results, and obtain explicit approval before full-suite or deep verification.

@@ -1,6 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { ArgumentMetadata } from '@nestjs/common';
-import { isListQueryKey } from './parse-filter-params.js';
+import { isListQueryKey } from './list-query-filter.js';
 
 /**
  * ValidationPipe that ignores the list-query keys (`sortBy`, `sortOrder`, `filterOperator`,

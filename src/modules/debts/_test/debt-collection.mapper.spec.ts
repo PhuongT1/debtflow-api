@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDebtCollectionData } from '../mappers/debt-collection.mapper.js';
+import { buildDebtCollectionData } from '../debt-collection.mapper.js';
 
 describe('collection PATCH mapping', () => {
   it('does not write omitted nullable fields when changing only status', () => {

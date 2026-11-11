@@ -76,7 +76,7 @@ stateDiagram-v2
 
 A **Payment** is one voucher for one party and one direction (`type`: RECEIVABLE = money in, PAYABLE = money out).
 It is split into **PaymentAllocation** rows, one per debt it settles
-([payments.service.ts](../src/modules/payments/services/payments.service.ts)). Everything runs in a single database transaction.
+([payments.service.ts](../src/modules/payments/payments.service.ts)). Everything runs in a single database transaction.
 
 ```mermaid
 flowchart TD
@@ -102,7 +102,7 @@ flowchart TD
 
 ## Parties
 
-([parties.service.ts](../src/modules/parties/services/parties.service.ts))
+([parties.service.ts](../src/modules/parties/parties.service.ts))
 
 - `type` is `CUSTOMER`, `SUPPLIER` or `BOTH`; `code` is optional but unique per organization.
 - The list returns an outstanding **balance** per party: remaining receivable and remaining payable

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as ExcelJS from 'exceljs';
 import { Prisma } from '@generated/prisma/client.js';
-import { DebtExportService } from '../services/debt-export.service.js';
+import { DebtExportService } from '../debt-export.service.js';
 
 describe('DebtExportService', () => {
   it('preserves tenant/filter scope, caps export rows and writes exact monetary strings', async () => {

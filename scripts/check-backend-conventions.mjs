@@ -117,7 +117,7 @@ export function checkBackendConventions(root = projectRoot, { baseline, routePol
           ['@nestjs/common', '@nestjs/swagger'].includes(imported.module) ||
           local === portable(resolve(root, 'src/auth/decorators/auth-api.decorator.ts')) ||
           local === portable(resolve(root, 'src/auth/decorators/roles.decorator.ts')) ||
-          local === portable(resolve(root, 'src/common/http/api-envelope.decorator.ts')) ||
+          local === portable(resolve(root, 'src/common/swagger/decorators/api-envelope.decorator.ts')) ||
           local === portable(resolve(root, 'src/common/decorators/api-response.decorator.ts'));
         return trusted ? [{ name: imported.name, call }] : [];
       });

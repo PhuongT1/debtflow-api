@@ -12,9 +12,8 @@ const outsideDocs = [
 export default withMermaid(
   defineConfig({
     title: 'DebtFlow API',
-    description:
-      'Product, architecture, business rules, database and API reference for DebtFlow API.',
-    lang: 'en-US',
+    description: 'Hướng dẫn kiến trúc, request flow, bảo trì và phát triển module DebtFlow API.',
+    lang: 'vi-VN',
     cleanUrls: true,
     lastUpdated: true,
     ignoreDeadLinks: outsideDocs,
@@ -25,92 +24,223 @@ export default withMermaid(
     vite: { optimizeDeps: { include: ['mermaid', 'fastdom', 'dayjs'] } },
     themeConfig: {
       nav: [
-        { text: 'Overview', link: '/01-overview' },
-        { text: 'Architecture', link: '/02-architecture' },
-        { text: 'Endpoints', link: '/generated/endpoints' },
-        { text: 'API Reference', link: '/generated/api-reference' },
-        { text: 'Database', link: '/04-database' },
+        {
+          text: 'Bắt đầu',
+          link: '/',
+        },
+        {
+          text: 'Kiến trúc',
+          link: '/02-architecture',
+        },
+        {
+          text: 'Request flow',
+          link: '/guides/request-flow',
+        },
+        {
+          text: 'API reference',
+          link: '/generated/endpoints',
+        },
       ],
       sidebar: [
         {
-          text: 'Start here',
+          text: 'Dev mới — đọc theo thứ tự',
           items: [
-            { text: 'Documentation home', link: '/' },
-            { text: '1. Product Overview', link: '/01-overview' },
-            { text: '2. Architecture', link: '/02-architecture' },
-            { text: '3. Business Rules', link: '/03-business-rules' },
-            { text: '4. Database', link: '/04-database' },
-          ],
-        },
-        {
-          text: 'Reference (generated)',
-          items: [
-            { text: 'Endpoint catalog', link: '/generated/endpoints' },
-            { text: 'API Reference', link: '/generated/api-reference' },
-            { text: 'Database ERD & dictionary', link: '/generated/database' },
-          ],
-        },
-        {
-          text: 'Guides',
-          items: [
-            { text: 'Run Source', link: '/guides/run-source' },
-            { text: 'API And Swagger', link: '/guides/api-and-swagger' },
-            { text: 'API Response Format', link: '/guides/api-response-format' },
-            { text: 'List Query (sort & filter)', link: '/guides/list-query' },
-            { text: 'Localization (EN / VI)', link: '/guides/localization' },
-            { text: 'Audit Log', link: '/guides/audit-log' },
-            { text: 'Vendure Reference', link: '/guides/vendure-reference' },
-            { text: 'AI Backend Development', link: '/guides/ai-development' },
-            { text: 'Team AI Setup & Portable Core', link: '/guides/ai-setup' },
             {
-              text: 'Backend Rules',
-              items: [
-                { text: 'Rule Index & Enforcement', link: '/guides/backend-rules/' },
-                {
-                  text: 'Vendure API Source Map',
-                  link: '/guides/backend-rules/vendure-source-map',
-                },
-                { text: 'Ownership & Naming', link: '/guides/backend-rules/ownership-naming' },
-                { text: 'Maintainability & Reuse', link: '/guides/backend-rules/maintainability' },
-                { text: 'HTTP Contract', link: '/guides/backend-rules/http-contract' },
-                { text: 'Validation', link: '/guides/backend-rules/validation' },
-                { text: 'Security & Tenancy', link: '/guides/backend-rules/security-tenancy' },
-                {
-                  text: 'Services & Persistence',
-                  link: '/guides/backend-rules/services-persistence',
-                },
-                { text: 'Queries', link: '/guides/backend-rules/queries' },
-                { text: 'Events & Errors', link: '/guides/backend-rules/events-errors' },
-                { text: 'Testing & Completion', link: '/guides/backend-rules/testing-completion' },
-              ],
+              text: 'Bắt đầu tại đây',
+              link: '/',
             },
-            { text: 'Request Flow', link: '/guides/request-flow' },
-            { text: 'Database Workflow', link: '/guides/database-workflow' },
-            { text: 'Project Structure', link: '/guides/project-structure' },
-            { text: 'Authentication & Authorization', link: '/guides/authorization' },
-            { text: 'Validation & Errors', link: '/guides/validation-and-errors' },
-            { text: 'Import Aliases', link: '/guides/import-aliases' },
+            {
+              text: '1. Chạy dự án',
+              link: '/guides/run-source',
+            },
+            {
+              text: '2. Kiến trúc backend',
+              link: '/02-architecture',
+            },
+            {
+              text: '3. Request từ FE đến DB',
+              link: '/guides/request-flow',
+            },
+            {
+              text: '4. Ví dụ: module Party',
+              link: '/guides/party-architecture',
+            },
+            {
+              text: '5. Sửa và thêm module',
+              link: '/guides/module-development',
+            },
           ],
         },
         {
-          text: 'Decisions (ADR)',
+          text: 'Tra cứu khi làm task',
+          collapsed: true,
           items: [
             {
-              text: '0001 Tenant isolation',
+              text: 'Cấu trúc source',
+              link: '/guides/project-structure',
+            },
+            {
+              text: 'Repository và transaction',
+              link: '/guides/persistence-architecture',
+            },
+            {
+              text: 'Swagger và API docs',
+              link: '/guides/api-and-swagger',
+            },
+            {
+              text: 'Response format',
+              link: '/guides/api-response-format',
+            },
+            {
+              text: 'Filter, sort, phân trang',
+              link: '/guides/list-query',
+            },
+            {
+              text: 'Auth và tenant',
+              link: '/guides/authorization',
+            },
+            {
+              text: 'Validation và errors',
+              link: '/guides/validation-and-errors',
+            },
+            {
+              text: 'Database workflow',
+              link: '/guides/database-workflow',
+            },
+            {
+              text: 'Localization EN/VI',
+              link: '/guides/localization',
+            },
+            {
+              text: 'Audit log',
+              link: '/guides/audit-log',
+            },
+            {
+              text: 'Import aliases và ESM',
+              link: '/guides/import-aliases',
+            },
+          ],
+        },
+        {
+          text: 'Quy tắc team và AI',
+          collapsed: true,
+          items: [
+            {
+              text: 'AI setup cho member',
+              link: '/guides/ai-setup',
+            },
+            {
+              text: 'AI development workflow',
+              link: '/guides/ai-development',
+            },
+            {
+              text: 'Backend rules: bắt đầu',
+              link: '/guides/backend-rules/',
+            },
+            {
+              text: 'Ownership và naming',
+              link: '/guides/backend-rules/ownership-naming',
+            },
+            {
+              text: 'Maintainability và reuse',
+              link: '/guides/backend-rules/maintainability',
+            },
+            {
+              text: 'HTTP contract',
+              link: '/guides/backend-rules/http-contract',
+            },
+            {
+              text: 'Validation',
+              link: '/guides/backend-rules/validation',
+            },
+            {
+              text: 'Security và tenancy',
+              link: '/guides/backend-rules/security-tenancy',
+            },
+            {
+              text: 'Services và persistence',
+              link: '/guides/backend-rules/services-persistence',
+            },
+            {
+              text: 'Query rules',
+              link: '/guides/backend-rules/queries',
+            },
+            {
+              text: 'Events và errors',
+              link: '/guides/backend-rules/events-errors',
+            },
+            {
+              text: 'Testing và completion',
+              link: '/guides/backend-rules/testing-completion',
+            },
+          ],
+        },
+        {
+          text: 'Sản phẩm và API reference',
+          collapsed: true,
+          items: [
+            {
+              text: 'Tổng quan sản phẩm',
+              link: '/01-overview',
+            },
+            {
+              text: 'Business rules',
+              link: '/03-business-rules',
+            },
+            {
+              text: 'Database overview',
+              link: '/04-database',
+            },
+            {
+              text: 'Danh sách endpoint',
+              link: '/generated/endpoints',
+            },
+            {
+              text: 'API reference (generated)',
+              link: '/generated/api-reference',
+            },
+            {
+              text: 'Database dictionary (generated)',
+              link: '/generated/database',
+            },
+          ],
+        },
+        {
+          text: 'Quyết định và nguồn tham khảo',
+          collapsed: true,
+          items: [
+            {
+              text: 'Vendure reference',
+              link: '/guides/vendure-reference',
+            },
+            {
+              text: 'Vendure source evidence',
+              link: '/guides/backend-rules/vendure-source-map',
+            },
+            {
+              text: 'ADR 0001: Tenant isolation',
               link: '/adr/0001-tenant-isolation-by-organization-id',
             },
             {
-              text: '0002 Docs as code',
+              text: 'ADR 0002: Docs as code',
               link: '/adr/0002-docs-as-code-with-generated-reference',
             },
-            { text: '0003 List query (Vendure)', link: '/adr/0003-list-query-modeled-on-vendure' },
-            { text: '0004 Audit via events', link: '/adr/0004-audit-log-through-domain-events' },
+            {
+              text: 'ADR 0003: List query',
+              link: '/adr/0003-list-query-modeled-on-vendure',
+            },
+            {
+              text: 'ADR 0004: Audit events',
+              link: '/adr/0004-audit-log-through-domain-events',
+            },
           ],
         },
       ],
       search: { provider: 'local' },
       outline: { level: [2, 3] },
-      footer: { message: 'Generated pages are rebuilt with npm run docs:generate.' },
+      footer: {
+        message: 'Guide cập nhật cùng code; API reference sinh bằng npm run docs:generate.',
+      },
     },
   }),
 );

@@ -75,14 +75,14 @@ test('blocks controller database imports and renamed PrismaClient imports', () =
   );
 });
 
-test('allows service persistence and controller enum imports; ignores generated code and specs', () => {
+test('allows adapter persistence and controller enum imports; ignores generated code and specs', () => {
   fixture(
     {
       'src/modules/parties/parties.controller.ts': `
       import { PartyType } from '@generated/prisma';
       import { PartiesService } from './parties.service';
     `,
-      'src/modules/parties/parties.service.ts': `import { PrismaService } from '@database/prisma.service';`,
+      'src/modules/parties/infrastructure/prisma-parties.repository.ts': `import { PrismaService } from '@database/prisma.service';`,
       'src/common/allowed.ts': `const sample = "import x from '@modules/parties/parties.service'";`,
       'src/common/_test/example.spec.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
       'src/generated/ignored.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
@@ -197,3 +197,28 @@ test('keeps feature tests in their own _test folder and out of production import
     },
   );
 });
+
+test('blocks application-to-Prisma and implementation imports through aliases, relatives and re-exports', () =>
+  fixture(
+    {
+      'src/modules/parties/infrastructure/prisma-parties.repository.ts':
+        'export class PrismaPartiesRepository {}',
+      'src/modules/parties/repositories/parties.repository.ts':
+        'export abstract class PartiesRepository {}',
+      'src/modules/parties/services/bad.service.ts':
+        "import { PrismaService } from '@database/prisma.service'; export { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository';",
+      'src/modules/parties/services/client.service.ts':
+        "import { PrismaClient as Client } from '@generated/prisma';",
+      'src/modules/parties/services/good.service.ts':
+        "import { PartiesRepository } from '../repositories/parties.repository';",
+      'src/modules/parties/parties.module.ts':
+        "import { PrismaPartiesRepository } from './infrastructure/prisma-parties.repository';",
+    },
+    (result) => {
+      assert.equal(result.violations.filter((v) => v.rule === 'persistence-adapter').length, 2);
+      assert.equal(
+        result.violations.filter((v) => v.rule === 'implementation-dependency').length,
+        1,
+      );
+    },
+  ));

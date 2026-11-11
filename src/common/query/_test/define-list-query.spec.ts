@@ -20,6 +20,7 @@ describe('generated list-query schema validation', () => {
   });
 
   it('fails at startup for unknown models, renamed fields and mismatched types', () => {
+    // @ts-expect-error Intentionally invalid model: exercise the runtime guard as well as the type guard.
     expect(() => defineListQuery({ model: 'Missing', fields: {} })).toThrow('unknown Prisma model');
     expect(() => defineListQuery({ model: 'Party', fields: { typo: { type: 'string' } } })).toThrow(
       'does not exist',

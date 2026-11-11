@@ -1,5 +1,5 @@
 import { PickType } from '@nestjs/swagger';
-import { PartyResponseDto } from '@modules/parties/public/parties.js';
+import { PartyResponseDto } from '@modules/parties/dto/party-response.dto.js';
 import { DebtWithPartyDto } from '@modules/debts/public/debt-responses.js';
 import {
   PaymentRecordDto,

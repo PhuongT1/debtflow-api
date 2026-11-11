@@ -1,6 +1,6 @@
 # DebtFlow test requests
 
-Read `.ai/core/testing.md` for the portable workflow and
+Read `.ai/core/workflow/testing.md` for the portable workflow and
 `docs/guides/backend-rules/testing-completion.md` for DebtFlow's behavioral requirements.
 
 Placement is owned by `docs/guides/backend-rules/ownership-naming.md`: every `src` test and its

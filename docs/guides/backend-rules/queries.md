@@ -65,3 +65,49 @@ large-result behavior, and check more-than-one-page data in a real applicable te
 rejection, default/single-field/stable sort, duplicate/null values, cross-page computed results, strict
 dates and the declared export/report volume semantics. Existing capped reports/exports are not a
 template for silently complete-data claims.
+
+
+## Party field definitions and navigation
+
+Party's query configuration uses generated `Prisma.PartyScalarFieldEnum` references for DB scalar
+keys. Computed sort aliases are declared once in `PARTY_COMPUTED_SORT_FIELDS` in `party.list-query.ts`
+with comments naming their actual data source. Config keys and SQL expressions must reference those
+symbols rather than repeating string literals. The SQL sort-aggregate mapping must cover every computed alias via
+`Record<PartyComputedSortField, ...>` with its expression and debt-type constraint. A computed flag alone is not a source definition.
+Keep `computed: true` and `filterable: false` on this sort-only contract. Do not rename public query
+parameters or change their counting/status semantics incidentally when improving names/navigation.
+
+## Party Prisma/SQL synchronization
+
+`buildPartyQuery` is the sole owner of tenant, named and dynamic filters. Pass its final `where`
+to both count/findMany and the private SQL adapter; never rebuild request filters in SQL separately.
+`PARTY_BALANCE_STATUSES` in `party.query.ts` owns eligible balance statuses for the balance-type
+filter, Prisma aggregation and SQL aggregation. Document count intentionally keeps its all-debt semantics.
+
+When adding a Party filter/operator/sort, extend the existing SQL boundary suite. It walks the actual
+capability configuration and shared `getAllowedFilterOperators`, including AND/OR, so unsupported additions fail
+before release. Column names are checked against Prisma's generated scalar enum. These checks prove
+adapter coverage, not SQL/Prisma result equivalence; changes to SQL semantics need the relevant
+PostgreSQL comparison scenarios under the normal database-verification approval policy.
+
+For Party computed sorts, aggregate only the requested direction/count across all matched parties,
+then select the ordered page. Compute both response balances from debts belonging to that page.
+Retain the same tenant/status rules, zero balance behavior and ID tie-breaker. Do not compute both
+balance directions over the full result solely to decorate one page. This reduces aggregate work;
+latency improvements still require measurements on representative data.
+
+## Reuse ordinary sorting
+
+For DB columns, declare the field type once in the resource list-query configuration and use the
+shared `@ListQuery` / `applyListQuery` path. Do not create per-feature date/text/number sorting helpers
+or load all rows to sort in JavaScript. Default ordering must include a unique tie-breaker. Preserve
+PostgreSQL null/collation/enum ordering unless the endpoint explicitly defines and tests a different
+contract. Calendar-day-only, natural text and computed aggregate ordering are deliberate custom
+requirements, not automatic effects of declaring `type: 'date'` or `type: 'string'`.
+
+Shared query ownership: `list-query-sort.ts` owns sort parsing and Prisma order compilation;
+`list-query-filter.ts` owns filter parsing/coercion and Prisma predicate compilation;
+`list-query.helpers.ts` owns the capability lookups and nested path construction shared by both.
+`list-query.types.ts` contains contract types/operator constants, not executable helper functions.
+Use explicit names such as `buildPrismaOrderBy`, `buildPrismaWhere`, `buildNestedPath` and
+`isFilterGroup`; do not import a filter's generic helper from the sort module or vice versa.

@@ -1,19 +1,17 @@
 # Maintainability and reuse contract
 
-Read `.ai/core/maintainability.md` at repository root before changing providers, DTOs,
+Read `.ai/core/architecture/maintainability.md` at repository root before changing providers, DTOs,
 types or queries. The
 project-specific decisions below specialize it.
 
 ## Required DebtFlow layout
 
-Domain ownership comes first: `src/modules/<feature>/`. At the feature root keep Nest module
-composition. Put controllers in `controllers/`, providers in `services/`, typed projections/list
-capabilities/filter builders in `queries/`, shared compile-time contracts in `types/`, conversion
-functions in `mappers/`, business decisions in `rules/`, listeners in `listeners/`, and runtime
-request/response classes in `dto/`. Nested document inputs may use `dto/items/`. All tests and test-only fixtures live in the owner's `_test/`
-and are excluded from production output.
-Create only responsibilities that exist. Webhooks, workers and integrations may use `api/`, `jobs/`
-and `integrations/`; reuse the same domain providers with explicit trusted context.
+Domain ownership comes first: `src/modules/<feature>/`. Keep a single ordinary responsibility at the
+feature root with its explicit role suffix. Group related controllers, services, queries, mappers,
+types or rules when there are at least two files. DTO, test, public, repository and infrastructure
+boundaries remain separate even with one file when needed. DTO/type-only contracts do not require
+a separate `public/` forwarding file. Module composition stays at the feature root.
+Follow OWN-01; do not add filler files or empty folders to justify a template.
 
 This is a NestJS ownership convention. It does not use Next.js file-based routes. Neither folder
 placement nor DTO inheritance grants authorization. Module exports and injection still define provider
@@ -26,17 +24,17 @@ ownership; route decorators and service invariants define access.
 | Editable debt collection fields     | `debts/dto/update-debt-collection.dto.ts` selects fields from `CreateDebtDto`; keep inherited runtime validators and null semantics                                                                                                                 |
 | Allocated payment input             | `payments/dto/create-allocated-payment.dto.ts` extends `CreatePaymentDto`; do not redefine amount/date/method                                                                                                                                       |
 | Member/user identity response       | `users/dto/user-response.dto.ts` derives related public shapes from `UserSummaryDto`                                                                                                                                                                |
-| Database result types               | `users/queries/member.select.ts`, `payments/queries/payment.select.ts`, `auth/queries/auth.select.ts`, `parties/queries/party.select.ts` own typed `satisfies Prisma.*Select/Include` projections; `types/` derives `Prisma.*GetPayload` and `Pick` |
+| Database result types               | `users/queries/member.select.ts`, `payments/queries/payment.select.ts`, `auth/auth.select.ts`, `parties/queries/party.select.ts` own typed `satisfies Prisma.*Select/Include` projections; `types/` derives `Prisma.*GetPayload` and `Pick` |
 | Request auth context                | `src/auth/types/auth-context.types.ts`; refresh payload derives its shared identity fields                                                                                                                                                          |
 | Response envelope types             | `common/http/api-response.types.ts` reuses the DTO owner; do not create another pagination/error-field definition                                                                                                                                   |
 | Optional text and phone format      | `common/utils/optional-text.util.ts`, `common/validation/phone.constants.ts`; no feature-specific clones                                                                                                                                            |
 | Debt filters for list/report/export | `debts/queries/debt-query.ts`; preserve scope and intersect overlapping constraints                                                                                                                                                                 |
-| Party/member list filters           | `parties/queries/parties.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                         |
-| Payment allocation and debt status  | `payments/rules/payment-allocation.rules.ts` owns allocation/amount checks; `debts/rules/debt-payment.rules.ts` owns state derivation and is exposed through `debts/public/debts.ts`                                                                |
+| Party/member list filters           | `parties/queries/party.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                         |
+| Payment allocation and debt status  | `payments/payment-allocation.rules.ts` owns allocation/amount checks; `debts/rules/debt-payment.rules.ts` owns state derivation and is exposed through `debts/public/debts.ts`                                                                |
 | Payment list composition            | `payments/queries/payments.query.ts`; tenant and named filters intersect with shared dynamic filters; retain a unique sort tie-breaker                                                                                                              |
 | Swagger setup and browser helper    | `common/swagger/swagger.setup.ts` owns the document/routes; `swagger-ui.ts` owns HTML/paths; `swagger-auth.js` owns browser authorization and is linted/tested as an asset. Follow the [owner table](../api-and-swagger.md#where-to-make-changes).  |
-| Public member mapping               | `users/mappers/member.mapper.ts`; business role decisions stay in `users/rules/users.rules.ts`                                                                                                                                                      |
-| XLSX document generation            | `exports/services/debt-export.service.ts`; controller owns headers, provider owns scoped capped data and workbook                                                                                                                                   |
+| Public member mapping               | `users/member.mapper.ts`; business role decisions stay in `users/users.rules.ts`                                                                                                                                                      |
+| XLSX document generation            | `exports/debt-export.service.ts`; controller owns headers, provider owns scoped capped data and workbook                                                                                                                                   |
 
 Paths without `src/` above are relative to `src/modules/` for domains or `src/` for common infrastructure.
 Use these as owners for the matching meaning, not universal templates. Payment audit snapshots need
@@ -46,7 +44,7 @@ use an explicit writable-field projection; never replace it with a spread of req
 ## Automated checks and limits
 
 `npm run check:maintainability` parses production TypeScript, excluding generated code and tests.
-It rejects misplaced feature responsibilities, helpers at feature roots, exported contracts inside
+It rejects misplaced mandatory boundaries, unnecessary one-file folders, unnamed generic root helpers, exported contracts inside
 executable services/controllers/guards, importing constants/helpers from another feature's DTO and
 exact repeated helper bodies of at least 25 significant tokens. Thin controller delegation is excluded
 from clone matching. No duplication baseline is provided.
@@ -72,17 +70,22 @@ is empty; do not add a waiver for a new or changed handler. DTO annotations docu
 they do not sanitize output. Money remains serialized as decimal strings.
 
 Party list count, page and balances share a RepeatableRead snapshot. Aggregate sorting is owned
-by `parties/queries/party-balance-page.query.ts`; `party-filter.sql.ts` adapts the canonical Prisma
+by `parties/infrastructure/sql/party-balance-page.sql.ts`; `party-filter.sql.ts` adapts the canonical Prisma
 where subset rather than parsing requests again. Extend its SQL and database regression tests when
-adding a Party filter or sort. `partyListInclude(organizationId)` owns the tenant-scoped relation count.
+adding a Party filter or sort. `partyListSelect(organizationId)` owns the Prisma projection and tenant-scoped relation count.
+List, detail and scalar record types derive from their actual `select` through `Prisma.PartyGetPayload`;
+only the computed balance is added separately. Do not copy Prisma scalar/relation field types.
 XLSX exports remain capped at 1000 rows, and audit delivery remains best-effort in-process. These are explicit behavior/scale limits, not solved by creating more folders.
 Mocked persistence tests do not establish live database isolation, concurrency safety or migration safety.
 
 ## Cross-feature calls and API implementation
 
-Only `public/` named exports and the owning Nest module are entry points for another feature.
-Controllers, services, mappers, queries, rules and DTO files remain implementation details unless
-explicitly re-exported. `public/` describes a TypeScript contract, not anonymous HTTP access. Do not
+Provider entry points are named `public/` exports and the owning Nest module. Named exported DTO
+classes may be imported directly from `dto/*.dto.ts`; named exported types/interfaces may be imported
+with `import type` from `*.types.ts`. These contract owners do not permit importing helper functions,
+constants, namespace objects or hidden providers. A one-symbol forwarding barrel is not required.
+Controllers, services, mappers, query builders and rules remain private unless explicitly exposed
+through a named provider/public contract. Direct DTO/type imports follow the narrow rules above. `public/` describes a TypeScript contract, not anonymous HTTP access. Do not
 use `export *`, register another feature's provider again or call this API over HTTP from a service
 in the same process. Import the owning module and inject its exported provider. Pure read builders
 and response DTOs may be reused through named public exports without a provider import.
@@ -92,7 +95,7 @@ and response DTOs may be reused through named public exports without a provider 
 - `PartiesService.assertActive` owns active party access. Debt creation propagates the same transaction
   client through party/member/product checks, line preparation, code lookup and insert. This does not
   establish safe concurrent sequential-code generation or eliminate all read-check-write races.
-- `debts/mappers/debt-collection.mapper.ts` owns PATCH mapping: omission keeps state, null clears only
+- `debts/debt-collection.mapper.ts` owns PATCH mapping: omission keeps state, null clears only
   nullable fields, and collection status cannot be null. Do not replace it with full-record mapping.
 - `debts/rules/debt-aging.rules.ts` owns calendar-day ranges for lists, reports and exports. Due today
   is not overdue in Vietnam; yesterday is day 1. No caller may define its own bucket boundaries.

@@ -1,30 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@database/prisma.service.js';
-import type { Prisma } from '@generated/prisma/client.js';
 import { requireOrganizationId } from '@common/validation/require-organization-id.js';
+import { UsersRepository } from '../repositories/users.repository.js';
 
-/** Shared membership lookup; callers own the error semantics of their operation. */
+/** The users module owns active membership semantics for all in-process consumers. */
 @Injectable()
 export class OrganizationMembersService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async isActive(
-    organizationId: string,
-    userId: string,
-    db: Prisma.TransactionClient = this.prisma,
-  ) {
+  constructor(private readonly repository: UsersRepository) {}
+  isActive(organizationId: string, userId: string) {
     requireOrganizationId(organizationId);
-    return Boolean(
-      await db.organizationMembership.findFirst({
-        where: {
-          organizationId,
-          userId,
-          status: 'ACTIVE',
-          user: { status: 'ACTIVE' },
-          organization: { status: 'ACTIVE' },
-        },
-        select: { id: true },
-      }),
-    );
+    return this.repository.isActive(organizationId, userId);
   }
 }

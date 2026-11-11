@@ -6,39 +6,35 @@ See source map entries V01–V03, V12, V29 and V19–V20. The REST file names be
 
 ## OWN-01 — choose the owner before creating a file
 
-Group feature files by responsibility; create only the folders with actual files:
+Use a compact feature layout. One ordinary responsibility stays at the feature root; a folder is
+created when it has at least **two related files**. Keep `dto/` separate even with one file. The
+explicit architecture boundaries `_test/`, `repositories/` and `infrastructure/` also stay
+separate even with one file. Keep `public/` for deliberate provider contracts where used; DTO/type-only
+contracts can be imported from their actual owner without a forwarding file. Do not add filler files to satisfy the threshold.
 
 ```text
-src/modules/<plural-feature>/
-  <plural-feature>.module.ts       # Nest registration and explicit exports
-  controllers/
-    <plural-feature>.controller.ts # routes, context, policy, documentation
-  services/
-    <plural-feature>.service.ts      # use-case orchestration and persistence
-  _test/
-    <plural-feature>.service.spec.ts # observable service behavior
-  queries/                          # only when query responsibilities exist
-    <plural-feature>.list-query.ts   # public filter/sort capabilities
-    <singular>-query.ts              # shared query composition, when needed
+src/modules/parties/
+  parties.module.ts
+  parties.controller.ts
+  parties.service.ts
+  party.mapper.ts
+  party.types.ts
   dto/
-    create-<singular>.dto.ts       # create request, if supported
-    update-<singular>.dto.ts       # partial update, if supported
-    query-<plural-feature>.dto.ts  # resource-specific list parameters
-    <singular>-response.dto.ts    # related public response classes
+  repositories/parties.repository.ts
+  infrastructure/
+    prisma-parties.repository.ts
+    queries/                         # multiple SQL helpers
+  queries/                           # list config, projection, filter composition
+  _test/
 ```
 
-MUST create only files needed for the requested capability. Read-only features do not need fake
-create/update DTOs, and a two-line mapping does not require a mapper framework. Add a named
-`<responsibility>.service.ts` or helper when a distinct concern has callers/tests, not to satisfy a
-line-count target. Existing useful examples: `mappers/party.mapper.ts`, `rules/users.rules.ts`, `services/debt-line-item.service.ts`.
-Do not add `utils.ts`, `misc.ts`, `base.service.ts`, `generic.repository.ts` or a new top-level folder
-without identifying the concrete responsibility and why existing ownership is insufficient.
+When a second service/controller/mapper/types/rules/query file is needed, group the existing and
+new files in the relevant folder and update every import, Nest binding, test and reference in the
+same change. Debts, Dashboard and Users keep `services/` because they have cooperating providers.
+Use role suffixes (`*.controller.ts`, `*.service.ts`, `*.mapper.ts`, `*.types.ts`, etc.) so the root
+stays readable. Never create empty folders or a second definition just to justify a folder.
+A short helper does not require a framework, generic base service/repository or an extra layer.
 
-This template is not a closed list. A growing feature may use focused `services/`, `queries/`,
-`rules/`, `jobs/`, `integrations/` or child domain modules when the task needs them. Existing
-`DebtLineItemService` and `DashboardActionCenterService` demonstrate splitting by responsibility.
-Use responsibility folders consistently for small features too. Group cooperating providers in `services/`, list config
-and query/date builders in `queries/`, and nested document item inputs in `dto/items/` when present.
 All unit, HTTP and database specs and test-only fixtures MUST live in the owner's `_test/` folder:
 `src/modules/<feature>/_test/`, `src/auth/_test/`, `src/config/_test/`, or
 `src/common/<responsibility>/_test/`. Application composition tests live in `src/_test/`.
@@ -54,6 +50,20 @@ differently protected route. Reuse the owning provider with explicit context/pol
 not secure background callers. Small modules may register controllers and providers in one Nest module. When an
 independent worker must import only use-case providers, split that domain's HTTP adapter module from
 its provider module; the worker imports the latter. Do not create those extra modules before needed.
+
+## File responsibility headers and documentation helpers
+
+Controller and module files MUST start with a brief header containing about two descriptive lines.
+Describe the actual endpoint responsibility/delegated service, or registered providers/module bindings.
+Do not claim a module exports/imports providers it does not, and update the header when its role changes.
+
+Shared Swagger-only decorators live in `src/common/swagger/decorators/` and retain Nest's `Api` prefix:
+`ApiEnvelope`/`ApiErrorEnvelopes` describe responses; `ApiListQuery` describes allowed query parameters.
+Import them from this namespace, not the runtime query barrel. Keep `ListQuery`, its parser and pipe in
+`common/query/`, and actual response wrapping in `common/interceptors/api-response.interceptor.ts`.
+Shared envelope DTOs remain in `common/http/` because runtime response type aliases also reuse them.
+`auth-api.decorator.ts` stays auth-owned: `PublicApi` has runtime metadata while `ProtectedApi` documents
+security/error responses. Global guards enforce access; Swagger decorators do not.
 
 ## OWN-02 — names communicate the role
 
@@ -102,7 +112,9 @@ copying its central list of hundreds of providers into this single API is not re
 
 - `common`, `config` and `database` MUST NOT depend on features or auth. `src/auth` infrastructure MUST NOT depend on features. The architecture checker
   resolves aliases and relative imports to enforce this. Tests and generated files are excluded.
-- Controllers MUST delegate database access to services; enums/types from generated Prisma are fine.
+- Controllers delegate to services; services/listeners inject repository contracts. Only feature
+  `infrastructure/` imports the database layer or PrismaClient. Modules bind contract to adapter.
+  Generated enums/Decimal values and owned projection types remain allowed; see DB-06.
   Business use-case services under features/auth MUST NOT import controllers, Express `Request`/`Response`, `@nestjs/swagger` decorators or
   call HTTP `res.json`. The existing auth payload is bound at the route boundary, then pass the
   explicitly needed identity/context into the use case.
@@ -159,3 +171,22 @@ Vendure illustrates both scopes: `packages/core/src/common/constants.ts` holds s
 values, while `health-check/constants.ts`, `job-queue/constants.ts` and `api/constants.ts` stay with
 their respective owners. DebtFlow uses its existing shared constants directory for the public REST
 path/tag contract; it does not import Vendure's constants or assume its GraphQL paths match REST.
+
+## Read-query file names
+
+Name pure read helpers by their output: `*.list-query.ts` for the HTTP filter/sort capability
+configuration, `*.query.ts` for Prisma argument composition, `*.select.ts` for typed Prisma
+projections, and `*.sql.ts` for TypeScript functions producing SQL fragments/statements. SQL builders
+belong to the owning feature's infrastructure; repository adapters execute them. A `.sql.ts` suffix
+still denotes TypeScript, not a standalone `.sql` file or Prisma TypedSQL. Do not imply CQRS
+QueryBus/QueryHandler usage when the feature only has pure query builders.
+
+For Parties, `infrastructure/sql/party-balance-page.sql.ts` builds the aggregate/page statement;
+`party-filter.sql.ts` adapts the canonical Prisma predicate subset. Both are executed/consumed through
+the owning Prisma repository, with no additional provider or database connection.
+
+Keep shared capability definitions, Prisma argument builders and projections in the feature's
+`queries/` folder when multiple files are needed. Put private PostgreSQL fragment/statement builders
+in `infrastructure/sql/`, rather than another folder called `queries/`. Repository adapters execute
+those statements. Shared DTOs/mappers/types must not depend on infrastructure just to reuse
+projection keys or inferred payloads. Keep one projection source, not a forwarding or duplicate copy.

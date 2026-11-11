@@ -1,17 +1,13 @@
-import { PartiesService } from '@modules/parties/public/parties.js';
-import { OrganizationMembersService } from '@modules/users/public/users.js';
-import { buildDebtCollectionData } from '../mappers/debt-collection.mapper.js';
+import { buildDebtCollectionData } from '../debt-collection.mapper.js';
 import { normalizeOptionalText } from '@common/utils/optional-text.util.js';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { badRequest } from '@common/errors/app-errors.js';
+import { badRequest, notFound } from '@common/errors/app-errors.js';
 import { AuditAction, emitAudit, scalarSnapshot } from '@common/events/audit-event.js';
 import type { ListQueryResult } from '@common/query/index.js';
 import { requireOrganizationId } from '@common/validation/require-organization-id.js';
-import { buildDebtQuery } from '../queries/debt-query.js';
-import { getPagination, paginate } from '@common/utils/pagination.util.js';
 import { CollectionStatus, DebtStatus, Prisma } from '@generated/prisma/client.js';
-import { PrismaService } from '@database/prisma.service.js';
+import { DebtsRepository, type DebtWriteStore } from '../repositories/debts.repository.js';
 import { CreateDebtDto } from '../dto/create-debt.dto.js';
 import { DebtLineItemService } from './debt-line-item.service.js';
 import { QueryDebtsDto } from '../dto/query-debts.dto.js';
@@ -20,62 +16,19 @@ import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto.js';
 @Injectable()
 export class DebtsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: DebtsRepository,
     private readonly debtLineItems: DebtLineItemService,
     private readonly events: EventEmitter2,
-    private readonly parties: PartiesService,
-    private readonly members: OrganizationMembersService,
   ) {}
 
   async list(organizationId: string, query: QueryDebtsDto, listQuery?: ListQueryResult) {
-    const pagination = getPagination(query);
-    const { where, orderBy } = buildDebtQuery(organizationId, query, listQuery);
-
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.debt.findMany({
-        where,
-        orderBy,
-        skip: pagination.skip,
-        take: pagination.take,
-        include: {
-          party: true,
-          assignedTo: { select: { id: true, name: true, email: true } },
-          items: {
-            select: {
-              id: true,
-              productName: true,
-              categoryName: true,
-              brandName: true,
-              quantity: true,
-              unit: true,
-              lineAmount: true,
-            },
-          },
-          _count: { select: { paymentAllocations: true } },
-        },
-      }),
-      this.prisma.debt.count({ where }),
-    ]);
-
-    return paginate(items, total, pagination);
+    requireOrganizationId(organizationId);
+    return this.repository.list(organizationId, query, listQuery);
   }
 
   async detail(id: string, organizationId: string) {
     requireOrganizationId(organizationId);
-    const debt = await this.prisma.debt.findFirstOrThrow({
-      where: { id, organizationId },
-      include: {
-        party: true,
-        assignedTo: { select: { id: true, name: true, email: true } },
-        items: { include: { product: { include: { brand: true, category: true } } } },
-        paymentAllocations: {
-          orderBy: { payment: { paidAt: 'desc' } },
-          include: {
-            payment: { include: { createdBy: { select: { id: true, name: true, email: true } } } },
-          },
-        },
-      },
-    });
+    const debt = await this.repository.detail(id, organizationId);
 
     return {
       ...debt,
@@ -93,41 +46,38 @@ export class DebtsService {
       throw badRequest('debts.DUE_DATE_BEFORE_ISSUE');
     }
 
-    const debt = await this.prisma.$transaction(async (tx) => {
-      await this.parties.assertActive(organizationId, input.partyId, tx);
-      await this.assertAssignee(organizationId, input.assignedToId, tx);
-      const items = await this.debtLineItems.prepare(
-        input.items,
-        originalAmount,
-        organizationId,
-        tx,
+    const debt = await this.repository.inTransaction(async (store) => {
+      if (!(await store.hasActiveParty(organizationId, input.partyId)))
+        throw notFound('parties.PARTY_NOT_FOUND');
+      await this.assertAssignee(organizationId, input.assignedToId, store);
+      const productIds = (input.items ?? []).flatMap((item) =>
+        item.productId ? [item.productId] : [],
       );
-      return tx.debt.create({
-        data: {
-          organizationId,
-          code: await this.nextDebtCode(organizationId, tx),
-          type: input.type,
-          partyId: input.partyId,
-          assignedToId: normalizeOptionalText(input.assignedToId),
-          title: input.title.trim(),
-          invoiceNo: normalizeOptionalText(input.invoiceNo),
-          orderNo: normalizeOptionalText(input.orderNo),
-          contractNo: normalizeOptionalText(input.contractNo),
-          poNo: normalizeOptionalText(input.poNo),
-          description: normalizeOptionalText(input.description),
-          originalAmount,
-          paidAmount: new Prisma.Decimal(0),
-          issueDate,
-          dueDate,
-          status: DebtStatus.OPEN,
-          collectionStatus: CollectionStatus.NEW,
-          nextFollowUpAt: input.nextFollowUpAt ? new Date(String(input.nextFollowUpAt)) : null,
-          followUpNote: normalizeOptionalText(input.followUpNote),
-          salesChannel: input.salesChannel,
-          createdById: userId,
-          ...(items.length > 0 ? { items: { create: items } } : {}),
-        },
-        include: { party: true },
+      const products = productIds.length ? await store.products(organizationId, productIds) : [];
+      const items = await this.debtLineItems.prepare(input.items, originalAmount, products);
+      return store.create({
+        organizationId,
+        code: await this.nextDebtCode(organizationId, store),
+        type: input.type,
+        partyId: input.partyId,
+        assignedToId: normalizeOptionalText(input.assignedToId),
+        title: input.title.trim(),
+        invoiceNo: normalizeOptionalText(input.invoiceNo),
+        orderNo: normalizeOptionalText(input.orderNo),
+        contractNo: normalizeOptionalText(input.contractNo),
+        poNo: normalizeOptionalText(input.poNo),
+        description: normalizeOptionalText(input.description),
+        originalAmount,
+        paidAmount: new Prisma.Decimal(0),
+        issueDate,
+        dueDate,
+        status: DebtStatus.OPEN,
+        collectionStatus: CollectionStatus.NEW,
+        nextFollowUpAt: input.nextFollowUpAt ? new Date(String(input.nextFollowUpAt)) : null,
+        followUpNote: normalizeOptionalText(input.followUpNote),
+        salesChannel: input.salesChannel,
+        createdById: userId,
+        ...(items.length > 0 ? { items } : {}),
       });
     });
 
@@ -151,13 +101,9 @@ export class DebtsService {
   ) {
     const before = await this.detail(id, organizationId);
     const data = buildDebtCollectionData(input);
-    const debt = await this.prisma.$transaction(async (tx) => {
-      await this.assertAssignee(organizationId, input.assignedToId, tx);
-      return tx.debt.update({
-        where: { id, organizationId },
-        data,
-        include: { party: true, assignedTo: { select: { id: true, name: true, email: true } } },
-      });
+    const debt = await this.repository.inTransaction(async (store) => {
+      await this.assertAssignee(organizationId, input.assignedToId, store);
+      return store.updateCollection(organizationId, id, data);
     });
 
     emitAudit(this.events, {
@@ -175,18 +121,11 @@ export class DebtsService {
 
   async cancel(id: string, organizationId: string, actorId?: string) {
     requireOrganizationId(organizationId);
-    const debt = await this.prisma.debt.findUniqueOrThrow({
-      where: { id, organizationId },
-      include: { paymentAllocations: true },
-    });
-
-    if (debt.paymentAllocations.length > 0) {
-      throw badRequest('debts.CANNOT_CANCEL_PAID_DEBT');
-    }
-
-    const cancelled = await this.prisma.debt.update({
-      where: { id },
-      data: { status: DebtStatus.CANCELLED },
+    const { debt, cancelled } = await this.repository.inTransaction(async (store) => {
+      const debt = await store.findForCancellation(organizationId, id);
+      if (debt.paymentAllocations.length > 0) throw badRequest('debts.CANNOT_CANCEL_PAID_DEBT');
+      const cancelled = await store.cancel(organizationId, id);
+      return { debt, cancelled };
     });
 
     emitAudit(this.events, {
@@ -205,19 +144,16 @@ export class DebtsService {
   private async assertAssignee(
     organizationId: string,
     userId: string | null | undefined,
-    db: Prisma.TransactionClient,
+    store: DebtWriteStore,
   ) {
     const id = normalizeOptionalText(userId);
-    if (id && !(await this.members.isActive(organizationId, id, db)))
+    if (id && !(await store.hasActiveMember(organizationId, id)))
       throw badRequest('debts.ASSIGNEE_NOT_FOUND');
   }
 
-  private async nextDebtCode(organizationId: string, db: Prisma.TransactionClient) {
+  private async nextDebtCode(organizationId: string, store: DebtWriteStore) {
     const now = new Date();
     const prefix = `CN-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const count = await db.debt.count({
-      where: { organizationId, code: { startsWith: prefix } },
-    });
-    return `${prefix}-${String(count + 1).padStart(4, '0')}`;
+    return store.nextCode(organizationId, prefix);
   }
 }

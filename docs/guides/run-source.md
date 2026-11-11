@@ -169,3 +169,8 @@ non-root `node` user with production dependencies only. `.dockerignore` excludes
 files, generated source, local AI/editor data and build caches from the context. Environment values
 are injected at runtime. The image build uses synthetic schema-generation URLs and performs no
 schema writes or database connections. Open `/docs` to inspect the deployed API.
+
+Dev/watch and debug emit to `dist-dev/`; production builds emit to `dist/`. The independent output
+and incremental state prevent a build/check command from deleting files used by the dev watcher.
+Restart `npm run dev` after changing these configs. Do not invoke `nest start --watch` without the
+project's `--path tsconfig.dev.json`; use the package script.

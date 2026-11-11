@@ -20,10 +20,18 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   user asks to change them. Their package managers, stacks and instruction files are not API policy.
 - Use Node 24 native ESM (`NodeNext`), npm and `package-lock.json`. Read
   [import aliases](docs/guides/import-aliases.md) before changing imports; use `.js` suffixes and
-  native `#...` package imports. Do not introduce another lockfile, package layout, framework or
+  the short `@auth/*`, `@common/*`, `@modules/*` and other configured aliases. Do not introduce another lockfile, package layout, framework or
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
   routes, not public/protected folder trees. Search for existing helpers and callers before adding files.
+- Keep one ordinary controller/service/query/mapper/types/rules file at the feature root. Create a
+  responsibility folder only for at least two related files. Keep `dto/`, `_test/`, `public/`,
+  `repositories/` and `infrastructure/` as explicit boundaries even when they contain one file.
+  Update imports, module bindings, tests and references together; never add filler or empty folders.
+- Features use `repositories/` contracts and `infrastructure/` Prisma adapters. Services/listeners
+  MUST NOT import the database layer, PrismaClient or concrete adapters. Modules own DI bindings.
+  See [Persistence architecture](docs/guides/persistence-architecture.md); transaction-scoped stores
+  keep dependent writes atomic without leaking Prisma clients into application services.
 - Put genuinely shared infrastructure in `src/common/`; it must not import feature or auth code.
   `src/config/` and `src/database/` also must not depend on features or auth. Controllers delegate
   persistence to services rather than importing the database layer or constructing a Prisma client.
@@ -31,7 +39,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   and unrelated document/CV scripts outside the repository, normally in the OS temporary directory
   or the user's explicitly requested destination. Do not move or delete existing unrelated files
   without authorization.
-- Do not hand-edit `src/generated/prisma/`, `src/generated/list-query/`, `dist/` or `docs/generated/`. Change their source and
+- Do not hand-edit `src/generated/prisma/`, `src/generated/list-query/`, `src/generated/response-models/`, `dist/` or `docs/generated/`. Change their source and
   regenerate. Keep browser artifacts and VitePress build/cache/temp output ignored.
 
 ## Security and business invariants
@@ -61,8 +69,10 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
 
 For provider, DTO, type, query or structure changes, read
 [Maintainability and reuse](docs/guides/backend-rules/maintainability.md) and its portable core topic.
-Cross-feature imports use named `public/` contracts and owning Nest modules, never private implementation
-folders or HTTP calls back to this application. Search existing owners/callers before defining another
+Cross-feature providers use named `public/` contracts and owning Nest modules, never private implementation
+folders or HTTP calls back to this application. DTO classes may be imported by name directly from their
+`dto/*.dto.ts` owner; named types/interfaces may be imported with `import type` from `*.types.ts`.
+Do not add a forwarding barrel merely to re-export one data contract. Search existing owners/callers before defining another
 contract/helper. Run `npm run check:maintainability`;
 do not bypass it with duplicated types, renamed clones or a new exemption.
 
@@ -84,15 +94,25 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 | Audit events | [Audit Log](docs/guides/audit-log.md) and existing emit/listener code |
 | Response or validation | [API Response Format](docs/guides/api-response-format.md) and [Localization](docs/guides/localization.md) |
 | Swagger UI, OpenAPI or generated API documentation | [API and Swagger](docs/guides/api-and-swagger.md), especially its task-to-file owner table |
+| Architecture onboarding or module development | [Backend architecture](docs/02-architecture.md), [request flow](docs/guides/request-flow.md), then [module development](docs/guides/module-development.md) |
+| Party example or workflow | [Party implementation example](docs/guides/party-architecture.md), including current audit gaps |
 | Architecture or new file placement | [Project Structure](docs/guides/project-structure.md) and [Vendure Reference](docs/guides/vendure-reference.md) |
 
 ## Verification and completion
+
+- For EVERY prompt/request (including questions, code, rules/config edits, review and commit),
+  default to the smallest relevant checks and affected test cases; reuse passing results when code
+  has not changed. Before a full suite (`npm test`, `npm run check`) or deep verification (broad
+  integration/e2e, database, load/performance or multi-runtime matrices), explain the reason and
+  proposed scope and wait for explicit user approval, unless that exact scope was already requested.
+  See [.ai/core/workflow/verification.md](.ai/core/workflow/verification.md#keep-verification-proportional).
+  The commands below apply when relevant; they are not an instruction to run every check per request.
 
 - Run `npm run check:architecture` and `npm run check:conventions` for backend structure/contract changes,
   and `npm run lint` for TypeScript. The conventions baseline contains only reviewed pre-existing response/
   query debt, locked per handler fingerprint. A changed/new handler must comply; remove stale entries.
   Do not broaden exemptions or put security/naming violations in that baseline to make checks pass.
-- Put every `src` spec/fixture in the owner's `_test/` folder; follow `.ai/core/testing.md` and
+- Put every `src` spec/fixture in the owner's `_test/` folder; follow `.ai/core/workflow/testing.md` and
   [test placement](docs/guides/backend-rules/testing-completion.md#test-placement).
 - Run meaningful targeted tests for changed behavior, especially tenant isolation, permissions,
   money, status transitions and failure paths. Extend existing suites when they own the scenario.
