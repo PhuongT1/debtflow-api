@@ -113,6 +113,33 @@ export function checkArchitecture(root = projectRoot) {
           `Infrastructure must not import feature/auth code (${literal.text}).`,
         );
       }
+      const featureCode = inside(owner, 'src/modules');
+      const composition = owner.endsWith('.module.ts');
+      const adapter = owner.split('/').includes('infrastructure');
+      const port = owner.split('/').includes('repositories');
+      if (
+        featureCode &&
+        !adapter &&
+        !owner.endsWith('.controller.ts') &&
+        inside(target, 'src/database')
+      )
+        report(
+          literal,
+          'persistence-adapter',
+          'Only feature infrastructure adapters may access the database layer.',
+        );
+      if (featureCode && !adapter && !composition && target.split('/').includes('infrastructure'))
+        report(
+          literal,
+          'implementation-dependency',
+          'Consume the repository contract; only module composition binds an infrastructure implementation.',
+        );
+      if (port && inside(target, 'src/generated/prisma'))
+        report(
+          literal,
+          'repository-contract',
+          'Keep generated persistence types in the owning types/projection file; repository ports expose named use-case data.',
+        );
       if (owner.endsWith('.controller.ts') && inside(target, 'src/database')) {
         report(
           literal,
@@ -122,7 +149,10 @@ export function checkArchitecture(root = projectRoot) {
       }
       // Generated modules also export enums/types. Named imports of those remain legal;
       // whole client modules and aliased constructors must not bypass controller ownership.
-      if (owner.endsWith('.controller.ts') && inside(target, 'src/generated/prisma')) {
+      if (
+        (owner.endsWith('.controller.ts') || (featureCode && !adapter)) &&
+        inside(target, 'src/generated/prisma')
+      ) {
         const declaration = literal.parent;
         const bindings = ts.isImportDeclaration(declaration)
           ? declaration.importClause?.namedBindings
@@ -137,7 +167,11 @@ export function checkArchitecture(root = projectRoot) {
           /(?:client|index)(?:\.d)?\.ts$/.test(target) &&
           ((bindings && ts.isNamespaceImport(bindings)) || ts.isCallExpression(declaration));
         if (importsClient || wholeClient)
-          report(literal, 'controller-persistence', 'Controllers must not import PrismaClient.');
+          report(
+            literal,
+            owner.endsWith('.controller.ts') ? 'controller-persistence' : 'persistence-adapter',
+            'Only infrastructure adapters may import PrismaClient.',
+          );
       }
     };
     const visit = (node) => {

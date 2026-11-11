@@ -5,7 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PaginationQueryDto } from '../../dto/pagination-query.dto.js';
 import { ListQuery } from '../list-query.decorator.js';
-import { ApiListQuery } from '../list-query.swagger.js';
+import { ApiListQuery } from '../../swagger/decorators/api-list-query.decorator.js';
 import { ListQueryAwareValidationPipe } from '../list-query.pipe.js';
 import type { ListQueryResult } from '../list-query.types.js';
 import { TEST_CONFIG } from './test-config.js';

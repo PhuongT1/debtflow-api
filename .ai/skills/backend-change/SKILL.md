@@ -11,15 +11,19 @@ contract; this skill selects and applies it rather than maintaining a second cop
 
 ## Select implementation rules before creating files
 
-- Providers, DTOs, types or queries: `.ai/core/maintainability.md` and project
+- Providers, DTOs, types or queries: `.ai/core/architecture/maintainability.md` and project
   `maintainability.md`. Search existing contracts/helpers and trace callers before defining another
   shape; choose runtime DTO reuse, generated payload derivation or inference as appropriate.
 - Constants or file moves: read `ownership-naming.md` (including constant ownership), search existing
   definitions/callers and choose the existing owner before adding a folder or file.
+- Before adding a folder: keep a single ordinary responsibility at the feature root; group at two
+  related files. DTO/test/public/repository/infrastructure boundaries stay separate. See OWN-01.
 - New file/feature: `ownership-naming.md` (owner, kebab-case role suffix, DTO/class names, Nest wiring).
 - Route/input/output: `http-contract.md` and `validation.md` (runtime DTO imports, null/blank semantics,
   status/envelope, validation/error contracts, binary exceptions).
 - Auth or related IDs: `security-tenancy.md` (current identity, roles, tenant/resource ownership).
+- Database access: read `docs/guides/persistence-architecture.md`; extend the owning repository port
+  and Prisma adapter, bind them in the Nest module and test the service with a fake port.
 - Service/write/status/money: `services-persistence.md` (explicit mapping, Decimal, tx propagation,
   concurrency evidence and schema/backfill impact).
 - List/report/export: `queries.md` (base scope, capabilities, count, stable compound sort, volume).
@@ -67,3 +71,5 @@ project testing guide remains the canonical verification contract.
 For a new endpoint, check that its owning Nest module registers the controller/service and that its
 role and response decorators match the actual HTTP behavior. For schema work, include the intended
 migration but do not apply it to an unspecified database.
+
+Follow `.ai/core/workflow/verification.md#keep-verification-proportional`: select affected checks, reuse passing results, and obtain explicit approval before full-suite or deep verification.

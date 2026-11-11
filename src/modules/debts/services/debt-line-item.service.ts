@@ -2,27 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { badRequest } from '@common/errors/app-errors.js';
 import { Prisma } from '@generated/prisma/client.js';
 
-type CatalogProduct = Prisma.ProductGetPayload<{ include: { brand: true; category: true } }>;
-import { PrismaService } from '@database/prisma.service.js';
+import type { CatalogProduct } from '../types/debt-persistence.types.js';
 import { CreateDebtItemDto } from '../dto/items/create-debt-item.dto.js';
 
 @Injectable()
 export class DebtLineItemService {
-  constructor(private readonly prisma: PrismaService) {}
-
   async prepare(
     items: CreateDebtItemDto[] | undefined,
     originalAmount: Prisma.Decimal,
-    organizationId: string,
-    db: Prisma.TransactionClient = this.prisma,
+    products: CatalogProduct[],
   ) {
     if (!items?.length) return [];
 
-    const productIds = items.flatMap((item) => (item.productId ? [item.productId] : []));
-    const products = await db.product.findMany({
-      where: { organizationId, id: { in: productIds }, isActive: true },
-      include: { brand: true, category: true },
-    });
     const productById = new Map(products.map((product) => [product.id, product]));
     const prepared = items.map((item) => this.toItem(item, productById));
     const total = prepared.reduce((sum, item) => sum.plus(item.lineAmount), new Prisma.Decimal(0));
@@ -51,7 +42,7 @@ export class DebtLineItemService {
     }
 
     return {
-      ...(product ? { product: { connect: { id: product.id } } } : {}),
+      ...(product ? { productId: product.id } : {}),
       productCode: product?.code,
       productName,
       categoryName: product?.category.name,

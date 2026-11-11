@@ -110,12 +110,13 @@ export function setupAi(root = defaultRoot, { check = false, init = false } = {}
   const coreRoot = '.ai/core';
   for (const topic of [
     'index',
-    'structure',
-    'api-validation',
-    'security',
-    'persistence',
-    'verification',
-    'testing',
+    'architecture/structure',
+    'architecture/maintainability',
+    'backend/api-validation',
+    'backend/security',
+    'backend/persistence',
+    'workflow/verification',
+    'workflow/testing',
   ])
     read(`${coreRoot}/${topic}.md`);
 

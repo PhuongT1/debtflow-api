@@ -16,7 +16,7 @@ a real independent caller/transport, not automatic boilerplate.
 Map accepted fields explicitly; do not pass a request object directly to Prisma `data`, `where`,
 `include` or `orderBy`. Database-managed IDs, tenant, creator, audit actor, paid amount and status
 transitions must not become editable merely because a generic `Partial<Model>` includes them.
-Respect omission/null behavior and recalculate derived values from merged state. `parties/mappers/party.mapper.ts`
+Respect omission/null behavior and recalculate derived values from merged state. `parties/party.mapper.ts`
 and `toMemberDto` are specific useful examples; not every Prisma field is a safe public field.
 
 ## DB-02 — separate shape validation and business invariants
@@ -34,14 +34,16 @@ unknown database failure and return success or mislabel an outage as invalid cre
 ## DB-03 — one atomic use case uses one transaction client
 
 When a payment changes voucher, allocations and debt balances, or another operation spans dependent
-writes, the whole invariant MUST commit or roll back together. The existing pattern is:
+writes, the whole invariant MUST commit or roll back together. Application services use the repository
+port; only its infrastructure implementation creates the Prisma transaction. The pattern is:
 
 ```ts
-const payment = await this.prisma.$transaction(async (tx) => {
-  const debt = await tx.debt.findFirstOrThrow({ where: { id: debtId, organizationId } });
+const payment = await this.repository.inTransaction(async (store) => {
+  const debt = await store.findDebt(organizationId, debtId);
   const amount = paymentAmount(input.amount);
   assertPayableDebt(debt, amount);
-  return this.createVoucher(tx, {
+  return this.createVoucher(store, {
+    organizationId,
     allocations: [{ amount, debt }],
     input: { ...input, createdById },
     partyId: debt.partyId,
@@ -52,17 +54,18 @@ this.auditCreated(payment, organizationId, createdById);
 return payment;
 ```
 
-`payments/rules/payment-allocation.rules.ts` owns amount checks and the pure allocation algorithm;
+`payments/payment-allocation.rules.ts` owns amount checks and the pure allocation algorithm;
 `debts/rules/debt-payment.rules.ts` owns balance-to-status calculation reused through Debts' public
 contract by payment application and reversal. Keep those rules independent of HTTP, Prisma clients
 and event emission. `payments/queries/payments.query.ts` owns authorized list composition. Services
-retain the transaction boundary and publish audit only after successful completion. Allocation priority
+retain the use-case boundary through the transaction-scoped store and publish audit only after successful completion. Allocation priority
 is due date, issue date, creation time, then unique debt ID; the ID resolves otherwise equal priorities.
-Do not replace explicit `tx` propagation with a global mutable request/transaction context.
+The adapter binds every store operation to the same `tx`. Do not expose `TransactionClient` to
+application services or replace the scoped store with global mutable transaction state.
 
 This demonstrates transaction-client propagation and event ordering, **not** a complete concurrent
-payment algorithm. Inside the callback and all called persistence helpers, use `tx`/
-`Prisma.TransactionClient`, not the root client by accident. A helper that starts a separate root
+payment algorithm. Inside adapter callbacks and all called persistence helpers, use the same `tx`, not the root client
+by accident. Application callbacks receive a typed use-case store, never a Prisma delegate. A helper that starts a separate root
 transaction is not part of the caller's transaction. Keep network calls, file uploads, email and long
 computations out of a database transaction. A single-row atomic write need not acquire a transaction
 solely to match a template.
@@ -96,3 +99,24 @@ Do not apply migrations, seed, import, reset or delete real data as an incidenta
 and use an authorized disposable database for real constraint/concurrency claims. Source-only mocks
 must be described as such. Use the APIs of the installed Prisma major version; newer online docs may
 describe a different client API.
+
+
+## DB-06 — repository contracts and Prisma adapters
+
+Follow [Persistence architecture](../persistence-architecture.md). Every feature that accesses the
+DB owns `repositories/<feature>.repository.ts` (abstract DI contract) and
+`infrastructure/prisma-<feature>.repository.ts` (implementation). Nest modules bind the two with
+`provide`/`useClass`; application services and listeners inject only the contract. Do not construct
+an adapter in application code or re-export implementation classes through `public/`.
+
+Contracts expose named operations and use-case data, not Prisma delegates, arbitrary `where`/`data`
+arguments or `TransactionClient`. Reuse existing DTOs, domain rules and named projection types;
+do not invent generic CRUD repositories or duplicate all generated models. Generated enums, Decimal
+values and typed projections remain deliberate compile-time/value dependencies; this is not a claim
+of complete ORM-independent Domain Driven Design.
+
+Read adapters own filters, SQL, aggregation and snapshot pagination. Write services own business
+validation, state rules, tenant/actor context and post-commit audit; adapters own persistence mapping
+and the actual transaction. Related party/member/product lookups needed for a write occur through
+its transaction-scoped store, not through another root-client service call. Ordinary standalone
+membership checks still use Users' exported service.

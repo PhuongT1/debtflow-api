@@ -23,12 +23,12 @@ route and `scripts/generate-api-docs.ts` use that same document; do not maintain
 
 | Change                                                                                | Edit this owner                                                                                    |
 | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Endpoint, input/output or response description                                        | Owning feature controller and DTO; shared response decorators in `common/decorators/`              |
-| Exposed sort/filter fields                                                            | Feature `*.list-query.ts`; shared `common/query/list-query.swagger.ts` renders their documentation |
-| Swagger group names (`Auth`, `Parties`, etc.) | `src/common/constants/api-tags.constants.ts`; controllers import `API_TAGS` |
+| Endpoint, input/output or response description                                        | Owning feature controller and DTO; Swagger response decorators in `common/swagger/decorators/`              |
+| Exposed sort/filter fields                                                            | Feature `*.list-query.ts`; shared `common/swagger/decorators/api-list-query.decorator.ts` renders their documentation |
+| Swagger group names (`Auth`, `Parties`, etc.)                                         | `src/common/constants/api-tags.constants.ts`; controllers import `API_TAGS`                        |
 | API title, version, bearer scheme, global headers or documentation route registration | `src/common/swagger/swagger.setup.ts`                                                              |
 | Documentation URLs, page HTML or pinned Swagger UI asset version                      | `src/common/swagger/swagger-ui.ts`                                                                 |
-| Automatic login token, persistence, expiry and Logout                                 | `src/common/swagger/swagger-auth.js`; extend `common/swagger/_test/swagger-auth.spec.ts`                       |
+| Automatic login token, persistence, expiry and Logout                                 | `src/common/swagger/swagger-auth.js`; extend `common/swagger/_test/swagger-auth.spec.ts`           |
 | Application prefix, CORS and global validation                                        | `src/configure-app.ts`                                                                             |
 | Generated Markdown rendering                                                          | `scripts/generate-api-docs.ts`; schema still comes from the shared Swagger setup                   |
 
@@ -113,14 +113,50 @@ The frontend `.env` should use:
 NEXT_PUBLIC_API_URL=http://localhost:<PORT>/api
 ```
 
-
 `@ApiTags(API_TAGS.PARTIES)` assigns a documentation group. It does not register an endpoint,
 a permission or an API prefix. Keep `@Controller`, route methods, DTOs and policy with their
 feature; OpenAPI derives the complete endpoint list from that code. The shared tag registry is
 also registered by `createOpenApiDocument()`; the compact endpoint catalog is generated from the same document.
 
-
 Endpoint discovery: [Endpoint catalog](../generated/endpoints.md) lists every HTTP method and URL from the compiled OpenAPI document.
 Path definitions live in `src/common/constants/api-routes.constants.ts`; controllers use `API_ROUTES`
 for `@Controller(...)` and named method paths. HTTP verbs, policy and implementations remain in
 the owning controllers. Run `npm run docs:generate` after a route change; do not edit the catalog.
+
+## Party generated response base (pilot)
+
+`npm run db:generate` also runs `scripts/generate-response-models.mjs` through Prisma's generator
+protocol. It generates `PartyBase` with scalar types and explicit Swagger metadata into ignored
+`src/generated/response-models/`. This pilot generates Party only; it uses the existing generator
+helper dependency and does not install a third-party class generator. Do not hand-edit the output.
+The build runs generation before compilation, including Vercel and Docker builds.
+
+`parties/queries/party.select.ts` owns `PARTY_DEFAULT_SELECT`, an explicit Prisma projection checked
+with `satisfies Prisma.PartySelect`. Record/list/detail payloads derive from the actual query
+projections through `Prisma.PartyGetPayload`; do not write another model-shaped interface.
+`PARTY_RESPONSE_FIELDS` derives from the scalar select keys (excluding the customized money field)
+and is reused by `PickType(PartyBase, ...)` and the response mapper. New DB columns are not exposed
+until explicitly selected. Existing fields, including `searchText`, remain in the contract.
+The list mapper declares `PartyListItemDto` as its return type, so TypeScript checks its output
+against the Swagger contract. `creditLimit` and computed balances serialize as decimal strings
+without floating-point conversion. Only the computed balance and pagination require non-Prisma
+structures; they are not stored Party columns.
+
+Party controllers apply the mapper to create/update/deactivate, list items and detail results before
+the shared response interceptor builds the envelope. Request DTO validation stays unchanged.
+This is generated base + mapped types + explicit mapping, not Zod or runtime response validation.
+Other feature DTOs may reuse the Party contract; their persistence and response mapping are unchanged.
+
+
+## Documentation decorators versus runtime behavior
+
+`common/swagger/decorators/api-envelope.decorator.ts` owns `ApiEnvelope`/`ApiErrorEnvelopes` and
+`common/swagger/decorators/api-list-query.decorator.ts` owns `ApiListQuery`. They only describe the
+OpenAPI contract; they do not wrap data, parse queries, validate requests or authorize users.
+Keep these imports visibly separate from runtime query decorators/pipes and response interceptors.
+Controller/module file headers explain their concrete endpoint or composition responsibility.
+
+Nest uses an `Api` prefix for OpenAPI decorators ([official convention](https://docs.nestjs.com/openapi/decorators)).
+Vendure groups API schema and API decorators under `packages/core/src/api/`; it uses GraphQL and is
+not evidence for a Swagger folder layout. DebtFlow groups its REST documentation helpers under its
+existing `common/swagger/` owner without adding per-endpoint documentation layers.

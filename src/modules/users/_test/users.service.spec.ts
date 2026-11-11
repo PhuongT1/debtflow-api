@@ -1,3 +1,4 @@
+import { PrismaUsersRepository } from '../infrastructure/prisma-users.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import { AUDIT_EVENT } from '@common/events/audit-event.js';
 import { UsersService } from '../services/users.service.js';
@@ -31,7 +32,9 @@ function setup() {
   const create = vi.fn();
   const emit = vi.fn();
   const service = new UsersService(
-    { organizationMembership: { findFirst, count, update, create } } as never,
+    new PrismaUsersRepository({
+      organizationMembership: { findFirst, count, update, create },
+    } as never),
     { emit } as never,
   );
   return { service, findFirst, count, update, create, emit };
@@ -74,7 +77,10 @@ describe('UsersService member boundaries', () => {
     const s = setup();
     const result = await s.service.deactivate('org-1', 'target', actor);
     expect(s.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'membership' }, data: { status: 'SUSPENDED' } }),
+      expect.objectContaining({
+        where: { id: 'membership', organizationId: 'org-1' },
+        data: { status: 'SUSPENDED' },
+      }),
     );
     expect(result).toMatchObject({
       id: 'target',

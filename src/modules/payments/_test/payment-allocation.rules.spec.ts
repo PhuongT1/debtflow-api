@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
-import type { PayableDebt } from '../types/payment.types.js';
+import type { PayableDebt } from '../payment.types.js';
 import {
   allocatePayment,
   assertPayableDebt,
   paymentAmount,
-} from '../rules/payment-allocation.rules.js';
+} from '../payment-allocation.rules.js';
 
 function debt(id: string, original: string, paid = '0'): PayableDebt {
   return {

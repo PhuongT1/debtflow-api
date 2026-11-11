@@ -6018,6 +6018,93 @@
       "PartyListItemDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "SUPPLIER",
+              "BOTH"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional business code, unique per organization."
+          },
+          "name": {
+            "type": "string"
+          },
+          "searchText": {
+            "type": "string",
+            "description": "Normalized text used by the party search (name, code, phone, ...)."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "provinceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address2": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Soft delete flag. A party with unsettled debts cannot be deactivated."
+          },
+          "createdById": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedToId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditLimit": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string."
+          },
           "assignedTo": {
             "nullable": true,
             "type": "object",
@@ -6032,7 +6119,38 @@
           },
           "_count": {
             "$ref": "#/components/schemas/PartyDebtCountDto"
-          },
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "type",
+          "code",
+          "name",
+          "searchText",
+          "phone",
+          "email",
+          "taxCode",
+          "address",
+          "provinceCode",
+          "provinceName",
+          "address2",
+          "note",
+          "isActive",
+          "createdById",
+          "assignedToId",
+          "createdAt",
+          "updatedAt",
+          "imageUrl",
+          "creditLimit",
+          "assignedTo",
+          "balance",
+          "_count"
+        ]
+      },
+      "PartyResponseDto": {
+        "type": "object",
+        "properties": {
           "id": {
             "type": "string"
           },
@@ -6049,13 +6167,15 @@
           },
           "code": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "Optional business code, unique per organization."
           },
           "name": {
             "type": "string"
           },
           "searchText": {
-            "type": "string"
+            "type": "string",
+            "description": "Normalized text used by the party search (name, code, phone, ...)."
           },
           "phone": {
             "type": "string",
@@ -6073,14 +6193,6 @@
             "type": "string",
             "nullable": true
           },
-          "address2": {
-            "type": "string",
-            "nullable": true
-          },
-          "note": {
-            "type": "string",
-            "nullable": true
-          },
           "provinceCode": {
             "type": "string",
             "nullable": true
@@ -6089,18 +6201,17 @@
             "type": "string",
             "nullable": true
           },
-          "creditLimit": {
+          "address2": {
             "type": "string",
-            "nullable": true,
-            "description": "Decimal string."
+            "nullable": true
           },
-          "imageUrl": {
+          "note": {
             "type": "string",
             "nullable": true
           },
           "isActive": {
             "type": "boolean",
-            "description": "False after the party was deactivated."
+            "description": "Soft delete flag. A party with unsettled debts cannot be deactivated."
           },
           "createdById": {
             "type": "string",
@@ -6117,91 +6228,8 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
-          }
-        },
-        "required": [
-          "assignedTo",
-          "balance",
-          "_count",
-          "id",
-          "organizationId",
-          "type",
-          "code",
-          "name",
-          "searchText",
-          "phone",
-          "email",
-          "taxCode",
-          "address",
-          "address2",
-          "note",
-          "provinceCode",
-          "provinceName",
-          "creditLimit",
-          "imageUrl",
-          "isActive",
-          "createdById",
-          "assignedToId",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "PartyResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
           },
-          "organizationId": {
-            "type": "string"
-          },
-          "type": {
-            "enum": [
-              "CUSTOMER",
-              "SUPPLIER",
-              "BOTH"
-            ],
-            "type": "string"
-          },
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string"
-          },
-          "searchText": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string",
-            "nullable": true
-          },
-          "email": {
-            "type": "string",
-            "nullable": true
-          },
-          "taxCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "address": {
-            "type": "string",
-            "nullable": true
-          },
-          "address2": {
-            "type": "string",
-            "nullable": true
-          },
-          "note": {
-            "type": "string",
-            "nullable": true
-          },
-          "provinceCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "provinceName": {
+          "imageUrl": {
             "type": "string",
             "nullable": true
           },
@@ -6209,30 +6237,6 @@
             "type": "string",
             "nullable": true,
             "description": "Decimal string."
-          },
-          "imageUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "False after the party was deactivated."
-          },
-          "createdById": {
-            "type": "string",
-            "nullable": true
-          },
-          "assignedToId": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
           }
         },
         "required": [
@@ -6246,17 +6250,17 @@
           "email",
           "taxCode",
           "address",
-          "address2",
-          "note",
           "provinceCode",
           "provinceName",
-          "creditLimit",
-          "imageUrl",
+          "address2",
+          "note",
           "isActive",
           "createdById",
           "assignedToId",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "imageUrl",
+          "creditLimit"
         ]
       },
       "CreatePartyDto": {
@@ -6489,22 +6493,24 @@
             "type": "string"
           },
           "type": {
+            "type": "string",
             "enum": [
               "CUSTOMER",
               "SUPPLIER",
               "BOTH"
-            ],
-            "type": "string"
+            ]
           },
           "code": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "Optional business code, unique per organization."
           },
           "name": {
             "type": "string"
           },
           "searchText": {
-            "type": "string"
+            "type": "string",
+            "description": "Normalized text used by the party search (name, code, phone, ...)."
           },
           "phone": {
             "type": "string",
@@ -6522,14 +6528,6 @@
             "type": "string",
             "nullable": true
           },
-          "address2": {
-            "type": "string",
-            "nullable": true
-          },
-          "note": {
-            "type": "string",
-            "nullable": true
-          },
           "provinceCode": {
             "type": "string",
             "nullable": true
@@ -6538,18 +6536,17 @@
             "type": "string",
             "nullable": true
           },
-          "creditLimit": {
+          "address2": {
             "type": "string",
-            "nullable": true,
-            "description": "Decimal string."
+            "nullable": true
           },
-          "imageUrl": {
+          "note": {
             "type": "string",
             "nullable": true
           },
           "isActive": {
             "type": "boolean",
-            "description": "False after the party was deactivated."
+            "description": "Soft delete flag. A party with unsettled debts cannot be deactivated."
           },
           "createdById": {
             "type": "string",
@@ -6566,6 +6563,15 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditLimit": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string."
           },
           "assignedTo": {
             "nullable": true,
@@ -6595,17 +6601,17 @@
           "email",
           "taxCode",
           "address",
-          "address2",
-          "note",
           "provinceCode",
           "provinceName",
-          "creditLimit",
-          "imageUrl",
+          "address2",
+          "note",
           "isActive",
           "createdById",
           "assignedToId",
           "createdAt",
           "updatedAt",
+          "imageUrl",
+          "creditLimit",
           "assignedTo",
           "debts"
         ]

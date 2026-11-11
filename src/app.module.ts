@@ -1,3 +1,7 @@
+/**
+ * Composes feature modules and shared application infrastructure.
+ * Registers global response/error handling and event/configuration providers.
+ */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';

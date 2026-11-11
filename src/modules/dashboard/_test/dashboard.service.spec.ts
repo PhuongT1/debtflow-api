@@ -1,3 +1,4 @@
+import { PrismaDashboardRepository } from '../infrastructure/prisma-dashboard.repository.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { DashboardService } from '../services/dashboard.service.js';
@@ -23,7 +24,10 @@ function setup() {
   return {
     prisma,
     actionCenter,
-    service: new DashboardService(prisma as never, actionCenter as never),
+    service: new DashboardService(
+      new PrismaDashboardRepository(prisma as never, {} as never),
+      actionCenter as never,
+    ),
   };
 }
 afterEach(() => vi.useRealTimers());

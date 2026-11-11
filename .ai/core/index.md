@@ -6,18 +6,21 @@ Read the project's `AGENTS.md` and `.ai/project.json` for those decisions. Proje
 the core; an explicit exception must name the affected rule and its reason. Client adapters and
 skills route to these sources and must not invent another policy.
 
+For every request, follow [proportional verification](workflow/verification.md#keep-verification-proportional):
+inspect/test only affected or necessary scope, and ask before full-suite or deep checks.
+
 Before editing, inspect the working directory, Git status, owning code and callers. Preserve existing
 changes. Read only the relevant topics below; a new endpoint usually needs every topic.
 
 | Work                                                 | Required core topic                             |
 | ---------------------------------------------------- | ----------------------------------------------- |
-| Files, classes, providers, modules, dependencies     | [Structure](structure.md)                       |
-| Providers, DTOs, types, queries, refactoring         | [Reuse and maintainability](maintainability.md) |
-| Controllers, DTOs, validation, serialization, errors | [API and validation](api-validation.md)         |
-| Identity, access policy, resource scope, secrets     | [Security](security.md)                         |
-| Services, queries, transactions, events, migrations  | [Persistence](persistence.md)                   |
-| Test requests and test organization | [Testing](testing.md) |
-| Commands, Git and completion                  | [Verification](verification.md)                 |
+| Files, classes, providers, modules, dependencies     | [Structure](architecture/structure.md)                       |
+| Providers, DTOs, types, queries, refactoring         | [Reuse and maintainability](architecture/maintainability.md) |
+| Controllers, DTOs, validation, serialization, errors | [API and validation](backend/api-validation.md)         |
+| Identity, access policy, resource scope, secrets     | [Security](backend/security.md)                         |
+| Services, queries, transactions, events, migrations  | [Persistence](backend/persistence.md)                   |
+| Test requests and test organization | [Testing](workflow/testing.md) |
+| Commands, Git and completion                  | [Verification](workflow/verification.md)                 |
 
 MUST rules apply to changed/new code. Existing violations do not authorize new ones. Use the current
 project contract where compatibility matters; do not rewrite unrelated legacy code as part of a task.

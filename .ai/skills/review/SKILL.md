@@ -62,3 +62,5 @@ No findings.
 ```
 
 Then add a short residual-risk or test-gap note.
+
+Follow `.ai/core/workflow/verification.md#keep-verification-proportional`: select affected checks, reuse passing results, and obtain explicit approval before full-suite or deep verification.

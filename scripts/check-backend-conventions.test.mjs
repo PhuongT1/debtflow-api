@@ -11,7 +11,7 @@ import { Controller, Get, Post, Body, Query, HttpCode, Res } from '@nestjs/commo
 import { ApiOperation, ApiProduces, ApiNoContentResponse } from '@nestjs/swagger';
 import { ProtectedApi, PublicApi } from '@auth/decorators/auth-api.decorator';
 import { Roles } from '@auth/decorators/roles.decorator';
-import { ApiEnvelope } from '@common/http/api-envelope.decorator';
+import { ApiEnvelope } from '@common/swagger/decorators/api-envelope.decorator';
 import { SkipApiResponse } from '@common/decorators/api-response.decorator';
 import { CreateWidgetDto } from './dto/create-widget.dto';
 import { WidgetResponseDto } from './dto/widget-response.dto';
@@ -46,7 +46,7 @@ function fixture(run) {
   for (const [file, names] of [
     ['src/auth/decorators/auth-api.decorator.ts', ['ProtectedApi', 'PublicApi']],
     ['src/auth/decorators/roles.decorator.ts', ['Roles']],
-    ['src/common/http/api-envelope.decorator.ts', ['ApiEnvelope']],
+    ['src/common/swagger/decorators/api-envelope.decorator.ts', ['ApiEnvelope']],
     ['src/common/decorators/api-response.decorator.ts', ['SkipApiResponse']],
   ])
     write(

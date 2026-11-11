@@ -14,8 +14,9 @@ large project does; [Vendure](../guides/vendure-reference.md) was studied for th
 
 - One convention for every list endpoint: single-field `sortBy`+`sortOrder`, `filter[field][operator]`,
   `filterOperator` ([List Query guide](../guides/list-query.md)).
-- Split like Vendure: a transport-neutral `ListQueryOptions` contract, `parse-sort-params`,
-  `parse-filter-params` and `list-query-builder`; pure functions covered by specs next to the code.
+- Adapt Vendure's responsibility split: a `ListQueryOptions` contract, `list-query-sort`,
+  `list-query-filter` and `list-query-builder`. Parsing and Prisma compilation share one owner per
+  operation; common capability/path helpers live in `list-query.helpers`. Specs live in `_test/`.
 - Operators are derived from the field type and use Vendure's names.
 - Each resource declares an **allow-list** (`*.list-query.ts`), verified against the Prisma schema at
   startup. Computed fields use `computed` or `sort`/`filter` hooks (Vendure's `@Calculated`).

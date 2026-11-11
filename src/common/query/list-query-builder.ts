@@ -1,10 +1,10 @@
-import { buildOrderBy, parseSortParams } from './parse-sort-params.js';
-import { buildWhere, parseFilterParams } from './parse-filter-params.js';
+import { buildPrismaOrderBy, parseSortParams } from './list-query-sort.js';
+import { buildPrismaWhere, parseFilterParams } from './list-query-filter.js';
 import type { ListQueryConfig, ListQueryResult } from './list-query.types.js';
 
 /**
  * Turns the raw query string object into a ready-to-use result (Vendure: `ListQueryBuilder.build`).
- * Pure function: no framework or database access, so it is covered by plain unit tests.
+ * No database calls; invalid inputs use the shared error contract and are covered by unit tests.
  */
 export function parseListQuery(
   query: Record<string, unknown>,
@@ -12,8 +12,8 @@ export function parseListQuery(
 ): ListQueryResult {
   const sort = parseSortParams(query, config);
   const filter = parseFilterParams(query, config);
-  const where = buildWhere(filter, config);
-  const orderBy = sort.length > 0 ? buildOrderBy(sort, config) : [];
+  const where = buildPrismaWhere(filter, config);
+  const orderBy = sort.length > 0 ? buildPrismaOrderBy(sort, config) : [];
 
   return {
     options: { sort, filter },

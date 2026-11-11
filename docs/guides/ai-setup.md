@@ -1,5 +1,9 @@
 # Team AI setup and portable NestJS rules
 
+See `.ai/README.md` in the repository for the source map: `core/architecture/`, `core/backend/`,
+`core/workflow/`, portable `core/skills/` and project `skills/`. Load only relevant topics.
+
+
 Every member uses the same reviewed sources, regardless of AI client. After cloning or pulling
 updated rules/skills, run:
 

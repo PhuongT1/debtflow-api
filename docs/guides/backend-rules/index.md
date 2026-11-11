@@ -16,6 +16,10 @@ These rules follow a source review of Vendure commit
 file is a perfect template. Read the [source map](./vendure-source-map.md) for the examined symbols,
 what they establish, and what changes when adapting GraphQL/TypeORM to REST/Prisma 7.
 
+New developers: start with [architecture](../../02-architecture.md),
+[request flow](../request-flow.md), [Party example](../party-architecture.md) and
+[module development](../module-development.md). The sections below remain the canonical policy.
+
 ## Select by change
 
 | Change                                     | Required sections                                                                                     |
@@ -31,6 +35,9 @@ what they establish, and what changes when adapting GraphQL/TypeORM to REST/Pris
 Read the applicable rules and real neighboring implementation before editing. A new CRUD endpoint
 usually crosses all these boundaries; a message-only fix does not. Start with the current contract,
 not an invented generic repository/service framework or an unregistered sample module.
+
+Persistence and transaction boundaries are defined in
+[Persistence architecture](../persistence-architecture.md) and DB-06 in services/persistence.
 
 ## What automation enforces
 

@@ -1,6 +1,7 @@
+import { PrismaPaymentsRepository } from '../infrastructure/prisma-payments.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
-import { PaymentsService } from '../services/payments.service.js';
+import { PaymentsService } from '../payments.service.js';
 
 function setup() {
   const debt = {
@@ -31,7 +32,10 @@ function setup() {
   };
   const transaction = vi.fn(async (run: (client: typeof tx) => unknown) => run(tx));
   const events = { emit: vi.fn() };
-  const service = new PaymentsService({ $transaction: transaction } as never, events as never);
+  const service = new PaymentsService(
+    new PrismaPaymentsRepository({ $transaction: transaction } as never),
+    events as never,
+  );
   return { service, tx, debt, payment, events, transaction };
 }
 const input = { amount: '10', paidAt: '2026-11-01T05:00:00Z' };
@@ -175,4 +179,32 @@ describe('payment tenant context and transaction effects', () => {
     expect(s.tx.payment.create).toHaveBeenCalledOnce();
     expect(s.events.emit).not.toHaveBeenCalled();
   });
+});
+
+it('supports a fake repository without exposing any Prisma delegate to the application', async () => {
+  const { debt, payment } = setup();
+  const updateDebt = vi.fn().mockResolvedValue(undefined);
+  const store = {
+    findDebt: vi.fn().mockResolvedValue(debt),
+    createPayment: vi.fn().mockResolvedValue(payment),
+    updateDebt,
+  };
+  const order: string[] = [];
+  const repository = {
+    inTransaction: async (work: (value: typeof store) => Promise<unknown>) => {
+      const result = await work(store);
+      order.push('commit');
+      return result;
+    },
+  };
+  const events = { emit: vi.fn(() => order.push('audit')) };
+  const service = new PaymentsService(repository as never, events as never);
+  await service.create('d1', input, 'org-1', 'actor');
+  expect(store.findDebt).toHaveBeenCalledWith('org-1', 'd1');
+  expect(updateDebt).toHaveBeenCalledWith(
+    'org-1',
+    'd1',
+    expect.objectContaining({ status: 'PARTIAL' }),
+  );
+  expect(order).toEqual(['commit', 'audit']);
 });

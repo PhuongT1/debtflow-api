@@ -4,7 +4,7 @@ import {
   OrganizationRole,
   UserStatus,
 } from '@generated/prisma/client.js';
-import { toMemberDto } from '../mappers/member.mapper.js';
+import { toMemberDto } from '../member.mapper.js';
 
 describe('toMemberDto', () => {
   const base = {
