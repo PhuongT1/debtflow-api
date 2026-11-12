@@ -103,7 +103,7 @@ describe a different client API.
 
 ## DB-06 — repository contracts and Prisma adapters
 
-Follow [Persistence architecture](../persistence-architecture.md). Every feature that accesses the
+Follow [Persistence architecture](../../development/persistence-architecture.md). Every feature that accesses the
 DB owns `repositories/<feature>.repository.ts` (abstract DI contract) and
 `infrastructure/prisma-<feature>.repository.ts` (implementation). Nest modules bind the two with
 `provide`/`useClass`; application services and listeners inject only the contract. Do not construct

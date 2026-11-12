@@ -2,7 +2,7 @@
 
 These are the DebtFlow-specific rules layered over the portable NestJS core in `.ai/core/`.
 Keep ORM, tenant, envelope, business and command choices here; keep general NestJS rules in the core.
-Member installation and copying the core to another project are documented in [AI setup](../ai-setup.md).
+Member installation and copying the core to another project are documented in [AI setup](../../team/ai-setup.md).
 
 This is the normative implementation contract for new or changed DebtFlow API code. **MUST** means a
 required project rule; **SHOULD** means the default unless the task has a concrete reason to differ.
@@ -16,9 +16,9 @@ These rules follow a source review of Vendure commit
 file is a perfect template. Read the [source map](./vendure-source-map.md) for the examined symbols,
 what they establish, and what changes when adapting GraphQL/TypeORM to REST/Prisma 7.
 
-New developers: start with [architecture](../../02-architecture.md),
-[request flow](../request-flow.md), [Party example](../party-architecture.md) and
-[module development](../module-development.md). The sections below remain the canonical policy.
+New developers: start with [architecture](../../getting-started/architecture.md),
+[request flow](../../getting-started/request-flow.md), [Party example](../../getting-started/party-architecture.md) and
+[module development](../../getting-started/module-development.md). The sections below remain the canonical policy.
 
 ## Select by change
 
@@ -37,7 +37,7 @@ usually crosses all these boundaries; a message-only fix does not. Start with th
 not an invented generic repository/service framework or an unregistered sample module.
 
 Persistence and transaction boundaries are defined in
-[Persistence architecture](../persistence-architecture.md) and DB-06 in services/persistence.
+[Persistence architecture](../../development/persistence-architecture.md) and DB-06 in services/persistence.
 
 ## What automation enforces
 
@@ -52,11 +52,11 @@ boundaries. Its scope and limits are described in [Maintainability and reuse](./
 
 Features are owned by domain under `src/modules/<feature>/`. The architecture gate rejects the old
 auth-first folder roots. Reviewed public handlers and self-service member mutations are listed exactly
-in `scripts/backend-route-policy.json`; moving a file into an auth folder cannot waive a role gate.
+in `scripts/quality/backend-route-policy.json`; moving a file into an auth folder cannot waive a role gate.
 Missing/stale policy entries fail the conventions gate and cannot enter the legacy baseline.
 
 The conventions checker records existing **response documentation** and **untyped query** debt in
-`scripts/backend-conventions-baseline.json`. Every entry identifies one handler, one rule and its
+`scripts/quality/backend-conventions-baseline.json`. Every entry identifies one handler, one rule and its
 exact significant-token fingerprint, including class decorators. It does not waive a whole file:
 changing that handler invalidates the waiver; fix the relevant debt and remove stale entries. New
 handlers have no waiver. Security/naming rules cannot be put in this baseline. Expanding the baseline

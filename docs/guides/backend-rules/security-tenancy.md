@@ -22,7 +22,7 @@ rows. `Permission.Owner` in Vendure is also **not** DebtFlow's `OrganizationRole
 - Never widen `@PublicApi`, remove a guard, manufacture an actor, or trust a body/query `role`,
   `actorId` or `organizationId` to make a request succeed. Public placement is not permission to
   implement unguarded tenant mutations. Domain folders do not authorize public access. New anonymous
-  handlers need an exact reviewed `publicHandlers` entry in `scripts/backend-route-policy.json`, with
+  handlers need an exact reviewed `publicHandlers` entry in `scripts/quality/backend-route-policy.json`, with
   a reason and the actual endpoint verification (for example a webhook signature check). Self-service
   authenticated mutations without an administrator role need an exact `memberMutations` entry.
   The checker rejects unlisted public routes and stale entries; these are policy, not legacy waivers.

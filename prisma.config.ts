@@ -1,11 +1,14 @@
 import { loadEnvFile } from 'node:process';
-import { defineConfig, env } from 'prisma/config';
+import { readDatabaseConfig } from './src/config/app.config.js';
+import { defineConfig } from 'prisma/config';
 
 try {
   loadEnvFile('.env');
 } catch {
   // Local development may rely on shell-provided env vars instead of a .env file.
 }
+
+const database = readDatabaseConfig();
 
 export default defineConfig({
   schema: 'prisma/',
@@ -14,7 +17,7 @@ export default defineConfig({
   },
   engine: 'classic',
   datasource: {
-    url: env('DATABASE_URL'),
-    directUrl: env('DIRECT_URL'),
+    url: database.url,
+    directUrl: database.directUrl,
   },
 });

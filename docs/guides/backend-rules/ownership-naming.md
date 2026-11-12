@@ -190,3 +190,14 @@ Keep shared capability definitions, Prisma argument builders and projections in 
 in `infrastructure/sql/`, rather than another folder called `queries/`. Repository adapters execute
 those statements. Shared DTOs/mappers/types must not depend on infrastructure just to reuse
 projection keys or inferred payloads. Keep one projection source, not a forwarding or duplicate copy.
+
+## Documentation ownership and navigation
+
+Group guides under `docs/getting-started/`, `docs/database/`, `docs/development/`, `docs/team/`,
+`docs/reference/` and `docs/adr/`. Keep canonical DebtFlow rules here and portable policy in `.ai/core/`.
+Use `docs/.vitepress/navigation.mts` as the single menu/sidebar source. Core policy views include
+canonical Markdown; never maintain a second policy body. When moving a guide, update repository links,
+agent/skill routing and generators together. See [documentation maintenance](../../team/documentation.md).
+
+Explain onboarding/database shell commands with a short English comment immediately above the command.
+State its purpose and meaningful effects; distinguish schema writes, generation and demo seeding.
