@@ -8,12 +8,12 @@
 Each list endpoint filtered and sorted in its own way (`sortBy` enums in one DTO, hand-written `where`
 fragments in each service). Every new field or endpoint meant new DTO fields and new service code, and
 sorting could not be combined with filters consistently. The team wants a standard that scales the way a
-large project does; [Vendure](../guides/vendure-reference.md) was studied for that.
+large project does; [Vendure](./vendure-reference.md) was studied for that.
 
 ## Decision
 
 - One convention for every list endpoint: single-field `sortBy`+`sortOrder`, `filter[field][operator]`,
-  `filterOperator` ([List Query guide](../guides/list-query.md)).
+  `filterOperator` ([List Query guide](../development/list-query.md)).
 - Adapt Vendure's responsibility split: a `ListQueryOptions` contract, `list-query-sort`,
   `list-query-filter` and `list-query-builder`. Parsing and Prisma compilation share one owner per
   operation; common capability/path helpers live in `list-query.helpers`. Specs live in `_test/`.

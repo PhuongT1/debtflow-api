@@ -10,7 +10,7 @@ That portable core owns general NestJS structure, naming, validation, provider, 
 rules. This guide and `docs/guides/backend-rules/` specialize them for DebtFlow's REST/Prisma contract.
 Project configuration lives in [.ai/project.json](.ai/project.json); do not move DebtFlow assumptions
 into the reusable core. Run `npm run ai:setup` after cloning or updating rule/skill sources, and
-`npm run ai:check` to verify the local installation. See [team setup](docs/guides/ai-setup.md).
+`npm run ai:check` to verify the local installation. See [team setup](./docs/team/ai-setup.md).
 
 ## Scope and repository hygiene
 
@@ -19,7 +19,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
 - Work in this API repository. Sibling repositories, including Vendure, are references unless the
   user asks to change them. Their package managers, stacks and instruction files are not API policy.
 - Use Node 24 native ESM (`NodeNext`), npm and `package-lock.json`. Read
-  [import aliases](docs/guides/import-aliases.md) before changing imports; use `.js` suffixes and
+  [import aliases](./docs/development/import-aliases.md) before changing imports; use `.js` suffixes and
   the short `@auth/*`, `@common/*`, `@modules/*` and other configured aliases. Do not introduce another lockfile, package layout, framework or
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
@@ -30,7 +30,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   Update imports, module bindings, tests and references together; never add filler or empty folders.
 - Features use `repositories/` contracts and `infrastructure/` Prisma adapters. Services/listeners
   MUST NOT import the database layer, PrismaClient or concrete adapters. Modules own DI bindings.
-  See [Persistence architecture](docs/guides/persistence-architecture.md); transaction-scoped stores
+  See [Persistence architecture](./docs/development/persistence-architecture.md); transaction-scoped stores
   keep dependent writes atomic without leaking Prisma clients into application services.
 - Put genuinely shared infrastructure in `src/common/`; it must not import feature or auth code.
   `src/config/` and `src/database/` also must not depend on features or auth. Controllers delegate
@@ -53,7 +53,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   an explicit role policy and service-level ownership/status rules. Do not widen public access to
   make a request or a test pass.
 - Public handlers and self-service member mutations without a role gate need exact reviewed entries
-  with reasons in `scripts/backend-route-policy.json`. No directory grants an auth/policy exception.
+  with reasons in `scripts/quality/backend-route-policy.json`. No directory grants an auth/policy exception.
 - Validate request DTOs; keep unknown-field rejection, the response envelope and EN/VI error keys.
   Use the per-resource list-query allow-list; never expose arbitrary Prisma columns or raw queries.
 - Use `Prisma.Decimal` for money. Changes to payments, allocations and debt balances must remain
@@ -68,7 +68,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
 ## Required implementation contract
 
 For provider, DTO, type, query or structure changes, read
-[Maintainability and reuse](docs/guides/backend-rules/maintainability.md) and its portable core topic.
+[Maintainability and reuse](./docs/guides/backend-rules/maintainability.md) and its portable core topic.
 Cross-feature providers use named `public/` contracts and owning Nest modules, never private implementation
 folders or HTTP calls back to this application. DTO classes may be imported by name directly from their
 `dto/*.dto.ts` owner; named types/interfaces may be imported with `import type` from `*.types.ts`.
@@ -76,27 +76,27 @@ Do not add a forwarding barrel merely to re-export one data contract. Search exi
 contract/helper. Run `npm run check:maintainability`;
 do not bypass it with duplicated types, renamed clones or a new exemption.
 
-Before creating/changing backend code, read the [Backend Rules index](docs/guides/backend-rules/index.md)
+Before creating/changing backend code, read the [Backend Rules index](./docs/guides/backend-rules/index.md)
 and its required topic sections. It defines file/class/DTO names, Nest provider ownership, route/status/
 response contracts, runtime validation/null semantics, tenant/related-ID checks, transaction/event order
 and the required verification. MUST rules apply to new/changed code; neighboring legacy code is not a waiver.
-The [pinned Vendure source map](docs/guides/backend-rules/vendure-source-map.md) shows the actual resolver,
+The [pinned Vendure source map](./docs/guides/backend-rules/vendure-source-map.md) shows the actual resolver,
 service, transaction, event and test evidence and the REST/Prisma adaptations. Do not invent claims about it.
 
 ## Read by responsibility
 
 | Task | Read when relevant |
 | --- | --- |
-| Implement a backend change | [Backend Rules](docs/guides/backend-rules/index.md), required topics, then the owned implementation |
-| Auth, tenants, permissions | [Authorization](docs/guides/authorization.md) and [Business Rules](docs/03-business-rules.md) |
-| Sort/filter/pagination | [List Query](docs/guides/list-query.md) and the resource's `*.list-query.ts` |
-| Prisma schema or migration | [Database Workflow](docs/guides/database-workflow.md) and the affected models/migrations |
-| Audit events | [Audit Log](docs/guides/audit-log.md) and existing emit/listener code |
-| Response or validation | [API Response Format](docs/guides/api-response-format.md) and [Localization](docs/guides/localization.md) |
-| Swagger UI, OpenAPI or generated API documentation | [API and Swagger](docs/guides/api-and-swagger.md), especially its task-to-file owner table |
-| Architecture onboarding or module development | [Backend architecture](docs/02-architecture.md), [request flow](docs/guides/request-flow.md), then [module development](docs/guides/module-development.md) |
-| Party example or workflow | [Party implementation example](docs/guides/party-architecture.md), including current audit gaps |
-| Architecture or new file placement | [Project Structure](docs/guides/project-structure.md) and [Vendure Reference](docs/guides/vendure-reference.md) |
+| Implement a backend change | [Backend Rules](./docs/guides/backend-rules/index.md), required topics, then the owned implementation |
+| Auth, tenants, permissions | [Authorization](./docs/development/authorization.md) and [Business Rules](./docs/reference/business-rules.md) |
+| Sort/filter/pagination | [List Query](./docs/development/list-query.md) and the resource's `*.list-query.ts` |
+| Prisma schema or migration | [Database Workflow](./docs/database/index.md) and the affected models/migrations |
+| Audit events | [Audit Log](./docs/development/audit-log.md) and existing emit/listener code |
+| Response or validation | [API Response Format](./docs/guides/api-response-format.md) and [Localization](./docs/development/localization.md) |
+| Swagger UI, OpenAPI or generated API documentation | [API and Swagger](./docs/development/api-and-swagger.md), especially its task-to-file owner table |
+| Architecture onboarding or module development | [Backend architecture](./docs/getting-started/architecture.md), [request flow](./docs/getting-started/request-flow.md), then [module development](./docs/getting-started/module-development.md) |
+| Party example or workflow | [Party implementation example](./docs/getting-started/party-architecture.md), including current audit gaps |
+| Architecture or new file placement | [Project Structure](./docs/development/project-structure.md) and [Vendure Reference](./docs/adr/vendure-reference.md) |
 
 ## Verification and completion
 
@@ -113,7 +113,7 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
   query debt, locked per handler fingerprint. A changed/new handler must comply; remove stale entries.
   Do not broaden exemptions or put security/naming violations in that baseline to make checks pass.
 - Put every `src` spec/fixture in the owner's `_test/` folder; follow `.ai/core/workflow/testing.md` and
-  [test placement](docs/guides/backend-rules/testing-completion.md#test-placement).
+  [test placement](./docs/guides/backend-rules/testing-completion.md#test-placement).
 - Run meaningful targeted tests for changed behavior, especially tenant isolation, permissions,
   money, status transitions and failure paths. Extend existing suites when they own the scenario.
 - Run `npm run typecheck` to check TypeScript including specs; Vitest alone only transpiles them.

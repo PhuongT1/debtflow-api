@@ -11,8 +11,8 @@ Paths are relative to the backend origin. Local port comes from `PORT`; startup 
 - Protected endpoints need `Authorization: Bearer <access token>`. The token carries the active organization, so every query is tenant-scoped automatically.
 - "Roles" lists the organization roles allowed. `All members` means any authenticated active member (including `VIEWER`).
 - JSON responses use the envelope described in [api-response-format](../guides/api-response-format.md).
-- Send `Accept-Language: en` or `vi` (default `vi`) to localize messages: [localization](../guides/localization.md).
-- List endpoints accept single-field `sortBy`/`sortOrder` and `filter[field][op]=value`: [list query](../guides/list-query.md).
+- Send `Accept-Language: en` or `vi` (default `vi`) to localize messages: [localization](../development/localization.md).
+- List endpoints accept single-field `sortBy`/`sortOrder` and `filter[field][op]=value`: [list query](../development/list-query.md).
 
 ## Endpoint index
 

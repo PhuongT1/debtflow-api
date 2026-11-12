@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "DebtFlow API",
-  "rules": ["docs/guides/backend-rules/index.md", "docs/guides/ai-development.md"],
+  "rules": ["docs/guides/backend-rules/index.md", "docs/team/ai-development.md"],
   "skillSources": [".ai/skills"],
   "commands": {
     "check": "npm run check",
