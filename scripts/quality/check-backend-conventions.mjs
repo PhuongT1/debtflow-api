@@ -4,7 +4,7 @@ import { basename, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
-const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const routeMethods = new Set(['Get', 'Post', 'Put', 'Patch', 'Delete', 'Head', 'Options', 'All']);
 const mutations = new Set(['Post', 'Put', 'Patch', 'Delete', 'All']);
 const statusCodes = { OK: 200, CREATED: 201, ACCEPTED: 202, NO_CONTENT: 204 };
@@ -28,7 +28,7 @@ function fingerprint(source, owner, method) {
 /** Declarative API conventions, not a proof of authorization or validation behavior. */
 export function checkBackendConventions(root = projectRoot, { baseline, routePolicy } = {}) {
   root = resolve(root);
-  const policyPath = resolve(root, 'scripts/backend-route-policy.json');
+  const policyPath = resolve(root, 'scripts/quality/backend-route-policy.json');
   routePolicy ??= existsSync(policyPath)
     ? JSON.parse(readFileSync(policyPath, 'utf8'))
     : { publicHandlers: [], memberMutations: [] };
@@ -117,7 +117,8 @@ export function checkBackendConventions(root = projectRoot, { baseline, routePol
           ['@nestjs/common', '@nestjs/swagger'].includes(imported.module) ||
           local === portable(resolve(root, 'src/auth/decorators/auth-api.decorator.ts')) ||
           local === portable(resolve(root, 'src/auth/decorators/roles.decorator.ts')) ||
-          local === portable(resolve(root, 'src/common/swagger/decorators/api-envelope.decorator.ts')) ||
+          local ===
+            portable(resolve(root, 'src/common/swagger/decorators/api-envelope.decorator.ts')) ||
           local === portable(resolve(root, 'src/common/decorators/api-response.decorator.ts'));
         return trusted ? [{ name: imported.name, call }] : [];
       });
@@ -172,7 +173,7 @@ export function checkBackendConventions(root = projectRoot, { baseline, routePol
         if (has('PublicApi') && !policies.publicHandlers.has(key))
           fail(
             'public-route-policy',
-            'Public access requires an exact reviewed entry in scripts/backend-route-policy.json.',
+            'Public access requires an exact reviewed entry in scripts/quality/backend-route-policy.json.',
           );
         if (has('ProtectedApi') && has('PublicApi'))
           fail('conflicting-auth', 'Do not combine public and protected metadata.');
@@ -334,7 +335,7 @@ export function checkBackendConventions(root = projectRoot, { baseline, routePol
           rule: 'stale-route-policy',
           message: `Remove or correct stale ${kind} entry; the route is missing or its classification changed.`,
         });
-  const baselinePath = resolve(root, 'scripts/backend-conventions-baseline.json');
+  const baselinePath = resolve(root, 'scripts/quality/backend-conventions-baseline.json');
   baseline ??= existsSync(baselinePath) ? JSON.parse(readFileSync(baselinePath, 'utf8')) : [];
   if (!Array.isArray(baseline)) throw Error('Conventions baseline must be an explicit array.');
   const id = (item) => JSON.stringify([item.file, item.rule, item.symbol, item.fingerprint]);

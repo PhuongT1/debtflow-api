@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { setupAi } from './ai-setup.mjs';
 
-const core = fileURLToPath(new URL('../.ai/core', import.meta.url));
+const core = fileURLToPath(new URL('../../.ai/core', import.meta.url));
 const installer = fileURLToPath(new URL('./ai-setup.mjs', import.meta.url));
 function fixture(run) {
   const root = mkdtempSync(join(tmpdir(), 'nestjs-ai-'));
@@ -82,13 +82,13 @@ test('rerunning setup is idempotent and check performs no writes', () =>
 test('copied CLI initializes without dependencies and resolves the repository from its own script', () =>
   fixture(({ root, write, read }) => {
     mkdirSync(join(root, 'scripts'));
-    cpSync(installer, join(root, 'scripts/ai-setup.mjs'));
+    cpSync(installer, join(root, 'scripts/ai/ai-setup.mjs'));
     write('package.json', {
       name: 'shipping-api',
       packageManager: 'pnpm@10.0.0',
       scripts: { build: 'nest build', test: 'vitest run' },
     });
-    const cli = join(root, 'scripts/ai-setup.mjs');
+    const cli = join(root, 'scripts/ai/ai-setup.mjs');
     const output = execFileSync(process.execPath, [cli, '--init'], {
       cwd: tmpdir(),
       encoding: 'utf8',
@@ -269,7 +269,7 @@ test('rejects a tampered local state that tries to delete unrelated source', () 
 
 test('repository ignores local artifacts without hiding team configuration, templates or generated references', () =>
   fixture(({ root, write }) => {
-    write('.gitignore', readFileSync(new URL('../.gitignore', import.meta.url), 'utf8'));
+    write('.gitignore', readFileSync(new URL('../../.gitignore', import.meta.url), 'utf8'));
     execFileSync('git', ['init', '--quiet'], { cwd: root });
     const ignored = [
       '.env',

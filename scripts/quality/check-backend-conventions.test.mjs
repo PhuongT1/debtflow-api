@@ -306,7 +306,7 @@ test('freezes only an exact reviewed legacy handler and rejects changes or new r
       ...v,
       reason: 'Existing response documentation debt at rollout.',
     }));
-    write('scripts/backend-conventions-baseline.json', JSON.stringify(baseline));
+    write('scripts/quality/backend-conventions-baseline.json', JSON.stringify(baseline));
     assert.deepEqual(check().violations, []);
     assert.equal(check().legacy.length, 1);
     write(owner, old.replace('return input;', 'return { name: input.name };'));

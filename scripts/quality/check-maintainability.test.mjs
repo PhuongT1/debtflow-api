@@ -237,14 +237,17 @@ test('does not allow namespace imports, runtime helpers or fake DTO functions th
 });
 
 test('separates shared query definitions from private SQL builders without waiving placement', () => {
-  fixture({
-    'src/modules/orders/queries/order.query.ts': 'export const ORDER_QUERY = {};',
-    'src/modules/orders/queries/order.select.ts': 'export const ORDER_SELECT = {};',
-    'src/modules/orders/infrastructure/sql/order-page.sql.ts': 'export const PAGE_SQL = {};',
-    'src/modules/orders/infrastructure/sql/order-filter.sql.ts': 'export const FILTER_SQL = {};',
-  }, ({ check, write }) => {
-    assert.deepEqual(check().violations, []);
-    write('src/modules/orders/helpers/order-balance.sql.ts', 'export const BALANCE_SQL = {};');
-    assert.ok(check().violations.some(({ rule }) => rule === 'responsibility-folder'));
-  });
+  fixture(
+    {
+      'src/modules/orders/queries/order.query.ts': 'export const ORDER_QUERY = {};',
+      'src/modules/orders/queries/order.select.ts': 'export const ORDER_SELECT = {};',
+      'src/modules/orders/infrastructure/sql/order-page.sql.ts': 'export const PAGE_SQL = {};',
+      'src/modules/orders/infrastructure/sql/order-filter.sql.ts': 'export const FILTER_SQL = {};',
+    },
+    ({ check, write }) => {
+      assert.deepEqual(check().violations, []);
+      write('src/modules/orders/helpers/order-balance.sql.ts', 'export const BALANCE_SQL = {};');
+      assert.ok(check().violations.some(({ rule }) => rule === 'responsibility-folder'));
+    },
+  );
 });

@@ -3,7 +3,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
-const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const portable = (value) => value.replaceAll('\\', '/');
 const inside = (path, directory) => path === directory || path.startsWith(`${directory}/`);
 

@@ -12,7 +12,7 @@ import {
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const stateFile = '.ai/local-state.json';
 const contextFile = '.ai/generated/project-context.md';
 const skillTargets = ['.codex/skills', '.agents/skills', '.claude/skills', '.cursor/skills'];
@@ -252,7 +252,7 @@ export function setupAi(root = defaultRoot, { check = false, init = false } = {}
       !configExists
     )
       throw Error(
-        `AI installation is missing/outdated. Run npm run ai:setup (or node scripts/ai-setup.mjs).\n${[...changes, ...stale].join('\n')}`,
+        `AI installation is missing/outdated. Run npm run ai:setup (or node scripts/ai/ai-setup.mjs).\n${[...changes, ...stale].join('\n')}`,
       );
     return { skills: skills.size, changed: 0 };
   }
@@ -276,7 +276,7 @@ if (
   try {
     const args = process.argv.slice(2);
     if (args.some((arg) => !['--check', '--init'].includes(arg)))
-      throw Error('Usage: node scripts/ai-setup.mjs [--init] [--check]');
+      throw Error('Usage: node scripts/ai/ai-setup.mjs [--init] [--check]');
     const result = setupAi(defaultRoot, {
       check: args.includes('--check'),
       init: args.includes('--init'),
