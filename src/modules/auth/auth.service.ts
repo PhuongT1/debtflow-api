@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { forbidden, unauthorized } from '@common/errors/app-errors.js';
-import { ConfigService } from '@nestjs/config';
+import { appConfig, type AppConfig } from '@config/app.config.js';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { AuthRepository } from './repositories/auth.repository.js';
@@ -13,15 +13,12 @@ import type {
 } from '@auth/types/auth-context.types.js';
 import type { AuthUser, MembershipContext } from './auth.types.js';
 
-const DEFAULT_ACCESS_TOKEN_EXPIRES_IN = '15m';
-const DEFAULT_REFRESH_TOKEN_EXPIRES_IN = '7d';
-
 @Injectable()
 export class AuthService {
   constructor(
     private readonly repository: AuthRepository,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    @Inject(appConfig.KEY) private readonly config: AppConfig,
   ) {}
 
   async login(input: LoginDto) {
@@ -41,7 +38,7 @@ export class AuthService {
     let payload: RefreshTokenPayload;
     try {
       payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(refreshToken, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.config.auth.jwtSecret,
       });
     } catch {
       throw unauthorized('auth.REFRESH_TOKEN_INVALID');
@@ -91,10 +88,7 @@ export class AuthService {
   }
 
   private async createTokenResponse(user: AuthUser, membership: MembershipContext) {
-    const accessTokenExpiresIn = (this.configService.get<string>('JWT_EXPIRES_IN') ??
-      DEFAULT_ACCESS_TOKEN_EXPIRES_IN) as JwtSignOptions['expiresIn'];
-    const refreshTokenExpiresIn = (this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') ??
-      DEFAULT_REFRESH_TOKEN_EXPIRES_IN) as JwtSignOptions['expiresIn'];
+    const { accessTokenExpiresIn, refreshTokenExpiresIn } = this.config.auth;
     const accessTokenExpiresAt = this.getExpiresAt(accessTokenExpiresIn);
     const shared = {
       sub: user.id,
@@ -110,14 +104,14 @@ export class AuthService {
         type: 'access',
       } satisfies AccessTokenPayload,
       {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.config.auth.jwtSecret,
         expiresIn: accessTokenExpiresIn,
       } satisfies JwtSignOptions,
     );
     const refreshToken = await this.jwtService.signAsync(
       { ...shared, type: 'refresh' } satisfies RefreshTokenPayload,
       {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.config.auth.jwtSecret,
         expiresIn: refreshTokenExpiresIn,
       } satisfies JwtSignOptions,
     );

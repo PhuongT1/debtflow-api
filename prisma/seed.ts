@@ -1,3 +1,4 @@
+import { readDatabaseConfig } from '../src/config/app.config.js';
 import {
   DebtStatus,
   DebtType,
@@ -15,9 +16,8 @@ import { loadEnvFile } from 'node:process';
 import * as bcrypt from 'bcryptjs';
 import { partySearchText } from '../src/common/utils/search-normalization.util.js';
 loadEnvFile('.env');
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) throw new Error('DATABASE_URL is required to seed the database.');
-const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
+const database = readDatabaseConfig();
+const prisma = new PrismaClient({ adapter: new PrismaPg(database.url) });
 const password = 'Demo@123456';
 
 type CoolmateDebtSeedRow = {
