@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createRequire } from 'node:module';
-import { parseEnv } from 'node:util';
+import { readDatabaseEnvironment } from './database-environment.ts';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
@@ -16,26 +16,22 @@ export function migrationCommand(
   action,
   { cwd = process.cwd(), env = process.env } = {},
 ) {
-  if (!['staging', 'production'].includes(environment) || !['deploy', 'status'].includes(action)) {
+  if (!['staging', 'production'].includes(environment) || !['apply', 'status'].includes(action)) {
     throw new Error(
-      'Usage: node scripts/database/database-migrate.mjs <staging|production> <deploy|status>',
+      'Usage: node scripts/database/database-migrate.mjs <staging|production> <apply|status>',
     );
   }
-  const filename = `.env.${environment}`;
-  const values = parseEnv(readFileSync(resolve(cwd, filename), 'utf8'));
-  for (const key of ['DATABASE_URL', 'DIRECT_URL']) {
-    if (!values[key]?.trim()) throw new Error(`${filename} must define ${key}.`);
-  }
+  const database = readDatabaseEnvironment(environment, { cwd, env });
   const require = createRequire(resolve(cwd, 'package.json'));
   const packagePath = require.resolve('prisma/package.json');
   const { bin } = JSON.parse(readFileSync(packagePath, 'utf8'));
   const cli = typeof bin === 'string' ? bin : bin?.prisma;
   if (typeof cli !== 'string') throw new Error('Installed Prisma package has no CLI entry.');
   return {
-    args: [resolve(dirname(packagePath), cli), 'migrate', action],
+    args: [resolve(dirname(packagePath), cli), 'migrate', action === 'apply' ? 'deploy' : 'status'],
     options: {
       cwd,
-      env: { ...env, DATABASE_URL: values.DATABASE_URL, DIRECT_URL: values.DIRECT_URL },
+      env: database.env,
       stdio: 'inherit',
     },
   };

@@ -1,3 +1,8 @@
+import {
+  OrganizationMembershipStatus,
+  OrganizationStatus,
+  UserStatus,
+} from '@generated/prisma/client.js';
 import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { unauthorized } from '@common/errors/app-errors.js';
 import { appConfig, type AppConfig } from '@config/app.config.js';
@@ -48,9 +53,9 @@ export class JwtAuthGuard implements CanActivate {
         id: payload.membershipId,
         organizationId: payload.organizationId,
         userId: payload.sub,
-        status: 'ACTIVE',
-        user: { status: 'ACTIVE' },
-        organization: { status: 'ACTIVE' },
+        status: OrganizationMembershipStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
+        organization: { status: OrganizationStatus.ACTIVE },
       },
       select: { role: true, user: { select: { email: true, systemRole: true } } },
     });
