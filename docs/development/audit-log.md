@@ -50,7 +50,7 @@ GET /audit-logs?filter[entityType]=Debt&filter[entityId]=<id>
 GET /audit-logs?filter[action][startsWith]=payment&filter[createdAt][between]=2026-10-01,2026-10-31
 ```
 
-Fields: `actorId`, `entityType`, `entityId`, `action`, `createdAt` (see [List Query](./list-query.md)).
+Fields: `actorId`, `entityType`, `entityId`, `action`, `createdAt` (see [List Query](./persistence/list-query.md)).
 The three named parameters `actorId`, `entityType`, `entityId`, `action` also work as plain filters.
 
 ## Auditing a new action

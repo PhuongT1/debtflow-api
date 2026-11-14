@@ -1,33 +1,43 @@
 # Bắt đầu với DebtFlow API
 
 Tài liệu này giúp dev mới hiểu kiến trúc, lần theo một request, sửa đúng chỗ và thêm module mới.
-Bắt đầu với lộ trình dưới đây; các quy tắc chi tiết và API reference nằm ở nhóm tra cứu trong sidebar.
+Đọc theo lộ trình dưới đây; không cần đọc hết phần tra cứu trước khi nhận task đầu tiên.
 
-Để thiết lập DB hoặc chuẩn bị release, xem [Database: dev, staging và production](../database/index.md).
+Để thiết lập DB, xem [Database](../database/index.md). CI/CD và phát hành staging/production
+nằm riêng tại [Triển khai](../deployment/index.md).
 
 ## Đọc theo thứ tự
 
 | Bước | Trang | Sau khi đọc bạn sẽ biết |
 | --- | --- | --- |
-| 1 | [Chạy dự án](../getting-started/run-source.md) | Chuẩn bị môi trường, chạy BE và mở Swagger |
-| 2 | [Kiến trúc backend](../getting-started/architecture.md) | Các layer, trách nhiệm và chiều phụ thuộc |
-| 3 | [Một request từ FE đến DB](../getting-started/request-flow.md) | Thứ tự xử lý, file nào chạy và lỗi được trả về ở đâu |
-| 4 | [Ví dụ thực tế: Party](../getting-started/party-architecture.md) | Áp dụng kiến trúc chung vào module đang có |
-| 5 | [Sửa chức năng và thêm module](../getting-started/module-development.md) | Chọn đúng owner, nối DI, tái sử dụng types và kiểm tra phần ảnh hưởng |
+| 1 | [Chạy dự án](./running/index.md) | Chọn Node, cấu hình môi trường, chạy BE và mở Swagger |
+| 2 | [Áp dụng AI rules sau khi clone](../team/ai-setup.md) | Cài rules/skills từ nguồn thật; biết nơi sửa và đồng bộ |
+| 3 | [Kiến trúc backend](./architecture.md) | Trách nhiệm từng layer và chiều phụ thuộc |
+| 3.1 | [Clean Architecture và lý do lựa chọn](./architecture/clean-architecture.md) | Các layer, chiều phụ thuộc và phạm vi đã chuyển đổi |
+| 3.2 | [Luồng request từ FE đến DB](./architecture/request-flow.md) | Thứ tự xử lý, file nào chạy và lỗi được trả về ở đâu |
+| 3.3 | [Ví dụ thực tế: Party](./architecture/party-architecture.md) | Lần theo một API đang có từ controller tới DB và response |
+| 4 | [Viết và bảo trì API](./module-development.md) | Sửa đúng owner, nối DI, tái sử dụng types và kiểm tra phần ảnh hưởng |
 
-**Party là ví dụ minh họa.** Kiến trúc chung áp dụng cho mọi module; không sao chép toàn bộ file/folder
+**Party là ví dụ đã áp dụng Clean Architecture; các module khác chưa chuyển hết.** Không sao chép toàn bộ file/folder
 của Party cho một chức năng nhỏ.
+
+## Sau lộ trình này, bạn cần làm được gì?
+
+- Mở Swagger và gọi một API với user/tenant đúng.
+- Tìm controller → service → repository binding → Prisma adapter của API đó.
+- Biết nơi sửa request, response, query, nghiệp vụ và test tương ứng.
+- Tìm đúng rule gốc khi cần thay đổi; không tạo thêm bản rules trong module.
 
 ## Khi đang làm một task
 
 | Bạn cần làm gì? | Đọc trang nào? |
 | --- | --- |
-| Tìm đúng file để sửa | [Cách làm việc với module](../getting-started/module-development.md#maintain-existing-feature) |
-| Viết filter, sort, phân trang | [List query dùng chung](../development/list-query.md) |
+| Tìm đúng file để sửa | [Cách làm việc với module](./module-development.md#maintain-existing-feature) |
+| Viết filter, sort, phân trang | [List query dùng chung](../development/persistence/list-query.md) |
 | Hiểu quyền và tổ chức của user | [Authorization](../development/authorization.md) |
 | Sửa schema hoặc migration | [Database workflow](../database/index.md) |
 | Xem endpoint và dữ liệu nhận/trả | [Endpoint catalog](../generated/endpoints.md), [API reference](../generated/api-reference.md) |
-| Thiết lập AI của team | [AI setup](../team/ai-setup.md), sau đó đọc `AGENTS.md` tại gốc repository |
+| Áp dụng AI rules sau khi clone | [Cài rules cho công cụ đang dùng](../team/ai-setup.md), sau đó đọc `AGENTS.md` tại gốc repository |
 
 ## Quy tắc và tài liệu tra cứu
 

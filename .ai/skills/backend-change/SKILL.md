@@ -22,7 +22,7 @@ contract; this skill selects and applies it rather than maintaining a second cop
 - Route/input/output: `http-contract.md` and `validation.md` (runtime DTO imports, null/blank semantics,
   status/envelope, validation/error contracts, binary exceptions).
 - Auth or related IDs: `security-tenancy.md` (current identity, roles, tenant/resource ownership).
-- Database access: read `docs/development/persistence-architecture.md`; extend the owning repository port
+- Database access: read `docs/development/persistence/persistence-architecture.md`; extend the owning repository port
   and Prisma adapter, bind them in the Nest module and test the service with a fake port.
 - Service/write/status/money: `services-persistence.md` (explicit mapping, Decimal, tx propagation,
   concurrency evidence and schema/backfill impact).

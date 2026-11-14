@@ -19,7 +19,7 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
 - Work in this API repository. Sibling repositories, including Vendure, are references unless the
   user asks to change them. Their package managers, stacks and instruction files are not API policy.
 - Use Node 24 native ESM (`NodeNext`), npm and `package-lock.json`. Read
-  [import aliases](./docs/development/import-aliases.md) before changing imports; use `.js` suffixes and
+  [import aliases](./docs/development/source/import-aliases.md) before changing imports; use `.js` suffixes and
   the short `@auth/*`, `@common/*`, `@modules/*` and other configured aliases. Do not introduce another lockfile, package layout, framework or
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
@@ -27,10 +27,12 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
 - Keep one ordinary controller/service/query/mapper/types/rules file at the feature root. Create a
   responsibility folder only for at least two related files. Keep `dto/`, `_test/`, `public/`,
   `repositories/` and `infrastructure/` as explicit boundaries even when they contain one file.
+  Party uses explicit `domain/`, `application/`, `presentation/`, `infrastructure/` layer folders;
+  its repository port lives under `application/repositories/`. Domain must not depend on Application.
   Update imports, module bindings, tests and references together; never add filler or empty folders.
 - Features use `repositories/` contracts and `infrastructure/` Prisma adapters. Services/listeners
   MUST NOT import the database layer, PrismaClient or concrete adapters. Modules own DI bindings.
-  See [Persistence architecture](./docs/development/persistence-architecture.md); transaction-scoped stores
+  See [Persistence architecture](./docs/development/persistence/persistence-architecture.md); transaction-scoped stores
   keep dependent writes atomic without leaking Prisma clients into application services.
 - Put genuinely shared infrastructure in `src/common/`; it must not import feature or auth code.
   `src/config/` and `src/database/` also must not depend on features or auth. Controllers delegate
@@ -89,14 +91,15 @@ service, transaction, event and test evidence and the REST/Prisma adaptations. D
 | --- | --- |
 | Implement a backend change | [Backend Rules](./docs/guides/backend-rules/index.md), required topics, then the owned implementation |
 | Auth, tenants, permissions | [Authorization](./docs/development/authorization.md) and [Business Rules](./docs/reference/business-rules.md) |
-| Sort/filter/pagination | [List Query](./docs/development/list-query.md) and the resource's `*.list-query.ts` |
+| Sort/filter/pagination | [List Query](./docs/development/persistence/list-query.md) and the resource's `*.list-query.ts` |
 | Prisma schema or migration | [Database Workflow](./docs/database/index.md) and the affected models/migrations |
 | Audit events | [Audit Log](./docs/development/audit-log.md) and existing emit/listener code |
 | Response or validation | [API Response Format](./docs/guides/api-response-format.md) and [Localization](./docs/development/localization.md) |
-| Swagger UI, OpenAPI or generated API documentation | [API and Swagger](./docs/development/api-and-swagger.md), especially its task-to-file owner table |
-| Architecture onboarding or module development | [Backend architecture](./docs/getting-started/architecture.md), [request flow](./docs/getting-started/request-flow.md), then [module development](./docs/getting-started/module-development.md) |
-| Party example or workflow | [Party implementation example](./docs/getting-started/party-architecture.md), including current audit gaps |
-| Architecture or new file placement | [Project Structure](./docs/development/project-structure.md) and [Vendure Reference](./docs/adr/vendure-reference.md) |
+| Swagger UI, OpenAPI or generated API documentation | [API and Swagger](./docs/development/http/api-and-swagger.md), especially its task-to-file owner table |
+| CI/CD or deployment documentation | [Deployment](./docs/deployment/index.md), actual `.github/workflows/`, `vercel.json` and `Dockerfile`; distinguish configured behavior from proposed gates |
+| Architecture onboarding or module development | [Backend architecture](./docs/getting-started/architecture.md), [request flow](./docs/getting-started/architecture/request-flow.md), then [module development](./docs/getting-started/module-development.md) |
+| Party example or workflow | [Party implementation example](./docs/getting-started/architecture/party-architecture.md), including current audit gaps |
+| Architecture or new file placement | [Project Structure](./docs/development/source/project-structure.md) and [Vendure Reference](./docs/adr/vendure-reference.md) |
 
 ## Verification and completion
 

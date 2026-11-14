@@ -7,10 +7,12 @@
 
 | Nhu cầu | Cách làm |
 | --- | --- |
-| Tạo bảng/field giống dev | Apply migration; xem [DB trống](./initialize-empty.md) hoặc [schema mới](./add-tables-fields.md) |
-| Tài khoản/dữ liệu giả cho QA | Fixture/bootstrap riêng đã review, chỉ dữ liệu staging |
+| Tạo bảng/field giống dev | Apply migration; xem [áp dụng migration](./migrations/index.md) hoặc [schema mới](./local/change-schema.md) |
+| Nhóm tài khoản mẫu dev/staging | `npm run db:user:seed:dev` hoặc `npm run db:user:seed:staging`; xem [tài khoản mẫu](./users/create-user.md) |
+| Một tài khoản với quyền cụ thể | [Tạo user theo quyền](./users/create-user.md), sau đó [kiểm tra quyền](./users/verify-user-access.md) |
+| Dữ liệu nghiệp vụ giả cho QA | Fixture riêng được review cho organization và môi trường được phép |
 | Danh mục nghiệp vụ dùng chung | Migration dữ liệu hoặc bootstrap được review và có thể chạy lại an toàn |
-| Điền giá trị field mới từ field cũ | Backfill; xem [đổi field](./change-existing-fields.md) |
+| Điền giá trị field mới từ field cũ | Backfill; xem [đổi field](./schema/change-existing-fields.md) |
 | Copy toàn bộ DB sang server mới | Kế hoạch backup/restore hoặc chuyển DB riêng, không phải `migrate deploy` |
 
 ## Nếu cần fixture/bootstrap
@@ -22,7 +24,8 @@
 5. Ghi lại kết quả; production chỉ chạy phần dữ liệu ban đầu được duyệt riêng.
 
 Repo có `prisma/seed.ts` cho dữ liệu demo dev; nó không phải bootstrap production.
-Hiện chưa có script bootstrap production riêng. Không hướng dẫn dev chạy seed này trên production.
+Script `db:user:create:*` tạo tài khoản và membership; dùng lại hoặc tạo workspace mặc định khi
+không truyền organization ID. Nó không tạo dữ liệu nghiệp vụ hoặc tự đặt lại mật khẩu. Đây không phải bootstrap toàn bộ production.
 
 ## Nếu cần copy toàn bộ dữ liệu
 

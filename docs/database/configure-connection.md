@@ -31,11 +31,11 @@ nvm use
 # Install the exact dependencies in package-lock.json; replace existing node_modules.
 npm ci
 # Create local development settings; skip if .env already exists.
-cp .env.example .env
+[ -f .env ] || cp .env.example .env
 # Create staging settings from the template; skip if the file exists.
-cp .env.example .env.staging
+[ -f .env.staging ] || cp .env.example .env.staging
 # Create production settings from the template; skip if the file exists.
-cp .env.example .env.production
+[ -f .env.production ] || cp .env.example .env.production
 ```
 
 Điền giá trị thật trong file của môi trường cần dùng:
@@ -50,8 +50,8 @@ Có thể dùng cùng URL cho cả hai biến nếu không có pooler/proxy.
 Các file thật được Git ignore; không commit credentials.
 
 **Riêng CLI của repo:** `prisma.config.ts` tự đọc `.env`, không tự chọn `.env.staging` theo
-`NODE_ENV`. Vì thế các lệnh ở trang sau dùng `node --env-file=...` và yêu cầu **cả hai URL** trong
-file đích, tránh `DIRECT_URL` dev được bổ sung từ `.env`.
+`NODE_ENV`. Các script `db:migrate:*:staging`/`production` và `db:user:create:*` đọc file môi trường được
+chọn trực tiếp, yêu cầu **cả hai URL** và thay URL kế thừa trong shell; không lấy URL thiếu từ `.env`.
 Đừng sửa `.env` dev để chuyển qua lại giữa các DB.
 
 ## 3. Xác nhận database đích
@@ -63,7 +63,7 @@ SELECT current_database() AS database_name, current_user AS database_user;
 ```
 
 Đối chiếu cả endpoint, tên database và user. Không dán SQL đầy đủ vào ô filter của tab Data.
-Sau đó chọn [khởi tạo DB trống](./initialize-empty.md) hoặc [cập nhật bảng/field](./add-tables-fields.md).
+Sau đó chọn [áp dụng migration: DB trống hoặc đã có lịch sử](./migrations/index.md) hoặc [cập nhật bảng/field](./local/change-schema.md).
 
 ## API trên Vercel dùng env nào?
 
@@ -78,3 +78,9 @@ Thiết lập backup/restore và quyền runtime trước khi dùng production.
 
 Cách chọn file và nhánh ở trên được đối chiếu với `prisma.config.ts`, `src/config/app.config.ts`
 và `vercel.json` của repo; không phải cơ chế tự chọn môi trường của Prisma.
+
+## Chọn hướng dẫn theo môi trường
+
+- [DB dev: cài/cập nhật](./local/index.md) và [tạo migration](./local/change-schema.md).
+- [Kết nối DB staging/production với API và release runner](./releases/connect-runtime.md).
+- [Production: code và DB từng bước](../deployment/environments/production.md).

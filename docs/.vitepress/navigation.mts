@@ -1,8 +1,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { DefaultTheme } from 'vitepress';
+import { readCorePages } from './core-pages.mts';
 
-type PageLink = { text: string; link: string; items?: PageLink[] };
+export type PageLink = { text: string; link?: string; items?: PageLink[] };
 export type DocSection = {
   icon: string;
   description: string;
@@ -28,23 +29,69 @@ function policyPages(directory: string, base: string): PageLink[] {
 
 export function createDocumentationNavigation() {
   const docsRoot = resolve(import.meta.dirname, '..');
-  const coreRoot = resolve(docsRoot, '../.ai/core');
+  const corePages = readCorePages();
+  const aiSetup: PageLink = {
+    text: 'Áp dụng AI rules sau khi clone',
+    link: '/team/ai-setup',
+    items: pages('/team/ai-setup/', [
+      ['choose-client', 'Kiểm tra AI đã nhận rules'],
+      ['use-skills', 'Dùng skill theo công việc'],
+      ['update-rules', 'Cập nhật và xử lý lỗi'],
+      ['reuse-in-project', 'Mang rules sang dự án khác'],
+    ]),
+  };
   const sections: DocSection[] = [
     {
       text: 'Bắt đầu',
       icon: 'start',
-      description: 'Chạy dự án, hiểu kiến trúc và lần theo một request từ FE đến database.',
+      description: 'Thiết lập máy dev, chạy local, áp dụng AI rules và viết API.',
       link: '/getting-started/',
       prefixes: ['/getting-started/'],
       groups: [
         {
           text: 'Dev mới — đọc theo thứ tự',
+          items: [
+            {
+              text: '1. Chạy dự án',
+              link: '/getting-started/run-source',
+              items: pages('/getting-started/running/', [
+                ['local', 'Chạy local và debug'],
+                ['troubleshooting', 'Xử lý lỗi khởi động'],
+              ]),
+            },
+            { ...aiSetup, text: '2. Áp dụng AI rules sau khi clone' },
+            {
+              text: '3. Viết và bảo trì API',
+              link: '/getting-started/module-development',
+              items: [
+                {
+                  text: 'Sửa API đang có',
+                  link: '/getting-started/module-development#maintain-existing-feature',
+                },
+                { text: 'Thêm module mới', link: '/getting-started/module-development#add-module' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      text: 'Kiến trúc',
+      icon: 'code',
+      description: 'Clean Architecture, các layer và luồng API qua ví dụ Party thực tế.',
+      link: '/getting-started/architecture',
+      prefixes: [
+        '/getting-started/architecture',
+        '/getting-started/request-flow',
+        '/getting-started/party-architecture',
+      ],
+      groups: [
+        {
+          text: 'Hiểu kiến trúc dự án',
           items: pages('/getting-started/', [
-            ['run-source', '1. Chạy dự án'],
-            ['architecture', '2. Kiến trúc backend'],
-            ['request-flow', '3. Request từ FE đến DB'],
-            ['party-architecture', '4. Ví dụ Party'],
-            ['module-development', '5. Sửa và thêm module'],
+            ['architecture/clean-architecture', 'Clean Architecture và lý do lựa chọn'],
+            ['request-flow', 'Luồng request từ FE đến DB'],
+            ['party-architecture', 'Ví dụ thực tế: Party'],
           ]),
         },
       ],
@@ -57,28 +104,57 @@ export function createDocumentationNavigation() {
       prefixes: ['/database/'],
       groups: [
         {
-          text: 'Chọn tình huống',
-          items: pages('/database/', [
-            ['configure-connection', 'Tạo DB và cấu hình URL'],
-            ['initialize-empty', 'DB trống: tạo toàn bộ bảng'],
-            ['add-tables-fields', 'Đưa bảng/field mới lên staging, production'],
-            ['change-existing-fields', 'Đổi/xóa field có dữ liệu'],
-            ['new-developer', 'Dev mới: cập nhật DB riêng'],
-            ['data-changes', 'Dữ liệu demo, QA và backfill'],
-            ['existing-database', 'DB có sẵn: baseline'],
-            ['migration-failure', 'Migration lỗi hoặc drift'],
-            ['overview', 'Tổng quan database'],
-            ['party-indexes', 'Party indexes và DB tests'],
-          ]).map((page) =>
-            page.link === '/database/initialize-empty'
-              ? {
-                  ...page,
+          text: 'DB local — dành cho dev',
+          items: [
+            { text: 'Kết nối và chọn đúng môi trường', link: '/database/configure-connection' },
+            {
+              text: 'Cài và cập nhật DB dev riêng',
+              link: '/database/new-developer',
+              items: [{ text: 'Tạo migration khi thêm/sửa model', link: '/database/add-tables-fields' }],
+            },
+          ],
+        },
+        {
+          text: 'DB staging và production',
+          items: [
+            {
+              text: 'Chuẩn bị DB để phát hành',
+              link: '/database/releases/',
+              items: [
+                { text: 'Kết nối DB với API và release runner', link: '/database/releases/connect-runtime' },
+                {
+                  text: 'Áp dụng migration: tạo mới và cập nhật DB',
+                  link: '/database/initialize-empty',
                   items: pages('/database/', [
-                    ['migration-order', 'Migration: thứ tự chạy và kiểm tra'],
+                    ['migration-order', '1. Chạy và kiểm tra migration'],
                   ]),
-                }
-              : page,
-          ),
+                },
+                {
+                  text: 'Tài khoản dev và kiểm thử',
+                  link: '/database/create-user',
+                  items: [{ text: 'Kiểm tra login và phân quyền', link: '/database/verify-user-access' }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          text: 'Schema, dữ liệu và xử lý lỗi',
+          items: [
+            {
+              text: 'Thay đổi schema có dữ liệu',
+              link: '/database/change-existing-fields',
+              items: pages('/database/', [
+                ['migration-failure', 'Migration lỗi hoặc drift'],
+                ['existing-database', 'DB có sẵn: baseline'],
+              ]),
+            },
+            ...pages('/database/', [
+              ['data-changes', 'Dữ liệu nghiệp vụ và backfill'],
+              ['overview', 'Tổng quan database'],
+              ['party-indexes', 'Party indexes và DB tests'],
+            ]),
+          ],
         },
       ],
     },
@@ -90,20 +166,35 @@ export function createDocumentationNavigation() {
       prefixes: ['/development/', '/guides/api-response-format'],
       groups: [
         {
-          text: 'Tra cứu khi làm task',
+          text: 'Chọn phần cần sửa',
           items: [
+            {
+              text: 'Tổ chức source và imports',
+              items: pages('/development/', [
+                ['project-structure', 'Cấu trúc source'],
+                ['import-aliases', 'Import aliases và ESM'],
+              ]),
+            },
+            {
+              text: 'Request, validation và response',
+              items: [
+                { text: 'Validation và errors', link: '/development/validation-and-errors' },
+                { text: 'Response format', link: '/guides/api-response-format' },
+                { text: 'Swagger và API docs', link: '/development/api-and-swagger' },
+              ],
+            },
+            {
+              text: 'Truy cập dữ liệu',
+              items: pages('/development/', [
+                ['persistence-architecture', 'Repository và transaction'],
+                ['list-query', 'Filter, sort, phân trang'],
+              ]),
+            },
             ...pages('/development/', [
-              ['project-structure', 'Cấu trúc source'],
-              ['persistence-architecture', 'Repository và transaction'],
-              ['api-and-swagger', 'Swagger và API docs'],
-              ['list-query', 'Filter, sort, phân trang'],
               ['authorization', 'Auth và tenant'],
-              ['validation-and-errors', 'Validation và errors'],
-              ['localization', 'Localization EN/VI'],
               ['audit-log', 'Audit log'],
-              ['import-aliases', 'Import aliases và ESM'],
+              ['localization', 'Localization EN/VI'],
             ]),
-            { text: 'Response format', link: '/guides/api-response-format' },
           ],
         },
       ],
@@ -116,33 +207,94 @@ export function createDocumentationNavigation() {
       prefixes: ['/team/', '/guides/backend-rules/'],
       groups: [
         {
-          text: 'Thiết lập và bảo trì',
-          items: pages('/team/', [
-            ['ai-setup', 'AI setup cho member'],
-            ['ai-development', 'AI development workflow'],
-            ['documentation', 'Sửa docs và rules đúng nguồn'],
-            ['core/', 'Core rules: bắt đầu'],
-          ]),
-        },
-        {
-          text: 'DebtFlow backend rules',
+          text: 'Áp dụng đúng nguồn',
           items: [
-            { text: 'Bắt đầu với backend rules', link: '/guides/backend-rules/' },
-            ...policyPages(resolve(docsRoot, 'guides/backend-rules'), '/guides/backend-rules/'),
+            aiSetup,
+            { text: 'Tìm rules theo công việc', link: '/team/ai-development' },
+            { text: 'Bảo trì tài liệu và rules', link: '/team/documentation' },
           ],
         },
-        ...['architecture', 'backend', 'workflow'].map((topic) => ({
-          text: `Core — ${topic}`,
-          items: policyPages(resolve(coreRoot, topic), `/team/core/${topic}/`),
-        })),
+        {
+          text: 'Quy tắc bắt buộc',
+          items: [
+            {
+              text: 'Core NestJS dùng chung',
+              link: '/team/core/',
+              items: ['architecture', 'backend', 'workflow'].map((topic) => ({
+                text: {
+                  architecture: 'Kiến trúc và tái sử dụng',
+                  backend: 'API, bảo mật và dữ liệu',
+                  workflow: 'Testing và verification',
+                }[topic]!,
+                items: corePages
+                  .filter((page) => page.topic.startsWith(`${topic}/`))
+                  .map(({ title, link }) => ({ text: title, link })),
+              })),
+            },
+            {
+              text: 'Quy tắc DebtFlow',
+              link: '/guides/backend-rules/',
+              items: policyPages(
+                resolve(docsRoot, 'guides/backend-rules'),
+                '/guides/backend-rules/',
+              ),
+            },
+          ],
+        },
       ],
     },
     {
-      text: 'API & sản phẩm',
+      text: 'Triển khai',
+      icon: 'decisions',
+      description: 'CI kiểm tra gì, CD phát hành thế nào và vận hành staging/production.',
+      link: '/deployment/',
+      prefixes: ['/deployment/'],
+      groups: [
+        {
+          text: 'CI — kiểm tra trước khi merge',
+          items: [
+            {
+              text: 'CI hiện có và các quality gates',
+              link: '/deployment/ci/',
+              items: pages('/deployment/ci/', [
+                ['pull-requests', 'Bảo vệ nhánh và xử lý CI lỗi'],
+              ]),
+            },
+          ],
+        },
+        {
+          text: 'CD — phát hành ứng dụng',
+          items: [
+            {
+              text: 'Quy trình phát hành',
+              link: '/deployment/cd/',
+              items: [
+                { text: '1. Triển khai staging', link: '/deployment/environments/staging' },
+                {
+                  text: '2. Phát hành production',
+                  link: '/deployment/environments/production',
+                  items: [{ text: 'Thêm, đổi, xóa field/bảng: thứ tự code và DB', link: '/deployment/environments/schema-changes' }],
+                },
+              ],
+            },
+            {
+              text: 'Chọn nền tảng triển khai',
+              items: pages('/deployment/platforms/', [
+                ['vercel', 'Vercel: nhánh, env và chặn phát hành'],
+                ['docker', 'Docker và host Node'],
+              ]),
+            },
+            { text: 'Kiểm tra, theo dõi và rollback', link: '/deployment/cd/operations' },
+          ],
+        },
+      ],
+    },
+    {
+      text: 'Tra cứu',
       icon: 'reference',
       description: 'Tra cứu endpoint, schema, nghiệp vụ và tài liệu được sinh từ code.',
       link: '/reference/',
-      prefixes: ['/reference/', '/generated/'],
+      prefixes: ['/reference/', '/generated/', '/adr/'],
       groups: [
         {
           text: 'Nguồn tra cứu',
@@ -158,15 +310,6 @@ export function createDocumentationNavigation() {
             ]),
           ],
         },
-      ],
-    },
-    {
-      text: 'Quyết định',
-      icon: 'decisions',
-      description: 'Hiểu lý do đằng sau kiến trúc qua ADR và các nguồn tham khảo.',
-      link: '/adr/',
-      prefixes: ['/adr/'],
-      groups: [
         {
           text: 'ADR và nguồn tham khảo',
           items: pages('/adr/', [
@@ -190,11 +333,20 @@ export function createDocumentationNavigation() {
   }
   return {
     docSections: sections,
-    nav: sections.map((section) => ({
-      text: section.text,
-      link: section.link,
-      activeMatch: `^(${section.prefixes.map((prefix) => prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
-    })),
-    sidebar,
+    nav: sections.map((section) => {
+      const escape = (prefix: string) => prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const nested = sections
+        .filter((other) => other !== section)
+        .flatMap((other) => other.prefixes)
+        .filter((prefix) => section.prefixes.some((base) => prefix.startsWith(base)));
+      const exclude = nested.length ? `(?!${nested.map(escape).join('|')})` : '';
+      return {
+        text: section.text,
+        link: section.link,
+        activeMatch: `^${exclude}(${section.prefixes.map(escape).join('|')})`,
+      };
+    }),
+    // VitePress sorts by slash depth; insert specific routes first to resolve equal-depth keys.
+    sidebar: Object.fromEntries(Object.entries(sidebar).sort(([a], [b]) => b.length - a.length)),
   };
 }

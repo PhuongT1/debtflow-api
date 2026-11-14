@@ -12,21 +12,23 @@ explicit architecture boundaries `_test/`, `repositories/` and `infrastructure/`
 separate even with one file. Keep `public/` for deliberate provider contracts where used; DTO/type-only
 contracts can be imported from their actual owner without a forwarding file. Do not add filler files to satisfy the threshold.
 
+Party uses explicit clean-layer responsibility folders, each with real owned files:
+
 ```text
 src/modules/parties/
   parties.module.ts
-  parties.controller.ts
-  parties.service.ts
-  party.mapper.ts
-  party.types.ts
-  dto/
-  repositories/parties.repository.ts
-  infrastructure/
-    prisma-parties.repository.ts
-    queries/                         # multiple SQL helpers
-  queries/                           # list config, projection, filter composition
+  party.list-query.ts                # outer HTTP/Prisma capability configuration
+  domain/                            # pure business decisions
+  application/                       # service, inputs, read models, ports, write mapper
+    repositories/parties.repository.ts
+  presentation/                      # HTTP controller, response mapper, dto/
+  infrastructure/                    # Prisma/event adapters, queries/, sql/
   _test/
 ```
+
+This is the selected Party architecture, not a template imposed on unmigrated features. Root-level
+single-responsibility placement still applies to their compact layout. Party's layer folders carry
+real responsibilities; do not add an extra services/types/rules folder inside them for a single file.
 
 When a second service/controller/mapper/types/rules/query file is needed, group the existing and
 new files in the relevant folder and update every import, Nest binding, test and reference in the
@@ -76,7 +78,7 @@ security/error responses. Global guards enforce access; Swagger decorators do no
 | Response classes           | specific response purpose + `Dto`      | `PartyResponseDto`, `PartyListItemDto`, `MemberDto`    |
 | List config/constant       | UPPER_SNAKE_CASE                       | `PARTY_LIST_QUERY`, `PASSWORD_ROUNDS`                  |
 | Method/variable            | camelCase, behavior-oriented verb      | `assertAssignee`, `buildPartyUpdateData`               |
-| Test                       | owned `_test/<subject>.spec.ts`           | `users.rules.spec.ts`                                  |
+| Test                       | owned `_test/<subject>.spec.ts`        | `users.rules.spec.ts`                                  |
 
 Prefer established service method names (`list`, `detail`, `create`, `update`, `deactivate`) when their
 meaning fits. A domain operation such as `reactivate`, `cancel` or `createAutoAllocated` should name
@@ -152,7 +154,6 @@ repository, CQRS bus, plugin engine or global request context when the actual ta
 use case. If an exception is necessary for a documented runtime constraint, scope and explain it
 instead of making it the default pattern.
 
-
 ## OWN-06 — locate constants by ownership
 
 Search existing constants and callers before adding a definition. Constants shared by feature HTTP
@@ -195,9 +196,13 @@ projection keys or inferred payloads. Keep one projection source, not a forwardi
 
 Group guides under `docs/getting-started/`, `docs/database/`, `docs/development/`, `docs/team/`,
 `docs/reference/` and `docs/adr/`. Keep canonical DebtFlow rules here and portable policy in `.ai/core/`.
-Use `docs/.vitepress/navigation.mts` as the single menu/sidebar source. Core policy views include
-canonical Markdown; never maintain a second policy body. When moving a guide, update repository links,
+Use `docs/.vitepress/navigation.mts` as the single menu/sidebar source. Core policy routes read
+canonical Markdown directly; never maintain a second policy body. When moving a guide, update repository links,
 agent/skill routing and generators together. See [documentation maintenance](../../team/documentation.md).
 
 Explain onboarding/database shell commands with a short English comment immediately above the command.
 State its purpose and meaningful effects; distinguish schema writes, generation and demo seeding.
+
+Name npm scripts by their actual action and environment; do not add equivalent aliases for the same
+operation. Keep documentation comments visible but excluded from shared code-copy behavior using
+the VitePress/Shiki owner; do not strip comment markers inside string literals or data blocks.

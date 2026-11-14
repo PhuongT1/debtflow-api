@@ -16,7 +16,7 @@ a real independent caller/transport, not automatic boilerplate.
 Map accepted fields explicitly; do not pass a request object directly to Prisma `data`, `where`,
 `include` or `orderBy`. Database-managed IDs, tenant, creator, audit actor, paid amount and status
 transitions must not become editable merely because a generic `Partial<Model>` includes them.
-Respect omission/null behavior and recalculate derived values from merged state. `parties/party.mapper.ts`
+Respect omission/null behavior and recalculate derived values from merged state. `parties/presentation/party.mapper.ts`
 and `toMemberDto` are specific useful examples; not every Prisma field is a safe public field.
 
 ## DB-02 — separate shape validation and business invariants
@@ -100,10 +100,9 @@ and use an authorized disposable database for real constraint/concurrency claims
 must be described as such. Use the APIs of the installed Prisma major version; newer online docs may
 describe a different client API.
 
-
 ## DB-06 — repository contracts and Prisma adapters
 
-Follow [Persistence architecture](../../development/persistence-architecture.md). Every feature that accesses the
+Follow [Persistence architecture](../../development/persistence/persistence-architecture.md). Every feature that accesses the
 DB owns `repositories/<feature>.repository.ts` (abstract DI contract) and
 `infrastructure/prisma-<feature>.repository.ts` (implementation). Nest modules bind the two with
 `provide`/`useClass`; application services and listeners inject only the contract. Do not construct
@@ -114,6 +113,18 @@ arguments or `TransactionClient`. Reuse existing DTOs, domain rules and named pr
 do not invent generic CRUD repositories or duplicate all generated models. Generated enums, Decimal
 values and typed projections remain deliberate compile-time/value dependencies; this is not a claim
 of complete ORM-independent Domain Driven Design.
+
+Party uses explicit clean layers: `domain/` owns pure business decisions and only the types those decisions need; `application/`
+owns the service, use-case inputs/read models, member/audit ports and `repositories/` contract.
+Domain MUST NOT depend on Application, HTTP, ORM or adapters, including through shared helpers.
+Application may depend on Domain and neutral shared code, never Presentation, Nest or Prisma.
+`presentation/` owns DTOs, response allow-lists and HTTP mapping. `infrastructure/` owns Prisma
+payload inference, Decimal arithmetic, SQL and event delivery. Map money to decimal text at its port.
+The feature-root `party.list-query.ts` is deliberately shared by outer HTTP/Prisma adapters and
+schema-checked; it MUST NOT enter Domain/Application. There is one allow-list, not two competing copies.
+Nest module factories bind implementations. Application maps rejected domain decisions to neutral
+`ApplicationError`; the HTTP filter preserves status/code/localization. Do not move HTTP concerns
+into Domain to reuse an exception constructor.
 
 Read adapters own filters, SQL, aggregation and snapshot pagination. Write services own business
 validation, state rules, tenant/actor context and post-commit audit; adapters own persistence mapping

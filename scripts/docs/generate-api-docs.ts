@@ -123,7 +123,7 @@ function renderMarkdown(document: OpenApi, groups: ReturnType<typeof groupOperat
     '- "Roles" lists the organization roles allowed. `All members` means any authenticated active member (including `VIEWER`).',
     '- JSON responses use the envelope described in [api-response-format](../guides/api-response-format.md).',
     '- Send `Accept-Language: en` or `vi` (default `vi`) to localize messages: [localization](../development/localization.md).',
-    '- List endpoints accept single-field `sortBy`/`sortOrder` and `filter[field][op]=value`: [list query](../development/list-query.md).',
+    '- List endpoints accept single-field `sortBy`/`sortOrder` and `filter[field][op]=value`: [list query](../development/persistence/list-query.md).',
     '',
     '## Endpoint index',
     '',

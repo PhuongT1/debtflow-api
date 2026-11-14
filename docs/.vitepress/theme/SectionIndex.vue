@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useData, withBase } from 'vitepress';
 import type { DocSection } from '../navigation.mts';
 import DocIcon from './DocIcon.vue';
+import TopicLinks from './TopicLinks.vue';
 
 const props = defineProps<{ section?: string }>();
 const { theme } = useData<{ docSections: DocSection[] }>();
@@ -13,18 +14,7 @@ const current = computed(() => theme.value.docSections.find((item) => item.link 
   <div v-if="current" class="docs-section-index">
     <section v-for="group in current.groups" :key="group.text">
       <h2>{{ group.text }}</h2>
-      <div class="docs-link-grid">
-        <a
-          v-for="item in group.items"
-          :key="item.link"
-          :href="withBase(item.link)"
-          class="docs-topic-link"
-        >
-          <span class="docs-topic-mark" aria-hidden="true">↗</span>
-          <span>{{ item.text }}</span>
-          <span class="docs-topic-arrow" aria-hidden="true">→</span>
-        </a>
-      </div>
+      <TopicLinks :items="group.items" />
     </section>
   </div>
   <div v-else class="docs-section-grid">
