@@ -1,7 +1,7 @@
-import type { ListQueryResult } from '@common/query/index.js';
+import type { ListQueryOptions } from '@common/query/list-query-options.types.js';
 import type { PaginatedResult } from '@common/utils/pagination.util.js';
-import type { QueryPartiesDto } from '../dto/query-parties.dto.js';
-import type { PartyRecord, PartyDetail, PartyWriteData, PartyWithBalance } from '../party.types.js';
+import type { PartyListInput, PartyWriteData } from '../party.inputs.js';
+import type { PartyRecord, PartyDetail, PartyWithBalance } from '../party-read.types.js';
 
 /** Operations bound to one write transaction; no Prisma client crosses this contract. */
 export type PartyWriteStore = {
@@ -15,8 +15,8 @@ export type PartyWriteStore = {
 export abstract class PartiesRepository {
   abstract list(
     organizationId: string,
-    query: QueryPartiesDto,
-    listQuery?: ListQueryResult,
+    query: PartyListInput,
+    listQuery?: ListQueryOptions,
   ): Promise<PaginatedResult<PartyWithBalance>>;
   abstract detail(organizationId: string, id: string): Promise<PartyDetail>;
   abstract isActive(organizationId: string, id: string): Promise<boolean>;

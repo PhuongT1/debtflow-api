@@ -85,8 +85,8 @@ export function checkMaintainability(root = projectRoot) {
     const folders = path.split('/').slice(3, -1);
     if (feature) {
       const roles = [
-        [/\.controller\.ts$/, ['controllers', 'api']],
-        [/\.service\.ts$/, ['services', 'jobs', 'integrations']],
+        [/\.controller\.ts$/, ['controllers', 'api', 'presentation']],
+        [/\.service\.ts$/, ['services', 'jobs', 'integrations', 'application']],
         [/\.listener\.ts$/, ['listeners']],
         [
           /\.repository\.ts$/,
@@ -94,9 +94,9 @@ export function checkMaintainability(root = projectRoot) {
         ],
         [/\.sql\.ts$/, ['sql']],
         [/(?:\.list-query|\.select|\.query|-query)\.ts$/, ['queries']],
-        [/\.rules\.ts$/, ['rules']],
-        [/\.types\.ts$/, ['types']],
-        [/\.mapper\.ts$/, ['mappers']],
+        [/\.rules\.ts$/, ['rules', 'domain']],
+        [/\.types\.ts$/, ['types', 'domain', 'application']],
+        [/\.mapper\.ts$/, ['mappers', 'presentation', 'application']],
         [/\.dto\.ts$/, ['dto']],
       ];
       const role = roles.find(([pattern]) => pattern.test(path));
@@ -104,6 +104,9 @@ export function checkMaintainability(root = projectRoot) {
         role &&
         role[1].some((folder) => ['dto', 'repositories', 'infrastructure'].includes(folder));
       const boundaryFolders = new Set(['dto', '_test', 'public', 'repositories', 'infrastructure']);
+      if (feature === 'parties') {
+        for (const layer of ['domain', 'application', 'presentation']) boundaryFolders.add(layer);
+      }
       const featurePrefix = `src/modules/${feature}/`;
       const siblings = files
         .map((name) => portable(relative(root, name)))

@@ -27,7 +27,7 @@ function fixture(files, run) {
       include: ['src/**/*.ts'],
     }),
   );
-  write('src/modules/parties/parties.service.ts', 'export class PartiesService {}');
+  write('src/modules/orders/orders.service.ts', 'export class OrdersService {}');
   write('src/database/prisma.service.ts', 'export class PrismaService {}');
   write(
     'src/generated/prisma/index.ts',
@@ -45,12 +45,12 @@ test('blocks infrastructure imports regardless of alias, relative path or import
   fixture(
     {
       'src/common/bad.ts': `
-      import { PartiesService } from '@modules/parties/parties.service';
-      export { PartiesService as Other } from '../modules/parties/parties.service';
-      const a = import('../modules/parties/parties.service');
-      const b = require('@modules/parties/parties.service');
-      import c = require('../modules/parties/parties.service');
-      type D = import('../modules/parties/parties.service').PartiesService;
+      import { OrdersService } from '@modules/orders/orders.service';
+      export { OrdersService as Other } from '../modules/orders/orders.service';
+      const a = import('../modules/orders/orders.service');
+      const b = require('@modules/orders/orders.service');
+      import c = require('../modules/orders/orders.service');
+      type D = import('../modules/orders/orders.service').OrdersService;
     `,
     },
     (result) => {
@@ -63,7 +63,7 @@ test('blocks infrastructure imports regardless of alias, relative path or import
 test('blocks controller database imports and renamed PrismaClient imports', () => {
   fixture(
     {
-      'src/modules/parties/parties.controller.ts': `
+      'src/modules/orders/orders.controller.ts': `
       import { PrismaService } from '@database/prisma.service';
       import { PrismaClient as Client } from '@generated/prisma';
     `,
@@ -78,14 +78,14 @@ test('blocks controller database imports and renamed PrismaClient imports', () =
 test('allows adapter persistence and controller enum imports; ignores generated code and specs', () => {
   fixture(
     {
-      'src/modules/parties/parties.controller.ts': `
+      'src/modules/orders/orders.controller.ts': `
       import { PartyType } from '@generated/prisma';
-      import { PartiesService } from './parties.service';
+      import { OrdersService } from './orders.service';
     `,
-      'src/modules/parties/infrastructure/prisma-parties.repository.ts': `import { PrismaService } from '@database/prisma.service';`,
-      'src/common/allowed.ts': `const sample = "import x from '@modules/parties/parties.service'";`,
-      'src/common/_test/example.spec.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
-      'src/generated/ignored.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
+      'src/modules/orders/infrastructure/prisma-orders.repository.ts': `import { PrismaService } from '@database/prisma.service';`,
+      'src/common/allowed.ts': `const sample = "import x from '@modules/orders/orders.service'";`,
+      'src/common/_test/example.spec.ts': `import { OrdersService } from '@modules/orders/orders.service';`,
+      'src/generated/ignored.ts': `import { OrdersService } from '@modules/orders/orders.service';`,
     },
     (result) => assert.deepEqual(result.violations, []),
   );
@@ -94,7 +94,7 @@ test('allows adapter persistence and controller enum imports; ignores generated 
 test('checks database and config dependencies as well as common helpers', () => {
   fixture(
     {
-      'src/config/bad.ts': `import { PartiesService } from '@modules/parties/parties.service';`,
+      'src/config/bad.ts': `import { OrdersService } from '@modules/orders/orders.service';`,
       'src/auth/auth.service.ts': 'export class AuthService {}',
       'src/database/bad.ts': `export { AuthService } from '../auth/auth.service';`,
     },
@@ -105,12 +105,12 @@ test('checks database and config dependencies as well as common helpers', () => 
 test('keeps Express, Swagger and controllers out of service dependencies', () => {
   fixture(
     {
-      'src/modules/parties/parties.controller.ts': 'export class PartiesController {}',
+      'src/modules/orders/orders.controller.ts': 'export class OrdersController {}',
       'src/common/i18n/i18n.service.ts': `import type { Request } from 'express'; export class I18nService {}`,
-      'src/modules/parties/parties.service.ts': `
+      'src/modules/orders/orders.service.ts': `
       import type { Response } from 'express';
       import { ApiOperation } from '@nestjs/swagger';
-      import { PartiesController } from './parties.controller';
+      import { OrdersController } from './orders.controller';
     `,
     },
     (result) => {
@@ -140,7 +140,7 @@ test('keeps auth infrastructure independent of feature sessions while allowing i
   fixture(
     {
       'src/auth/guards/bad.guard.ts':
-        "import { PartiesService } from '../../modules/parties/parties.service';",
+        "import { OrdersService } from '../../modules/orders/orders.service';",
       'src/auth/types/context.types.ts': 'export type Context = { id: string };',
       'src/auth/guards/good.guard.ts': "import type { Context } from '../types/context.types';",
     },
@@ -167,13 +167,13 @@ test('resolves short ESM aliases and permits generated enums but rejects a clien
       }),
       'src/generated/prisma/client.ts':
         'export class PrismaClient {}; export enum PartyType { CUSTOMER }',
-      'src/modules/parties/good.controller.ts':
+      'src/modules/orders/good.controller.ts':
         "import { PartyType } from '@generated/prisma/client.js';",
-      'src/modules/parties/bad.controller.ts':
+      'src/modules/orders/bad.controller.ts':
         "import { PrismaClient as Client } from '@generated/prisma/client.js';",
-      'src/modules/parties/namespace.controller.ts':
+      'src/modules/orders/namespace.controller.ts':
         "import * as Database from '@generated/prisma/client.js';",
-      'src/modules/parties/dynamic.controller.ts':
+      'src/modules/orders/dynamic.controller.ts':
         "const db = import('@generated/prisma/client.js');",
     },
     (result) => {
@@ -186,10 +186,10 @@ test('resolves short ESM aliases and permits generated enums but rejects a clien
 test('keeps feature tests in their own _test folder and out of production imports', () => {
   fixture(
     {
-      'src/modules/parties/queries/bad.spec.ts': 'export {};',
-      'src/modules/parties/_test/good.spec.ts': 'export {};',
-      'src/modules/parties/_test/fixture.ts': 'export const fixture = 1;',
-      'src/modules/parties/parties.service.ts': "import { fixture } from './_test/fixture';",
+      'src/modules/orders/queries/bad.spec.ts': 'export {};',
+      'src/modules/orders/_test/good.spec.ts': 'export {};',
+      'src/modules/orders/_test/fixture.ts': 'export const fixture = 1;',
+      'src/modules/orders/orders.service.ts': "import { fixture } from './_test/fixture';",
     },
     (result) => {
       assert.equal(result.violations.filter((v) => v.rule === 'test-layout').length, 1);
@@ -201,18 +201,18 @@ test('keeps feature tests in their own _test folder and out of production import
 test('blocks application-to-Prisma and implementation imports through aliases, relatives and re-exports', () =>
   fixture(
     {
-      'src/modules/parties/infrastructure/prisma-parties.repository.ts':
-        'export class PrismaPartiesRepository {}',
-      'src/modules/parties/repositories/parties.repository.ts':
-        'export abstract class PartiesRepository {}',
-      'src/modules/parties/services/bad.service.ts':
-        "import { PrismaService } from '@database/prisma.service'; export { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository';",
-      'src/modules/parties/services/client.service.ts':
+      'src/modules/orders/infrastructure/prisma-orders.repository.ts':
+        'export class PrismaOrdersRepository {}',
+      'src/modules/orders/repositories/orders.repository.ts':
+        'export abstract class OrdersRepository {}',
+      'src/modules/orders/services/bad.service.ts':
+        "import { PrismaService } from '@database/prisma.service'; export { PrismaOrdersRepository } from '../infrastructure/prisma-orders.repository';",
+      'src/modules/orders/services/client.service.ts':
         "import { PrismaClient as Client } from '@generated/prisma';",
-      'src/modules/parties/services/good.service.ts':
-        "import { PartiesRepository } from '../repositories/parties.repository';",
-      'src/modules/parties/parties.module.ts':
-        "import { PrismaPartiesRepository } from './infrastructure/prisma-parties.repository';",
+      'src/modules/orders/services/good.service.ts':
+        "import { OrdersRepository } from '../repositories/orders.repository';",
+      'src/modules/orders/orders.module.ts':
+        "import { PrismaOrdersRepository } from './infrastructure/prisma-orders.repository';",
     },
     (result) => {
       assert.equal(result.violations.filter((v) => v.rule === 'persistence-adapter').length, 2);
@@ -222,3 +222,78 @@ test('blocks application-to-Prisma and implementation imports through aliases, r
       );
     },
   ));
+
+test('Party clean core follows indirect type imports and rejects DTO/ORM/framework dependencies', () => {
+  fixture(
+    {
+      'src/modules/parties/application/parties.service.ts':
+        "import type { PartyRecord } from '../domain/party.types';",
+      'src/modules/parties/domain/party.types.ts':
+        "export type { PartyRecord } from '../../../common/hidden';",
+      'src/common/hidden.ts':
+        "export type PartyRecord = import('../generated/prisma').PrismaClient;",
+      'src/modules/parties/domain/party.rules.ts': "import { Injectable } from '@nestjs/common';",
+      'src/modules/parties/application/repositories/parties.repository.ts':
+        "import type { InputDto } from '../../presentation/dto/input.dto';",
+      'src/modules/parties/presentation/dto/input.dto.ts': 'export class InputDto {}',
+    },
+    ({ violations }) => {
+      const issues = violations.filter(({ rule }) => rule === 'party-clean-core');
+      assert.equal(issues.length, 4);
+      assert.ok(issues.some(({ file }) => file === 'src/common/hidden.ts'));
+      assert.ok(issues.some(({ file }) => file.endsWith('party.rules.ts')));
+      assert.ok(issues.some(({ file }) => file.endsWith('parties.repository.ts')));
+    },
+  );
+});
+
+test('Party pure contracts/rules and outer DI/Prisma adapters remain legal', () => {
+  fixture(
+    {
+      'src/modules/parties/application/parties.service.ts':
+        "import type { Input } from '../domain/party.types'; import { validate } from '../domain/party.rules';",
+      'src/modules/parties/domain/party.types.ts': 'export type Input = { name: string };',
+      'src/modules/parties/domain/party.rules.ts':
+        'export function validate(name: string) { return name.trim(); }',
+      'src/modules/parties/parties.module.ts':
+        "import { Module } from '@nestjs/common'; import { PrismaPartiesRepository } from './infrastructure/prisma-parties.repository';",
+      'src/modules/parties/infrastructure/prisma-parties.repository.ts':
+        "import { PrismaService } from '@database/prisma.service';",
+    },
+    ({ violations }) => assert.deepEqual(violations, []),
+  );
+});
+
+test('domain cannot reach application through a neutral-looking type export', () => {
+  fixture(
+    {
+      'src/modules/parties/domain/party.types.ts':
+        "export type { Input } from '../../../common/bridge';",
+      'src/common/bridge.ts':
+        "export type { Input } from '../modules/parties/application/party.inputs';",
+      'src/modules/parties/application/party.inputs.ts': 'export type Input = { name: string };',
+    },
+    ({ violations }) => {
+      assert.ok(
+        violations.some(
+          ({ rule, file }) => rule === 'party-clean-core' && file === 'src/common/bridge.ts',
+        ),
+      );
+    },
+  );
+});
+test('new application files cannot hide outer dependencies and adapters cannot import HTTP', () => {
+  fixture(
+    {
+      'src/modules/parties/application/extra.ts':
+        "import { InputDto } from '../presentation/dto/input.dto';",
+      'src/modules/parties/presentation/dto/input.dto.ts': 'export class InputDto {}',
+      'src/modules/parties/infrastructure/read.ts':
+        "import { InputDto } from '../presentation/dto/input.dto';",
+    },
+    ({ violations }) => {
+      assert.ok(violations.some(({ rule }) => rule === 'party-clean-core'));
+      assert.ok(violations.some(({ rule }) => rule === 'party-adapter-dependency'));
+    },
+  );
+});

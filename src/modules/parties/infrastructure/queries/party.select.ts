@@ -29,11 +29,6 @@ export const PARTY_DEFAULT_SELECT = {
   creditLimit: true,
 } satisfies Prisma.PartySelect;
 
-// Swagger and the mapper reuse the query's keys. Money has its own serialized representation.
-export const PARTY_RESPONSE_FIELDS = (
-  Object.keys(PARTY_DEFAULT_SELECT) as Array<keyof typeof PARTY_DEFAULT_SELECT>
-).filter((field) => field !== 'creditLimit');
-
 const ASSIGNEE_SELECT = { id: true, name: true, email: true } satisfies Prisma.UserSelect;
 
 /** Both list paths use this exact projection; tenant-scoped debt counts stay in the DB. */

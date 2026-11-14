@@ -1,3 +1,4 @@
+import type { CreatePartyInput } from '../../application/party.inputs.js';
 import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 import { OptionalBlank } from '@common/validation/optional-blank.decorator.js';
 import { Trim } from '@common/validation/trim.decorator.js';
@@ -7,7 +8,7 @@ import { PartyType } from '@generated/prisma/client.js';
 /** Non-negative amount with up to 2 decimals. */
 export const AMOUNT_PATTERN = /^\d{1,16}(\.\d{1,2})?$/;
 
-export class CreatePartyDto {
+export class CreatePartyDto implements CreatePartyInput {
   /** Customer, supplier, or both. */
   @IsEnum(PartyType)
   type!: PartyType;

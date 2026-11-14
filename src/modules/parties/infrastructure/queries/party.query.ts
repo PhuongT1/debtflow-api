@@ -12,7 +12,7 @@ import {
   getBusinessDayRangeForDate,
 } from '@common/utils/business-date.util.js';
 import { DebtStatus, Prisma } from '@generated/prisma/client.js';
-import type { QueryPartiesDto } from '../dto/query-parties.dto.js';
+import type { PartyListInput } from '../../application/party.inputs.js';
 
 /** Shared by the Prisma balance aggregate, SQL page aggregate and balance-type filter. */
 export const PARTY_BALANCE_STATUSES: DebtStatus[] = [DebtStatus.OPEN, DebtStatus.PARTIAL];
@@ -20,7 +20,7 @@ export const PARTY_BALANCE_STATUSES: DebtStatus[] = [DebtStatus.OPEN, DebtStatus
 /** Compose Prisma arguments only; no database calls. Omitted filters add no conditions. */
 export function buildPartyQuery(
   organizationId: string,
-  query: QueryPartiesDto,
+  query: PartyListInput,
   listQuery?: ListQueryResult,
 ) {
   // Base scope is mandatory; optional filters below only narrow it.
@@ -44,7 +44,7 @@ export function buildPartyQuery(
   });
 }
 
-function createdAtFilter(query: QueryPartiesDto): Prisma.DateTimeFilter | undefined {
+function createdAtFilter(query: PartyListInput): Prisma.DateTimeFilter | undefined {
   if (!query.createdFrom && !query.createdTo) return createdRange(query.createdRange);
   let from: Date | undefined;
   let to: Date | undefined;
@@ -61,7 +61,7 @@ function createdAtFilter(query: QueryPartiesDto): Prisma.DateTimeFilter | undefi
   return range;
 }
 
-function createdRange(range: QueryPartiesDto['createdRange']): Prisma.DateTimeFilter | undefined {
+function createdRange(range: PartyListInput['createdRange']): Prisma.DateTimeFilter | undefined {
   if (!range) return undefined;
   const { start } = getBusinessDayRange();
   switch (range) {

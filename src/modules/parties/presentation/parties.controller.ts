@@ -32,8 +32,8 @@ import { CreatePartyDto } from './dto/create-party.dto.js';
 import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from './dto/party-response.dto.js';
 import { QueryPartiesDto } from './dto/query-parties.dto.js';
 import { UpdatePartyDto } from './dto/update-party.dto.js';
-import { PARTY_LIST_QUERY } from './queries/party.list-query.js';
-import { PartiesService } from './parties.service.js';
+import { PARTY_LIST_QUERY } from '../party.list-query.js';
+import { PartiesService } from '../application/parties.service.js';
 
 const ID_PARAM = ApiParam({ name: 'id', description: 'Party id.' });
 const WRITERS = [OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.ACCOUNTANT];
@@ -58,7 +58,7 @@ export class PartiesController {
     @Query() q: QueryPartiesDto,
     @ListQuery(PARTY_LIST_QUERY) listQuery: ListQueryResult,
   ) {
-    return this.service.list(u.organizationId, q, listQuery).then((page) => ({
+    return this.service.list(u.organizationId, q, listQuery.options).then((page) => ({
       ...page,
       items: page.items.map(toPartyListItem),
     }));

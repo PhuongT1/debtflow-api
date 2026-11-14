@@ -1,8 +1,9 @@
+import type { PartyListInput } from '../../application/party.inputs.js';
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString, Matches } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto.js';
 import { DebtType, PartyType } from '@generated/prisma/client.js';
 
-export class QueryPartiesDto extends PaginationQueryDto {
+export class QueryPartiesDto extends PaginationQueryDto implements PartyListInput {
   /** Accent-insensitive search over name, code, phone and tax code. */
   @IsOptional()
   @IsString()

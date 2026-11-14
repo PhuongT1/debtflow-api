@@ -1,7 +1,7 @@
 import { DebtRecordDto } from '@modules/debts/public/debt-records.js';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { PartyBase } from '@generated/response-models/party-base.js';
-import { PARTY_RESPONSE_FIELDS } from '../queries/party.select.js';
+import { PARTY_RESPONSE_FIELDS } from './party-response.fields.js';
 import { UserSummaryDto } from '@modules/users/public/users.js';
 
 export class PartyBalanceDto {

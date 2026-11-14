@@ -6,9 +6,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery } from '@common/query/index.js';
 import { partyBalancePageSql } from '../infrastructure/sql/party-balance-page.sql.js';
-import { buildPartyQuery } from '../queries/party.query.js';
-import { PARTY_LIST_QUERY } from '../queries/party.list-query.js';
-import type { QueryPartiesDto } from '../dto/query-parties.dto.js';
+import { buildPartyQuery } from '../infrastructure/queries/party.query.js';
+import { PARTY_LIST_QUERY } from '../party.list-query.js';
+import type { QueryPartiesDto } from '../presentation/dto/query-parties.dto.js';
 
 // Opt-in only: never fall back to DATABASE_URL. DDL/fixtures live in a fresh schema and roll back.
 const connectionString = process.env.PARTY_QUERY_TEST_DATABASE_URL;
@@ -141,17 +141,24 @@ describe.skipIf(!connectionString)('Party aggregate ordering on PostgreSQL', () 
     ['payable', 'asc', ['c', 'd', 'g', 'a', 'b', 'f']],
     ['outstandingDocuments', 'desc', ['a', 'b', 'd', 'f', 'c', 'g']],
     ['outstandingDocuments', 'asc', ['c', 'g', 'd', 'f', 'b', 'a']],
-  ])('preserves %s %s ordering and both balances across page boundaries', async (sortBy, sortOrder, expected) => {
-    const rows = [];
-    for (let skip = 0; skip < 6; skip += 2) {
-      rows.push(...await page({ sortBy, sortOrder }, {}, 2, skip));
-    }
-    expect(rows.map(({ id }) => id)).toEqual(expected);
-    expect(rows.find(({ id }) => id === 'a')).toEqual({ id: 'a', receivable: '100', payable: '10' });
-    expect(rows.find(({ id }) => id === 'g')).toEqual({ id: 'g', receivable: '0', payable: '0' });
-    expect(rows.find(({ id }) => id === 'd')?.receivable).toBe('9007199254740993.2');
-    expect(await page({ sortBy, sortOrder }, {}, 2, 6)).toEqual([]);
-  });
+  ])(
+    'preserves %s %s ordering and both balances across page boundaries',
+    async (sortBy, sortOrder, expected) => {
+      const rows = [];
+      for (let skip = 0; skip < 6; skip += 2) {
+        rows.push(...(await page({ sortBy, sortOrder }, {}, 2, skip)));
+      }
+      expect(rows.map(({ id }) => id)).toEqual(expected);
+      expect(rows.find(({ id }) => id === 'a')).toEqual({
+        id: 'a',
+        receivable: '100',
+        payable: '10',
+      });
+      expect(rows.find(({ id }) => id === 'g')).toEqual({ id: 'g', receivable: '0', payable: '0' });
+      expect(rows.find(({ id }) => id === 'd')?.receivable).toBe('9007199254740993.2');
+      expect(await page({ sortBy, sortOrder }, {}, 2, 6)).toEqual([]);
+    },
+  );
 
   it('uses balanceType as a party filter without removing the opposite-direction balance', async () => {
     const rows = await page(

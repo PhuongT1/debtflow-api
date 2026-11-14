@@ -1,3 +1,5 @@
+/** Shared HTTP/Prisma list capabilities, checked against schema metadata at startup.
+ * Outer-adapter configuration only; Domain and Application must not import it. */
 import { PartyType, Prisma } from '@generated/prisma/client.js';
 import { defineListQuery, type ListQueryField } from '@common/query/index.js';
 
