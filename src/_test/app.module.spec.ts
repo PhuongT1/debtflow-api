@@ -77,8 +77,8 @@ describe('domain module composition and HTTP access', () => {
       '../../dist/src/modules/auth/auth.service.js',
     ) as typeof import('../modules/auth/auth.service.js');
     const { PartiesService } = requireCompiled(
-      '../../dist/src/modules/parties/parties.service.js',
-    ) as typeof import('../modules/parties/parties.service.js');
+      '../../dist/src/modules/parties/application/parties.service.js',
+    ) as typeof import('../modules/parties/application/parties.service.js');
     const { configureApp } = requireCompiled(
       '../../dist/src/configure-app.js',
     ) as typeof import('../configure-app.js');
@@ -313,7 +313,7 @@ describe('domain module composition and HTTP access', () => {
       id: 'test-party',
       name: 'Example',
       type: 'CUSTOMER',
-      creditLimit: { toString: () => '9999999999999999.99' },
+      creditLimit: '9999999999999999.99',
       internalNote: 'must not leave the server',
     });
     const response = await request('parties', { name: 'Example', type: 'CUSTOMER' }, true);
@@ -418,6 +418,49 @@ describe('domain module composition and HTTP access', () => {
       await request('exports/debts?organizationId=foreign-org', undefined, true),
     ).toMatchObject({ status: 400 });
     expect(findDebts).not.toHaveBeenCalled();
+  });
+
+  it('wires Party clean service through Nest factories without starting HTTP or connecting a database', async () => {
+    const { PartiesModule } = requireCompiled(
+      '../../dist/src/modules/parties/parties.module.js',
+    ) as typeof import('../modules/parties/parties.module.js');
+    const { PartiesService } = requireCompiled(
+      '../../dist/src/modules/parties/application/parties.service.js',
+    ) as typeof import('../modules/parties/application/parties.service.js');
+    const { DatabaseModule } = requireCompiled(
+      '../../dist/src/database/database.module.js',
+    ) as typeof import('../database/database.module.js');
+    const { PrismaService } = requireCompiled(
+      '../../dist/src/database/prisma.service.js',
+    ) as typeof import('../database/prisma.service.js');
+    const create = vi.fn().mockResolvedValue({ id: 'p-clean', creditLimit: '9999999999999999.99' });
+    const worker = await Test.createTestingModule({
+      imports: [DatabaseModule, EventEmitterModule.forRoot(), PartiesModule],
+    })
+      .overrideProvider(PrismaService)
+      .useValue({ party: { create } })
+      .compile();
+    try {
+      const service = worker.get(PartiesService);
+      expect(worker.select(PartiesModule).get(PartiesService, { strict: true })).toBe(service);
+      const result = await service.create('org-clean', 'actor-clean', {
+        name: ' Clean ',
+        type: 'CUSTOMER',
+        creditLimit: '9999999999999999.99',
+      });
+      expect(result.creditLimit).toBe('9999999999999999.99');
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            organizationId: 'org-clean',
+            createdById: 'actor-clean',
+            name: 'Clean',
+          }),
+        }),
+      );
+    } finally {
+      await worker.close();
+    }
   });
 
   it('allows a domain provider module to compose without the HTTP application or auth grouping modules', async () => {

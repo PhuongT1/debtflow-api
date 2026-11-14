@@ -17,7 +17,7 @@ file is a perfect template. Read the [source map](./vendure-source-map.md) for t
 what they establish, and what changes when adapting GraphQL/TypeORM to REST/Prisma 7.
 
 New developers: start with [architecture](../../getting-started/architecture.md),
-[request flow](../../getting-started/request-flow.md), [Party example](../../getting-started/party-architecture.md) and
+[request flow](../../getting-started/architecture/request-flow.md), [Party example](../../getting-started/architecture/party-architecture.md) and
 [module development](../../getting-started/module-development.md). The sections below remain the canonical policy.
 
 ## Select by change
@@ -37,7 +37,7 @@ usually crosses all these boundaries; a message-only fix does not. Start with th
 not an invented generic repository/service framework or an unregistered sample module.
 
 Persistence and transaction boundaries are defined in
-[Persistence architecture](../../development/persistence-architecture.md) and DB-06 in services/persistence.
+[Persistence architecture](../../development/persistence/persistence-architecture.md) and DB-06 in services/persistence.
 
 ## What automation enforces
 

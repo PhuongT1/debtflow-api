@@ -26,4 +26,4 @@ Uniqueness is per tenant (`@@unique([organizationId, code])`).
 
 ## Notes
 
-`GET /audit-logs` initially missed the `organizationId` filter and was corrected on 2026-10-30. The generic list query ([List Query](../development/list-query.md)) cannot filter or sort on `organizationId` because it is never in a resource's allow-list.
+`GET /audit-logs` initially missed the `organizationId` filter and was corrected on 2026-10-30. The generic list query ([List Query](../development/persistence/list-query.md)) cannot filter or sort on `organizationId` because it is never in a resource's allow-list.

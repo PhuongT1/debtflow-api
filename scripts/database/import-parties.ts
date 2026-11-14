@@ -15,7 +15,7 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  if (!organizationId) throw new Error('Usage: npm run import:parties -- <organizationId> [count]');
+  if (!organizationId) throw new Error('Usage: npm run db:import:parties -- <organizationId> [count]');
   if (!Number.isSafeInteger(partyCount) || partyCount < 1 || partyCount > 1000) {
     throw new Error('Party count must be an integer between 1 and 1000.');
   }

@@ -152,6 +152,23 @@
   letter-spacing: -1.1px;
   font-weight: 720;
 }
+/* Keep heading permalinks without a hash prefix or shifting the title on hover. */
+.vp-doc h1 .header-anchor {
+  display: none;
+}
+.vp-doc :is(h2, h3, h4, h5, h6) {
+  padding-right: 28px;
+}
+.vp-doc :is(h2, h3, h4, h5, h6) .header-anchor {
+  left: auto;
+  right: 0;
+  top: 0;
+  margin-left: 0;
+  font-size: 18px;
+}
+.vp-doc .header-anchor::before {
+  content: '↗';
+}
 .vp-doc h2 {
   margin: 42px 0 18px;
   padding-top: 0;
@@ -170,6 +187,17 @@
 .vp-doc a {
   text-underline-offset: 3px;
 }
+.vp-doc a:hover {
+  color: var(--vp-c-brand-2);
+}
+.vp-doc a.docs-topic-link:hover,
+.vp-doc a.docs-section-card:hover {
+  color: var(--vp-c-text-1);
+}
+.vp-doc a:hover > code {
+  color: var(--vp-c-brand-2);
+}
+
 .vp-doc :not(pre) > code {
   padding: 3px 6px;
   border-radius: 5px;
@@ -205,6 +233,11 @@
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+/* Keep language identity visible: the copy button occupies the opposite side. */
+.vp-doc div[class*='language-']:hover > button.copy + span.lang,
+.vp-doc div[class*='language-'] > button.copy:focus + span.lang {
+  opacity: 1;
+}
 .vp-doc div[class*='language-'] > button.copy {
   top: 3px;
   right: 8px;
@@ -212,7 +245,7 @@
   height: 29px;
   border: 0;
   background-color: transparent;
-  opacity: 0.65;
+  opacity: 1;
 }
 .vp-doc div[class*='language-'] pre {
   padding-top: 49px;
@@ -221,9 +254,6 @@
 .vp-doc div[class*='language-'] code {
   font-size: 14px;
   line-height: 1.85;
-}
-.vp-doc div[class*='language-'] .line .s {
-  font-style: normal;
 }
 .vp-doc table {
   font-size: 14px;
@@ -254,11 +284,6 @@
   border-radius: 10px;
   background: var(--docs-surface);
 }
-.docs-link-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
 .vp-doc a.docs-topic-link {
   display: flex;
   align-items: center;
@@ -273,10 +298,6 @@
   transition:
     background 0.15s,
     border-color 0.15s;
-}
-.docs-topic-mark {
-  color: var(--vp-c-brand-1);
-  font-size: 18px;
 }
 .docs-topic-arrow {
   margin-left: auto;
@@ -407,7 +428,6 @@ button:focus-visible {
   .docs-page-kind {
     display: none;
   }
-  .docs-link-grid,
   .docs-section-grid {
     grid-template-columns: 1fr;
   }
@@ -431,7 +451,19 @@ button:focus-visible {
   }
 }
 
-/* Keep GitHub syntax comments readable against the shared dark code surface. */
-.dark .vp-doc div[class*='language-'] span[style*='--shiki-dark:#6A737D'] {
-  color: #b2bfd4 !important;
+/* Reuse the navigation hierarchy on section landing pages. */
+.vp-doc ul.docs-topic-tree {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.vp-doc .docs-topic-tree > li {
+  margin: 10px 0;
+}
+.vp-doc .docs-topic-tree .docs-topic-tree {
+  margin: 8px 0 16px 20px;
+}
+.vp-doc .docs-topic-group {
+  font-weight: 650;
+  margin: 20px 0 8px;
 }

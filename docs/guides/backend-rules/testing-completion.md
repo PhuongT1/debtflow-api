@@ -43,7 +43,7 @@ Rules-only changes do not require application tests or backend builds.
 npm run check:architecture  # import layering
 npm run check:conventions   # naming and declarative API rules + exact legacy ratchet
 npm run check:maintainability # responsibility folders, shared contracts and exact helper clones
-npm run test:architecture   # executable checker regression tests
+npm run test:quality   # executable checker regression tests
 npm run lint
 npm run typecheck        # full TypeScript project, including test files
 npm test
@@ -59,7 +59,7 @@ Tests that require emitted Nest constructor metadata load the compiled graph via
 `createRequire(import.meta.url)`; Node 24 supports synchronous ESM interop for this graph.
 Build before those tests. Do not suppress editor errors or reintroduce CommonJS output. Use `npm run build` so the required
 short-alias rewrite completes before compiled-runtime tests.
-See [Import Aliases](../../development/import-aliases.md) and [Run Source](../../getting-started/run-source.md).
+See [Import Aliases](../../development/source/import-aliases.md) and [Run Source](../../getting-started/running/index.md).
 
 `npm run check` combines these and builds first to generate Prisma Client on a fresh checkout. Prisma
 schema changes additionally require `npm run db:check`. Changes to API/schema descriptions or response

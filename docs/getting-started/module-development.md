@@ -1,24 +1,24 @@
-# Sửa chức năng và thêm module
+# Viết và bảo trì API
 
-Đọc [kiến trúc](./architecture.md) và [request flow](./request-flow.md) trước.
-Dùng [Party](./party-architecture.md) để tìm ví dụ đang chạy; chỉ lấy phần phù hợp với task.
+Đọc [kiến trúc](./architecture.md) và [request flow](./architecture/request-flow.md) trước.
+Dùng [Party](./architecture/party-architecture.md) để tìm ví dụ đang chạy; chỉ lấy phần phù hợp với task.
 
 ## Sửa chức năng đang có {#maintain-existing-feature}
 
-| Yêu cầu | Sửa ở đâu trước? | Các phần phải đi cùng |
-| --- | --- | --- |
-| Thêm/sửa route, quyền, status | Controller | Route constants khi cần, Swagger và HTTP contract |
-| Thêm field request | Request DTO | Mapper writable fields, service checks, null/omission semantics |
-| Thêm field response | Projection + mapper | Response DTO/Swagger, kiểm tra không lộ field nội bộ |
-| Thêm filter/sort | Resource `*.list-query.ts` | Query builder; SQL adapter nếu computed sort dùng nó |
-| Thêm quyết định nghiệp vụ | Service hoặc rule thuần của feature | Related-ID/tenant checks và failure path |
-| Thêm cách đọc/ghi DB | Repository contract → Prisma adapter | DI binding, projection, transaction phù hợp |
-| Sửa normalization/serialization | Mapper | Tiền, ngày, null và omitted fields |
+| Yêu cầu                         | Sửa ở đâu trước?                     | Các phần phải đi cùng                                           |
+| ------------------------------- | ------------------------------------ | --------------------------------------------------------------- |
+| Thêm/sửa route, quyền, status   | Controller                           | Route constants khi cần, Swagger và HTTP contract               |
+| Thêm field request              | Request DTO                          | Mapper writable fields, service checks, null/omission semantics |
+| Thêm field response             | Projection + mapper                  | Response DTO/Swagger, kiểm tra không lộ field nội bộ            |
+| Thêm filter/sort                | Resource `*.list-query.ts`           | Query builder; SQL adapter nếu computed sort dùng nó            |
+| Thêm quyết định nghiệp vụ       | Service hoặc rule thuần của feature  | Related-ID/tenant checks và failure path                        |
+| Thêm cách đọc/ghi DB            | Repository contract → Prisma adapter | DI binding, projection, transaction phù hợp                     |
+| Sửa normalization/serialization | Mapper                               | Tiền, ngày, null và omitted fields                              |
 
 Bắt đầu từ route → service → repository binding → adapter. Search helper/type/callers hiện có trước
 khi tạo thêm. Không đổi cấu trúc module khác chỉ để hoàn thành một endpoint.
 
-## Thêm module mới
+## Thêm module mới {#add-module}
 
 ### 1. Xác định owner và API contract
 
@@ -58,10 +58,7 @@ Controller/module có khoảng hai dòng đầu mô tả chức năng thực t�
 Trong feature module, bind contract với adapter:
 
 ```ts
-providers: [
-  TasksService,
-  { provide: TasksRepository, useClass: PrismaTasksRepository },
-]
+providers: [TasksService, { provide: TasksRepository, useClass: PrismaTasksRepository }];
 ```
 
 Đăng ký controller, import provider/module cần dùng, rồi import feature module vào `AppModule`.
@@ -96,3 +93,12 @@ mới trong README của mỗi module.
 Dùng bảng đầu trang và mở module tương tự. Giữ service cho use case, adapter cho DB, mapper cho
 chuyển đổi. Nếu phải import private implementation của feature khác hoặc tạo thêm tầng chỉ để hết
 lỗi import, kiểm tra lại owner và dependency trước khi tiếp tục.
+
+## Khi áp dụng Clean Architecture như Party
+
+Dùng [bảng layer/file của Party](./architecture/party-architecture.md) làm ví dụ hiện có.
+Record, input, read models và ports thuộc `application/`. `domain/party.rules.ts` giữ quy tắc nghiệp vụ thuần; chỉ thêm domain types khi quy tắc hoặc entity thực sự cần.
+`presentation/` sở hữu DTO và response mapper; adapter
+suy ra Prisma payload từ select và chuyển về application contract. Chỉ `parties.module.ts` nối các
+implementation. Kiểm tra dependency bắc cầu bằng `npm run check:architecture`; không thêm interface
+để rồi alias ngược về request DTO hay Prisma model. Các module chưa chuyển vẫn theo contract hiện tại.

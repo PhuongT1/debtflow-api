@@ -1,30 +1,44 @@
-# Database — chọn tình huống cần làm
+# Database: dev local và staging/production
 
-Tài liệu dùng PostgreSQL và Prisma 7 của repository. Mỗi trang xử lý một việc;
-chỉ đọc trang khớp với database và thay đổi của bạn.
+Chọn theo môi trường bạn đang thao tác. **Dev tạo migration; staging/production áp dụng migration đã
+review.** Cùng lịch sử schema, nhưng mỗi DB có dữ liệu và credentials riêng.
 
-| Bạn đang cần làm gì? | Mở hướng dẫn |
+## 1. Làm việc trên DB dev riêng
+
+| Bạn cần làm gì? | Hướng dẫn |
 | --- | --- |
-| Chưa có database hoặc chưa biết đặt URL | [Tạo DB và cấu hình kết nối](./configure-connection.md) |
-| DB staging/production trống, cần đủ bảng và field như dev | [Khởi tạo toàn bộ schema](./initialize-empty.md) |
-| Muốn biết file SQL nào chạy trước, đã chạy hay còn thiếu | [Thứ tự migration và kiểm tra kết quả](./migration-order.md) |
-| Dev thêm bảng/field, staging/production cần có thay đổi đó | [Phát hành bảng hoặc field mới](./add-tables-fields.md) |
-| Đổi tên/kiểu, xóa field hoặc thêm field bắt buộc | [Thay đổi field đang có dữ liệu](./change-existing-fields.md) |
-| Dev mới join hoặc vừa nhận migration từ đồng đội | [Cập nhật DB development](./new-developer.md) |
-| Cần dữ liệu demo, account QA hoặc backfill | [Chuẩn bị và chuyển dữ liệu](./data-changes.md) |
-| DB đã có bảng nhưng thiếu lịch sử Prisma | [Đối chiếu và baseline DB có sẵn](./existing-database.md) |
-| Migration lỗi, báo drift hoặc yêu cầu reset | [Xử lý migration lỗi](./migration-failure.md) |
-| Cần kiểm tra index/SQL của Party | [Party indexes và DB tests](./party-indexes.md) |
+| Mới clone, DB dev trống hoặc nhận migration của đồng đội | [Cài và cập nhật DB dev](./local/index.md) |
+| Tự thêm/sửa model, tạo SQL migration mới | [Tạo migration ở dev](./local/change-schema.md) |
+| Chưa có URL hoặc chưa biết chọn DB nào | [Kết nối và môi trường](./configure-connection.md) |
 
-## Ba điều cần nhớ
+DB dev có thể là PostgreSQL trên máy hoặc DB development riêng trên dịch vụ hosting.
+“Chạy local” nói nơi chạy code, không bắt buộc PostgreSQL cũng nằm cùng máy.
 
-- **Schema:** dev tạo migration SQL → commit → staging apply → kiểm tra → production apply cùng migration.
-- **Dữ liệu:** mỗi môi trường giữ dữ liệu riêng; migration không tự copy toàn bộ DB dev.
-- **Lệnh:** `db:migrate` tạo migration ở dev; `db:deploy` apply migration đã commit.
+## 2. Chuẩn bị DB staging/production
 
-Vercel build hiện không chạy migration; chưa có job release tự động trong repo.
-Không dùng `setup:dev`, seed demo hoặc reset cho staging/production.
+| Bạn cần làm gì? | Hướng dẫn |
+| --- | --- |
+| Hiểu chuyển gì từ dev và ai chạy migration | [Chuẩn bị DB để phát hành](./releases/index.md) |
+| Đặt URL trên Vercel/host và release runner | [Kết nối runtime và runner](./releases/connect-runtime.md) |
+| DB trống hoặc đã có lịch sử, cần áp dụng migration còn thiếu | [Tạo mới và cập nhật schema](./migrations/index.md) |
+| Xem thứ tự SQL và nhận biết thành công/thất bại | [Migration trên staging](./migrations/order.md) |
+| Cần account để login/kiểm thử | [Tạo user](./users/create-user.md), [kiểm tra quyền](./users/verify-user-access.md) |
 
-Các quy trình được đối chiếu với [Prisma 7 — development và production](https://www.prisma.io/docs/orm/v7/prisma-migrate/workflows/development-and-production)
-và các file cấu hình/lệnh hiện tại của repo. Khi thêm tình huống mới, tạo một trang con tương ứng
-và thêm vào mục lục/sidebar; không ghép lại thành một bài dài.
+## 3. Phát hành code và DB cùng nhau
+
+Đọc **[production từng bước](../deployment/environments/production.md)** để đi từ dev/staging →
+chuẩn bị release runner → kiểm tra pending → apply SQL → deploy code → kiểm tra sau deploy.
+
+[Trang tình huống schema](../deployment/environments/schema-changes.md) phân biệt code-only,
+thêm bảng/cột, field bắt buộc, rename/đổi kiểu, DROP và backfill. Không dùng một thứ tự migrate/deploy
+cho tất cả trường hợp.
+
+## 4. Tra cứu khi cần
+
+- [Thay đổi dữ liệu hiện có](./schema/change-existing-fields.md) và [backfill](./data-changes.md).
+- [Migration lỗi/drift](./schema/migration-failure.md), [DB có sẵn cần baseline](./schema/existing-database.md).
+- [Schema tổng quan](./overview.md), [Party indexes và DB tests](./party-indexes.md).
+
+Không copy DB dev lên production; không dùng reset/seed demo để cập nhật DB vận hành.
+Vercel build và API startup hiện không tự migrate. Các lệnh đã có trong `package.json` và dùng
+[Prisma CLI v7](https://docs.prisma.io/docs/cli/v7/migrate/deploy).

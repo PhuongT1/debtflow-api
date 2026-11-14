@@ -51,6 +51,90 @@ export function checkArchitecture(root = projectRoot) {
       });
   }
 
+  // Check each inner layer transitively, including type-only imports through shared helpers.
+  const partyRoot = 'src/modules/parties';
+  const domainRoot = `${partyRoot}/domain`;
+  const applicationRoot = `${partyRoot}/application`;
+  const checkedCore = new Set();
+  const checkCore = (file, layer) => {
+    const key = `${layer}:${file}`;
+    if (checkedCore.has(key) || !ts.sys.fileExists(file)) return;
+    checkedCore.add(key);
+    const owner = portable(relative(root, file));
+    const source = ts.createSourceFile(
+      file,
+      readFileSync(file, 'utf8'),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    const inspectCore = (literal) => {
+      const imported = ts.resolveModuleName(
+        literal.text,
+        file,
+        parsed.options,
+        ts.sys,
+        cache,
+      ).resolvedModule;
+      const target = imported ? portable(relative(root, imported.resolvedFileName)) : '';
+      const featureTarget = inside(target, 'src/modules');
+      const allowedFeature =
+        inside(target, domainRoot) || (layer === 'application' && inside(target, applicationRoot));
+      const forbidden =
+        /^(?:@nestjs(?:\/|$)|@prisma(?:\/|$)|express(?:\/|$)|pg$|node:)/.test(literal.text) ||
+        ['src/generated', 'src/database', 'src/config', 'src/auth'].some((dir) =>
+          inside(target, dir),
+        ) ||
+        /\/(?:dto|infrastructure|presentation|_test)\//.test(target) ||
+        /\.(?:controller|module)\.ts$/.test(target) ||
+        (featureTarget && !allowedFeature) ||
+        (imported && !inside(target, 'src') && !inside(target, 'node_modules/typescript/lib'));
+      if (forbidden) {
+        violations.push({
+          file: owner,
+          line: source.getLineAndCharacterOfPosition(literal.getStart(source)).line + 1,
+          rule: 'party-clean-core',
+          message: `Party ${layer} must depend only on its inner layers and neutral shared code (${literal.text}).`,
+        });
+      } else if (inside(target, 'src')) checkCore(imported.resolvedFileName, layer);
+    };
+    const visit = (node) => {
+      if (
+        (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+        node.moduleSpecifier &&
+        ts.isStringLiteralLike(node.moduleSpecifier)
+      )
+        inspectCore(node.moduleSpecifier);
+      if (
+        ts.isImportTypeNode(node) &&
+        ts.isLiteralTypeNode(node.argument) &&
+        ts.isStringLiteralLike(node.argument.literal)
+      )
+        inspectCore(node.argument.literal);
+      if (
+        ts.isImportEqualsDeclaration(node) &&
+        ts.isExternalModuleReference(node.moduleReference) &&
+        node.moduleReference.expression &&
+        ts.isStringLiteralLike(node.moduleReference.expression)
+      )
+        inspectCore(node.moduleReference.expression);
+      if (
+        ts.isCallExpression(node) &&
+        node.arguments.length === 1 &&
+        (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+          (ts.isIdentifier(node.expression) && node.expression.text === 'require')) &&
+        ts.isStringLiteralLike(node.arguments[0])
+      )
+        inspectCore(node.arguments[0]);
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  };
+  for (const file of files) {
+    const owner = portable(relative(root, file));
+    if (inside(owner, domainRoot)) checkCore(file, 'domain');
+    if (inside(owner, applicationRoot)) checkCore(file, 'application');
+  }
+
   for (const file of files) {
     const owner = portable(relative(root, file));
     const source = ts.createSourceFile(
@@ -71,6 +155,19 @@ export function checkArchitecture(root = projectRoot) {
         source,
         'domain-layout',
         'Own features under src/modules/<domain>; declare access at the route boundary.',
+      );
+    const partyLayer = inside(owner, partyRoot)
+      ? owner.slice(partyRoot.length + 1).split('/')[0]
+      : undefined;
+    if (
+      partyLayer &&
+      !['domain', 'application', 'presentation', 'infrastructure', '_test'].includes(partyLayer) &&
+      ![`${partyRoot}/parties.module.ts`, `${partyRoot}/party.list-query.ts`].includes(owner)
+    )
+      report(
+        source,
+        'party-layer-placement',
+        'Put Party code in its owning clean layer; only Nest composition and shared outer list capabilities stay at the feature root.',
       );
     const inspect = (literal) => {
       const businessService =
@@ -95,6 +192,24 @@ export function checkArchitecture(root = projectRoot) {
       ).resolvedModule;
       if (!imported) return; // The TypeScript build reports unresolved modules.
       const target = portable(relative(root, imported.resolvedFileName));
+      if (
+        inside(owner, `${partyRoot}/infrastructure`) &&
+        inside(target, `${partyRoot}/presentation`)
+      )
+        report(
+          literal,
+          'party-adapter-dependency',
+          'Database/event adapters must not depend on HTTP presentation.',
+        );
+      if (
+        inside(owner, `${partyRoot}/presentation`) &&
+        inside(target, `${partyRoot}/infrastructure`)
+      )
+        report(
+          literal,
+          'party-adapter-dependency',
+          'HTTP presentation calls application contracts, not concrete persistence adapters.',
+        );
       if (target.split('/').includes('_test'))
         report(literal, 'test-dependency', 'Production code must not import test-only modules.');
       if (businessService && target.endsWith('.controller.ts')) {

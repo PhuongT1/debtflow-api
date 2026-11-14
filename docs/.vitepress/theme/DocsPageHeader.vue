@@ -6,7 +6,10 @@ import DocIcon from './DocIcon.vue';
 const route = useRoute();
 const { theme } = useData<{ docSections: DocSection[] }>();
 const current = computed(() =>
-  theme.value.docSections.find((section) =>
+  [...theme.value.docSections].sort((a, b) =>
+    Math.max(...b.prefixes.map((prefix) => prefix.length)) -
+    Math.max(...a.prefixes.map((prefix) => prefix.length)),
+  ).find((section) =>
     section.prefixes.some((prefix) => route.path.startsWith(prefix)),
   ),
 );

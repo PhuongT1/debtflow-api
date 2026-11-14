@@ -251,3 +251,23 @@ test('separates shared query definitions from private SQL builders without waivi
     },
   );
 });
+
+test('accepts explicit clean layers without redundant single-responsibility subfolders', () => {
+  fixture(
+    {
+      'src/modules/parties/parties.module.ts': 'export class PartiesModule {}',
+      'src/modules/parties/domain/party.rules.ts': 'export function isAllowed() { return true; }',
+      'src/modules/parties/application/parties.service.ts': 'export class PartiesService {}',
+      'src/modules/parties/application/party.inputs.ts': 'export type Input = { name: string };',
+      'src/modules/parties/application/party-write.mapper.ts':
+        'export function mapInput(x: string) { return x.trim(); }',
+      'src/modules/parties/application/repositories/parties.repository.ts':
+        'export abstract class PartiesRepository {}',
+      'src/modules/parties/presentation/parties.controller.ts': 'export class PartiesController {}',
+      'src/modules/parties/presentation/party.mapper.ts':
+        'export function mapOutput(x: string) { return x.toUpperCase(); }',
+      'src/modules/parties/presentation/dto/party-response.fields.ts': 'export const FIELDS = [];',
+    },
+    ({ check }) => assert.deepEqual(check().violations, []),
+  );
+});

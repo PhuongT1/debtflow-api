@@ -102,7 +102,7 @@ flowchart TD
 
 ## Parties
 
-([parties.service.ts](../../src/modules/parties/parties.service.ts))
+([parties.service.ts](../../src/modules/parties/application/parties.service.ts))
 
 - `type` is `CUSTOMER`, `SUPPLIER` or `BOTH`; `code` is optional but unique per organization.
 - The list returns an outstanding **balance** per party: remaining receivable and remaining payable
@@ -112,7 +112,7 @@ flowchart TD
 
 ## Collection follow-up and filtering
 
-Every list endpoint also supports the generic `sort` and `filter[field][operator]` convention, see [List Query](../development/list-query.md). The named filters below are the debt-specific shortcuts of `GET /debts` (see [api-reference](../generated/api-reference.md#get-apidebts)); `/reports/aging` and `/exports/debts` accept both kinds:
+Every list endpoint also supports the generic `sort` and `filter[field][operator]` convention, see [List Query](../development/persistence/list-query.md). The named filters below are the debt-specific shortcuts of `GET /debts` (see [api-reference](../generated/api-reference.md#get-apidebts)); `/reports/aging` and `/exports/debts` accept both kinds:
 
 | Filter                                                                                                                                     | Values                                           | Meaning                                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ | --------------------------------------- |

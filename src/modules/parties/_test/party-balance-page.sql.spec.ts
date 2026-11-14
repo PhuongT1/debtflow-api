@@ -8,8 +8,8 @@ import {
 } from '@common/query/index.js';
 import { partyBalancePageSql } from '../infrastructure/sql/party-balance-page.sql.js';
 import { partyWhereSql } from '../infrastructure/sql/party-filter.sql.js';
-import { buildPartyQuery } from '../queries/party.query.js';
-import { PARTY_LIST_QUERY, PARTY_COMPUTED_SORT_FIELDS } from '../queries/party.list-query.js';
+import { buildPartyQuery } from '../infrastructure/queries/party.query.js';
+import { PARTY_LIST_QUERY, PARTY_COMPUTED_SORT_FIELDS } from '../party.list-query.js';
 
 const pagination = { take: 20, skip: 40 };
 

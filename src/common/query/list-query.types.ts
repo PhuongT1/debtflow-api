@@ -1,31 +1,9 @@
-/**
- * Transport-neutral contract of every list query, modeled on Vendure's `ListQueryOptions`
- * (`skip`/`take`, `sort`, `filter`, `filterOperator`). HTTP parsing produces these options and the
- * Prisma builder consumes them, so another transport (GraphQL, CSV import, ...) can reuse the builder.
- */
-
+/** ORM-backed list capability definitions and compiled fragments; neutral criteria live in list-query-options.types.ts. */
 import type { Prisma } from '@generated/prisma/client.js';
 
-export const FILTER_OPERATORS = [
-  'eq',
-  'notEq',
-  'in',
-  'notIn',
-  'contains',
-  'notContains',
-  'startsWith',
-  'endsWith',
-  'lt',
-  'lte',
-  'gt',
-  'gte',
-  'before',
-  'after',
-  'between',
-  'isNull',
-] as const;
-
-export type FilterOperator = (typeof FILTER_OPERATORS)[number];
+export { FILTER_OPERATORS } from './list-query-options.types.js';
+import type { FilterOperator } from './list-query-options.types.js';
+export type { FilterOperator } from './list-query-options.types.js';
 
 export type FieldType = 'string' | 'enum' | 'number' | 'decimal' | 'date' | 'boolean';
 
@@ -49,9 +27,16 @@ export const OPERATORS_BY_TYPE: Record<FieldType, readonly FilterOperator[]> = {
   boolean: ['eq', 'notEq', 'isNull'],
 };
 
-/** Reuse the ordering accepted by the generated Prisma client. */
-export type SortDirection = Prisma.SortOrder;
-export type LogicalOperator = 'AND' | 'OR';
+export type {
+  SortDirection,
+  LogicalOperator,
+  SortItem,
+  FilterCondition,
+  FilterGroup,
+  FilterNode,
+  ListQueryOptions,
+} from './list-query-options.types.js';
+import type { SortDirection, ListQueryOptions } from './list-query-options.types.js';
 
 export type PrismaFragment = Record<string, unknown>;
 
@@ -86,17 +71,6 @@ export type ListQueryConfig = {
   /** Prisma model name. When set, the fields are verified against the Prisma schema at startup. */
   model?: Prisma.ModelName;
   fields: Record<string, ListQueryField>;
-};
-
-export type SortItem = { field: string; direction: SortDirection };
-export type FilterCondition = { field: string; operator: FilterOperator; value: unknown };
-export type FilterGroup = { operator: LogicalOperator; conditions: FilterNode[] };
-export type FilterNode = FilterCondition | FilterGroup;
-
-export type ListQueryOptions = {
-  /** Zero or one client-selected field; database ordering may append an internal ID tie-breaker. */
-  sort: SortItem[];
-  filter: FilterGroup;
 };
 
 /** Shares the requested sort contract instead of maintaining a second declaration. */

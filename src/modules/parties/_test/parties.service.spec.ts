@@ -1,12 +1,14 @@
+import { PARTY_DEFAULT_SELECT } from '../infrastructure/queries/party.select.js';
+import { PartyAuditAdapter } from '../infrastructure/party-audit.adapter.js';
 import { PrismaUsersRepository } from '@modules/users/infrastructure/prisma-users.repository.js';
 import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery, getListQueryFieldNames } from '@common/query/index.js';
-import { PartiesService } from '../parties.service.js';
-import type { PartyWriteStore } from '../repositories/parties.repository.js';
+import { PartiesService } from '../application/parties.service.js';
+import type { PartyWriteStore } from '../application/repositories/parties.repository.js';
 import { OrganizationMembersService } from '@modules/users/services/organization-members.service.js';
-import { PARTY_LIST_QUERY } from '../queries/party.list-query.js';
+import { PARTY_LIST_QUERY } from '../party.list-query.js';
 
 function setup() {
   const findMany = vi.fn().mockResolvedValue([
@@ -47,7 +49,7 @@ function setup() {
       $queryRaw: rootRead,
       $transaction: transaction,
     } as never),
-    events as never,
+    new PartyAuditAdapter(events as never),
     new OrganizationMembersService(
       new PrismaUsersRepository({ organizationMembership: { findFirst } } as never),
     ),
@@ -107,7 +109,11 @@ describe('PartiesService', () => {
     };
     const repository = transactionRepository(store);
     const events = { emit: vi.fn() };
-    const service = new PartiesService(repository as never, events as never, {} as never);
+    const service = new PartiesService(
+      repository as never,
+      new PartyAuditAdapter(events as never),
+      {} as never,
+    );
     expect(await service.update('org-1', 'p1', { name: 'After' }, 'actor-1')).toEqual(after);
     expect(store.findRecord).toHaveBeenCalledWith('org-1', 'p1');
     expect(events.emit).toHaveBeenCalledWith(
@@ -125,9 +131,13 @@ describe('PartiesService', () => {
     };
     const repository = transactionRepository(store);
     const events = { emit: vi.fn() };
-    const service = new PartiesService(repository as never, events as never, {} as never);
+    const service = new PartiesService(
+      repository as never,
+      new PartyAuditAdapter(events as never),
+      {} as never,
+    );
     await expect(service.deactivate('org-1', 'p1', 'actor-1')).rejects.toMatchObject({
-      status: 400,
+      kind: 'invalid',
     });
     expect(store.deactivate).not.toHaveBeenCalled();
     expect(events.emit).not.toHaveBeenCalled();
@@ -199,17 +209,19 @@ describe('PartiesService', () => {
     expect(update).toHaveBeenNthCalledWith(1, {
       where: { id: 'p1', organizationId: 'org-1' },
       data: { name: 'Updated' },
+      select: PARTY_DEFAULT_SELECT,
     });
     expect(update).toHaveBeenNthCalledWith(2, {
       where: { id: 'p1', organizationId: 'org-1' },
       data: { isActive: false },
+      select: PARTY_DEFAULT_SELECT,
     });
     expect(rootAccess).not.toHaveBeenCalled();
   });
 
   it('recomputes searchText from fresh state after a conflict and audits only the committed attempt', async () => {
     const before = { id: 'p1', name: 'Before', code: 'old', phone: null, taxCode: null };
-    const fresh = { ...before, code: 'fresh' };
+    const fresh = { ...before, code: 'fresh', creditLimit: null };
     const events = { emit: vi.fn() };
     const find = vi.fn().mockResolvedValueOnce(before).mockResolvedValueOnce(fresh);
     const update = vi.fn(async ({ data }) => ({ ...fresh, ...data }));
@@ -226,7 +238,7 @@ describe('PartiesService', () => {
     });
     const service = new PartiesService(
       new PrismaPartiesRepository({ $transaction: transaction } as never),
-      events as never,
+      new PartyAuditAdapter(events as never),
       {} as never,
     );
     const result = await service.update('org-1', 'p1', { name: 'After' }, 'actor-1');
@@ -253,12 +265,12 @@ describe('PartiesService', () => {
     });
     const service = new PartiesService(
       transactionRepository(store) as never,
-      events as never,
+      new PartyAuditAdapter(events as never),
       { isActive: rootMemberCheck } as never,
     );
     await expect(
       service.update('org-1', 'p1', { assignedToId: 'foreign-user' }),
-    ).rejects.toMatchObject({ status: 400 });
+    ).rejects.toMatchObject({ kind: 'invalid' });
     expect(store.hasActiveMember).toHaveBeenCalledWith('org-1', 'foreign-user');
     expect(store.update).not.toHaveBeenCalled();
     expect(rootMemberCheck).not.toHaveBeenCalled();
@@ -282,7 +294,11 @@ describe('PartiesService', () => {
           throw new Error('commit failed');
         },
       };
-      const service = new PartiesService(repository as never, events as never, {} as never);
+      const service = new PartiesService(
+        repository as never,
+        new PartyAuditAdapter(events as never),
+        {} as never,
+      );
       const request =
         operation === 'update'
           ? service.update('org-1', 'p1', { name: 'After' })
@@ -298,7 +314,9 @@ describe('PartiesService', () => {
     await service.assertActive('org-1', 'p1');
     expect(isActive).toHaveBeenCalledWith('org-1', 'p1');
     isActive.mockResolvedValue(false);
-    await expect(service.assertActive('org-1', 'foreign')).rejects.toMatchObject({ status: 404 });
+    await expect(service.assertActive('org-1', 'foreign')).rejects.toMatchObject({
+      kind: 'not-found',
+    });
   });
   it.each(
     getListQueryFieldNames(PARTY_LIST_QUERY, 'sortable')
@@ -311,7 +329,7 @@ describe('PartiesService', () => {
       await s.service.list(
         'org-1',
         { page: 2, pageSize: 1 },
-        parseListQuery({ sortBy: field, sortOrder: direction }, PARTY_LIST_QUERY),
+        parseListQuery({ sortBy: field, sortOrder: direction }, PARTY_LIST_QUERY).options,
       );
       expect(s.queryRaw).not.toHaveBeenCalled();
       expect(s.findMany).toHaveBeenCalledWith(
@@ -329,7 +347,7 @@ describe('PartiesService', () => {
     const result = await s.service.list(
       'org-1',
       { page: 2, pageSize: 1 },
-      parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY).options,
     );
     expect(result.items.map(({ id }) => id)).toEqual(['p2']);
     expect(result.total).toBe(3);
@@ -352,7 +370,8 @@ describe('PartiesService', () => {
     await s.service.list(
       'org-1',
       {},
-      parseListQuery({ sortBy: 'outstandingDocuments', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'outstandingDocuments', sortOrder: 'desc' }, PARTY_LIST_QUERY)
+        .options,
     );
     expect(s.queryRaw).toHaveBeenCalledOnce();
     expect((s.queryRaw.mock.calls[0][0] as Prisma.Sql).text).toContain('COUNT(*)');
@@ -372,7 +391,7 @@ describe('PartiesService', () => {
     const result = await s.service.list(
       'org-1',
       {},
-      parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY).options,
     );
     expect(result.items.map(({ id }) => id)).toEqual(['p3', 'p1']);
     expect(result.items[0].balance.receivable.toString()).toBe('9007199254740993.25');
@@ -405,7 +424,7 @@ describe('PartiesService', () => {
       const result = await s.service.list(
         'org-1',
         { page: 99, pageSize: 20 },
-        parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+        parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY).options,
       );
       expect(result).toMatchObject({ items: [], total, page: 99 });
       expect(s.queryRaw).not.toHaveBeenCalled();
@@ -421,7 +440,7 @@ describe('PartiesService', () => {
       s.service.list(
         'org-1',
         {},
-        parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY),
+        parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY).options,
       ),
     ).rejects.toThrow('snapshot is inconsistent');
   });
@@ -439,7 +458,7 @@ describe('PartiesService', () => {
     await s.service.list(
       'org-1',
       { createdFrom: '2026-10-31', createdTo: '2026-10-31' },
-      parseListQuery({ sortBy: 'receivable' }, PARTY_LIST_QUERY),
+      parseListQuery({ sortBy: 'receivable' }, PARTY_LIST_QUERY).options,
     );
     expect(s.count.mock.calls[0][0].where.createdAt).toEqual({
       gte: new Date('2026-10-30T17:00:00Z'),
@@ -463,12 +482,12 @@ describe('PartiesService', () => {
     async (organizationId) => {
       const s = setup();
       await expect(s.service.list(organizationId as never, {})).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
       });
       expect(() => s.service.detail(organizationId as never, 'p1')).toThrow();
       await expect(
         s.service.create(organizationId as never, 'actor', { name: 'Party', type: 'CUSTOMER' }),
-      ).rejects.toMatchObject({ status: 403 });
+      ).rejects.toMatchObject({ kind: 'forbidden' });
       expect(s.findMany).not.toHaveBeenCalled();
       expect(s.create).not.toHaveBeenCalled();
       expect(s.events.emit).not.toHaveBeenCalled();
@@ -483,7 +502,7 @@ describe('PartiesService', () => {
         type: 'CUSTOMER',
         assignedToId: 'foreign-user',
       }),
-    ).rejects.toMatchObject({ status: 400 });
+    ).rejects.toMatchObject({ kind: 'invalid' });
     expect(s.findFirst.mock.calls[0][0].where).toEqual({
       organizationId: 'org-1',
       userId: 'foreign-user',
@@ -493,5 +512,70 @@ describe('PartiesService', () => {
     });
     expect(s.create).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
+  });
+});
+
+it('runs the create use case with plain ports and audits only its successful result', async () => {
+  const party = { id: 'party-plain', name: 'Plain', creditLimit: '0' };
+  const create = vi.fn().mockResolvedValue(party);
+  const record = vi.fn();
+  const isActive = vi.fn().mockResolvedValue(true);
+  const service = new PartiesService({ create } as never, { record }, { isActive });
+  const result = await service.create('org-plain', 'actor-plain', {
+    type: 'CUSTOMER',
+    name: ' Plain ',
+    assignedToId: 'member-plain',
+    creditLimit: '0',
+  });
+  expect(isActive).toHaveBeenCalledWith('org-plain', 'member-plain');
+  expect(create).toHaveBeenCalledWith(
+    'org-plain',
+    'actor-plain',
+    expect.objectContaining({
+      type: 'CUSTOMER',
+      name: 'Plain',
+      searchText: 'plain',
+      creditLimit: '0',
+    }),
+  );
+  expect(result).toBe(party);
+  expect(record).toHaveBeenCalledWith(
+    expect.objectContaining({
+      action: 'party.created',
+      organizationId: 'org-plain',
+      actorId: 'actor-plain',
+      after: party,
+    }),
+  );
+  record.mockClear();
+  create.mockRejectedValueOnce(new Error('write failed'));
+  await expect(
+    service.create('org-plain', 'actor-plain', { type: 'CUSTOMER', name: 'Plain' }),
+  ).rejects.toThrow('write failed');
+  expect(record).not.toHaveBeenCalled();
+});
+
+it('converts Prisma money into exact application values at the adapter boundary', async () => {
+  const stored = { id: 'p1', creditLimit: new Prisma.Decimal('9999999999999999.99') };
+  const create = vi.fn().mockResolvedValue(stored);
+  const repository = new PrismaPartiesRepository({ party: { create } } as never);
+  const result = await repository.create('org-1', 'actor-1', {
+    type: 'CUSTOMER',
+    name: 'Exact',
+    searchText: 'exact',
+    creditLimit: '9999999999999999.99',
+  });
+  expect(result.creditLimit).toBe('9999999999999999.99');
+  expect(stored.creditLimit).toBeInstanceOf(Prisma.Decimal);
+  expect(create).toHaveBeenCalledWith({
+    data: {
+      organizationId: 'org-1',
+      createdById: 'actor-1',
+      type: 'CUSTOMER',
+      name: 'Exact',
+      searchText: 'exact',
+      creditLimit: '9999999999999999.99',
+    },
+    select: PARTY_DEFAULT_SELECT,
   });
 });

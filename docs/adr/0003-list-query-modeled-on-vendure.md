@@ -13,7 +13,7 @@ large project does; [Vendure](./vendure-reference.md) was studied for that.
 ## Decision
 
 - One convention for every list endpoint: single-field `sortBy`+`sortOrder`, `filter[field][operator]`,
-  `filterOperator` ([List Query guide](../development/list-query.md)).
+  `filterOperator` ([List Query guide](../development/persistence/list-query.md)).
 - Adapt Vendure's responsibility split: a `ListQueryOptions` contract, `list-query-sort`,
   `list-query-filter` and `list-query-builder`. Parsing and Prisma compilation share one owner per
   operation; common capability/path helpers live in `list-query.helpers`. Specs live in `_test/`.

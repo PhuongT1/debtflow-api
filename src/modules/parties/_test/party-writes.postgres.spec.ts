@@ -1,3 +1,4 @@
+import { PartyAuditAdapter } from '../infrastructure/party-audit.adapter.js';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -9,7 +10,7 @@ import { PrismaDebtsRepository } from '@modules/debts/infrastructure/prisma-debt
 import { DebtsService } from '@modules/debts/services/debts.service.js';
 import { DebtLineItemService } from '@modules/debts/services/debt-line-item.service.js';
 import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
-import { PartiesService } from '../parties.service.js';
+import { PartiesService } from '../application/parties.service.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
 
 // Explicit opt-in, dedicated loopback database only. Never fall back to DATABASE_URL.
@@ -158,7 +159,11 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       );
     const partyEvents = { emit: vi.fn() };
     const debtEvents = { emit: vi.fn() };
-    const parties = new PartiesService(partyRepo, partyEvents as never, {} as never);
+    const parties = new PartiesService(
+      partyRepo,
+      new PartyAuditAdapter(partyEvents as never),
+      {} as never,
+    );
     const debts = new DebtsService(debtRepo, new DebtLineItemService(), debtEvents as never);
     const deactivation = parties.deactivate('org-a', 'deactivate-wins', 'actor-a');
     const creation = debts.create(
@@ -211,7 +216,11 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       );
     const partyEvents = { emit: vi.fn() };
     const debtEvents = { emit: vi.fn() };
-    const parties = new PartiesService(partyRepo, partyEvents as never, {} as never);
+    const parties = new PartiesService(
+      partyRepo,
+      new PartyAuditAdapter(partyEvents as never),
+      {} as never,
+    );
     const debts = new DebtsService(debtRepo, new DebtLineItemService(), debtEvents as never);
     const deactivation = parties.deactivate('org-a', 'debt-wins', 'actor-a');
     const result = deactivation.then(
@@ -271,8 +280,16 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
           },
         });
       });
-    const firstService = new PartiesService(firstRepo, firstEvents as never, {} as never);
-    const secondService = new PartiesService(secondRepo, secondEvents as never, {} as never);
+    const firstService = new PartiesService(
+      firstRepo,
+      new PartyAuditAdapter(firstEvents as never),
+      {} as never,
+    );
+    const secondService = new PartiesService(
+      secondRepo,
+      new PartyAuditAdapter(secondEvents as never),
+      {} as never,
+    );
     const patchName = firstService.update(
       'org-a',
       'patch-race',
@@ -327,7 +344,11 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       code: 'P2025',
     });
     const events = { emit: vi.fn() };
-    const service = new PartiesService(repository, events as never, {} as never);
+    const service = new PartiesService(
+      repository,
+      new PartyAuditAdapter(events as never),
+      {} as never,
+    );
     await expect(
       service.update('org-b', 'detail-scope', { name: 'Forbidden edit' }),
     ).rejects.toMatchObject({ code: 'P2025' });

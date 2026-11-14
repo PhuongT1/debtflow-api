@@ -5,7 +5,7 @@ The database is PostgreSQL, modelled with Prisma. Models are split by domain in
 generators and the datasource. Migrations are SQL files in [`prisma/migrations`](../../prisma/migrations).
 
 > **Source of truth**: the `.prisma` files. The full ERD and the column dictionary are generated from them
-> into [generated/database.md](../generated/database.md) by `npm run docs:db`. This page is the hand-written
+> into [generated/database.md](../generated/database.md) by `npm run docs:generate:database`. This page is the hand-written
 > guide to read that output.
 
 ## Domain overview
@@ -121,7 +121,7 @@ erDiagram
 ## Changing the schema
 
 1. Edit the model in `prisma/models/*.prisma` (add a `///` comment for every new model and non-obvious column; the comment becomes the dictionary entry).
-2. `npm run db:migrate -- --name describe_change`, then `npm run db:generate`.
+2. `npm run db:migrate:dev -- --name describe_change`, then `npm run db:generate`.
 3. `npm run docs:generate` and commit the regenerated `docs/generated/*` together with the migration.
 
 More detail: [database-workflow](./index.md).
