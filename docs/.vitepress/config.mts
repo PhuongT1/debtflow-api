@@ -39,6 +39,7 @@ const pageRewrites = {
 export default withMermaid(
   defineConfig({
     title: 'DebtFlow API',
+    titleTemplate: 'Docs | :title',
     description: 'Hướng dẫn kiến trúc, request flow, bảo trì và phát triển module DebtFlow API.',
     lang: 'vi-VN',
     head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }]],

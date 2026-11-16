@@ -6,7 +6,7 @@ import { PAYMENT_LIST_QUERY } from '../queries/payments.list-query.js';
 describe('payment list query ownership', () => {
   it.each([undefined, null, '', ' '])('rejects missing tenant %s', (organizationId) => {
     expect(() => buildPaymentsQuery(organizationId as never, {})).toThrow(
-      expect.objectContaining({ status: 403 }),
+      expect.objectContaining({ kind: 'forbidden', key: 'errors.FORBIDDEN' }),
     );
   });
   it('keeps named filters together and defaults to a stable date/id order', () => {

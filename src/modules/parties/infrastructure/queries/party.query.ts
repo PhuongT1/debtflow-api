@@ -3,7 +3,7 @@
  * Named filters and validated dynamic filters are combined here; this file does not execute DB queries.
  */
 import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
-import { badRequest } from '@common/errors/app-errors.js';
+import { ApplicationError } from '@common/errors/application-error.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
 import {
   addBusinessDays,
@@ -52,9 +52,10 @@ function createdAtFilter(query: PartyListInput): Prisma.DateTimeFilter | undefin
     from = query.createdFrom ? getBusinessDayRangeForDate(query.createdFrom).start : undefined;
     to = query.createdTo ? getBusinessDayRangeForDate(query.createdTo).end : undefined;
   } catch {
-    throw badRequest('parties.INVALID_DATE_RANGE');
+    throw new ApplicationError('invalid', 'parties.INVALID_DATE_RANGE');
   }
-  if (from && to && from > to) throw badRequest('parties.INVALID_DATE_RANGE');
+  if (from && to && from > to)
+    throw new ApplicationError('invalid', 'parties.INVALID_DATE_RANGE');
   const range: Prisma.DateTimeFilter = {};
   if (from) range.gte = from;
   if (to) range.lte = to;

@@ -6,25 +6,79 @@ là ví dụ có tên file và method cụ thể.
 
 ## Luồng thành công của một API được bảo vệ
 
+Các thành phần nằm **ngang theo layer**; đọc các tương tác **từ trên xuống**.
+Mũi tên liền là lời gọi, nét đứt là kết quả trả về. Tên trong sơ đồ là vai trò chung,
+không phải tên class bắt buộc cho mọi module.
+
 ```mermaid
-flowchart TD
-  FE["FE / API client gửi HTTP request"] --> ENTRY["HTTP server: prefix /api, CORS, body parsing"]
-  ENTRY --> AUTH["JwtAuthGuard: token + trạng thái user / membership / organization"]
-  AUTH --> ROLE["RolesGuard: kiểm tra role metadata của route"]
-  ROLE --> ENTER["ApiResponseInterceptor: bắt đầu bọc handler"]
-  ENTER --> INPUT["Pipes + parameter decorators: DTO validation, CurrentUser, ListQuery"]
-  INPUT --> CTRL["Presentation: Controller nhận input, gọi service"]
-  CTRL --> SVC["Application: Service kiểm tra nghiệp vụ, gọi repository contract"]
-  SVC --> CALL["Application: gọi repository contract; gọi domain rule khi use case cần"]
-  CALL --> ADAPTER["Infrastructure của feature: Prisma repository triển khai contract"]
-  ADAPTER --> CLIENT["Database infrastructure: PrismaService / transaction client"]
-  CLIENT --> DRIVER["PrismaPg + pg: pool kết nối và thực thi SQL"]
-  DRIVER --> DB[(PostgreSQL)]
-  DB --> BACK["Driver → Prisma client → infrastructure adapter"]
-  BACK --> RESULT["Service → Controller mapper"]
-  RESULT --> OUT["ApiResponseInterceptor: envelope + pagination + localization"]
-  OUT --> RESPONSE["HTTP response về FE"]
+sequenceDiagram
+  participant FE as FE / API client
+  box transparent Presentation — HTTP
+    participant H as HTTP pipeline
+    participant C as FeatureController
+  end
+  box transparent Application — use case
+    participant S as FeatureService
+  end
+  box transparent Domain — quy tắc thuần
+    participant D as Business rules
+  end
+  box transparent Infrastructure — truy cập DB
+    participant R as Prisma repository
+    participant P as PrismaService<br/>PrismaPg / pg
+  end
+  box transparent Database — cơ sở dữ liệu
+    participant DB as PostgreSQL
+  end
+
+  FE->>H: HTTP request
+  H->>H: Guards → interceptor trước → pipes / DTO
+  H->>C: Input hợp lệ + context đã xác thực
+  C->>S: Gọi use case với input và context
+  S->>S: Kiểm tra tenant và điều phối nghiệp vụ
+  opt Use case cần domain rule
+    S->>D: Dữ liệu cần kiểm tra
+    D-->>S: Kết quả quy tắc nghiệp vụ
+  end
+  S->>R: Gọi repository qua port đã inject
+  R->>P: Thao tác Prisma theo tenant
+  P->>DB: Thực thi SQL qua kết nối trong pool
+  DB-->>P: Kết quả đọc / ghi
+  P-->>R: Dữ liệu Prisma
+  R-->>S: Kết quả theo contract Application
+  S-->>C: Kết quả use case
+  C->>C: Map response, chọn field public
+  C-->>H: Dữ liệu response
+  H-->>FE: Interceptor sau → HTTP response
 ```
+
+Dùng nút mở rộng để xem rõ các layer, zoom và kéo tới tương tác cần theo dõi.
+Sơ đồ mô tả **một lần tương tác DB đại diện**, không phải mọi API chỉ chạy một câu SQL.
+Use case có thể gọi repository nhiều lần, gọi adapter ngoài hoặc trả kết quả mà không cần DB.
+
+- **Domain:** chỉ gọi khi có rule thuần; GET list Party không cần đi qua bước này.
+- **Repository port:** thuộc Application. Nest module bind port với adapter khi app khởi động;
+  abstract contract không phải một thành phần thực thi query riêng.
+- **Transaction:** Infrastructure chọn theo yêu cầu nhất quán/atomic của use case; không bắt buộc
+  mọi API dùng transaction hoặc cùng isolation level. Transaction hoàn tất trước khi trả thành công.
+- **Ghi dữ liệu có audit:** service phát audit sau thay đổi thành công/transaction commit qua port
+  hoặc cơ chế của module; API chỉ đọc không tự phát audit. Xem [Audit Log](../../development/audit-log.md).
+- **Response:** JSON thường qua envelope; response 204/binary tuân theo ngoại lệ trong
+  [API response format](../../guides/api-response-format.md).
+
+Đây là flow mục tiêu theo kiến trúc và cách tách lớp đã áp dụng ở Party. Các module chưa chuyển
+Clean Architecture vẫn có controller/service/Prisma adapter, nhưng chưa chắc có core độc lập hoặc
+folder `domain/`. Đối chiếu [ví dụ Party](./party-architecture.md) để xem tên file, method và query cụ thể.
+
+### Chi tiết bên trong các nhóm
+
+| Nhóm | Thứ tự thực hiện |
+| --- | --- |
+| Pipeline HTTP | HTTP server xử lý CORS/body parsing, định tuyến `/api` → `JwtAuthGuard` kiểm tra token và trạng thái user/membership/organization → `RolesGuard` kiểm tra quyền route → `ApiResponseInterceptor` đi vào → parameter decorators/pipes resolve context, validate DTO và parse list query. |
+| Presentation | Controller nhận input đã resolve/validate, gọi application service. Khi nhận kết quả, response mapper chọn field public và định dạng response. |
+| Application + Domain | Service kiểm tra tenant/nghiệp vụ, gọi domain rule khi cần, dùng repository port để yêu cầu đọc/ghi; không gọi Prisma trực tiếp. |
+| Infrastructure | Prisma repository triển khai port → `PrismaService` hoặc transaction client → `PrismaPg`/`pg` lấy kết nối từ pool và thực thi SQL trên PostgreSQL; adapter map kết quả về contract Application. |
+| Response | Kết quả về service → controller/mapper → phần xử lý kết quả của `ApiResponseInterceptor`: envelope, pagination và localization → HTTP response về FE. |
 
 Đây là đường đi bình thường, không phải mọi request đều chạy tới DB nghiệp vụ. Guard có thể dừng
 request sớm; route public bỏ qua phần xác thực theo metadata. `RolesGuard` chỉ yêu cầu role cụ thể
