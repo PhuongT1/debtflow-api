@@ -194,6 +194,18 @@ export function checkArchitecture(root = projectRoot) {
       const target = portable(relative(root, imported.resolvedFileName));
       if (
         inside(owner, `${partyRoot}/infrastructure`) &&
+        (target === 'src/common/errors/app-errors.ts' ||
+          ['src/common/http', 'src/common/swagger', 'src/common/filters', 'src/auth'].some(
+            (directory) => inside(target, directory),
+          ))
+      )
+        report(
+          literal,
+          'party-adapter-dependency',
+          'Party infrastructure reports neutral failures; HTTP/auth adapters own transport policy.',
+        );
+      if (
+        inside(owner, `${partyRoot}/infrastructure`) &&
         inside(target, `${partyRoot}/presentation`)
       )
         report(

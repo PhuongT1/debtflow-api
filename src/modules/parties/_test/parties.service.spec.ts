@@ -472,7 +472,10 @@ describe('PartiesService', () => {
       { createdFrom: '2026-02-30' },
       { createdFrom: '2026-11-01', createdTo: '2026-10-31' },
     ]) {
-      await expect(s.service.list('org-1', query)).rejects.toMatchObject({ status: 400 });
+      await expect(s.service.list('org-1', query)).rejects.toMatchObject({
+        kind: 'invalid',
+        key: 'parties.INVALID_DATE_RANGE',
+      });
     }
     expect(s.findMany).not.toHaveBeenCalled();
   });

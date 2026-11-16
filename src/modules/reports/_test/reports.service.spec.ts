@@ -151,7 +151,8 @@ describe('full-dataset aging report', () => {
     async (organizationId) => {
       const s = setup();
       await expect(s.service.aging({}, organizationId as never)).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       expect(s.aggregate).not.toHaveBeenCalled();
       expect(s.transaction).not.toHaveBeenCalled();

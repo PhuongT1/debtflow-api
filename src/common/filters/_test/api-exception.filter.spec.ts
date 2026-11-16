@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ArgumentsHost } from '@nestjs/common';
 import { ApplicationError } from '@common/errors/application-error.js';
+import { requireOrganizationId } from '@common/validation/require-organization-id.js';
 import { I18nService } from '@common/i18n/i18n.service.js';
 import { ApiExceptionFilter } from '../api-exception.filter.js';
 
@@ -8,6 +9,7 @@ describe('application failures at the HTTP boundary', () => {
   it.each([
     ['invalid', 'parties.ASSIGNEE_NOT_FOUND', 400],
     ['invalid', 'parties.CANNOT_DELETE_ACTIVE_DEBTS', 400],
+    ['invalid', 'parties.INVALID_DATE_RANGE', 400],
     ['forbidden', 'errors.FORBIDDEN', 403],
     ['not-found', 'parties.PARTY_NOT_FOUND', 404],
   ] as const)('maps %s %s to HTTP %i and preserves both locales', (kind, key, statusCode) => {
@@ -38,6 +40,16 @@ describe('application failures at the HTTP boundary', () => {
         }),
       );
       expect(i18n.t(key, locale)).not.toBe(key);
+    }
+  });
+
+  it.each([undefined, null, '', ' '])('rejects missing tenant %s without choosing an HTTP status', (tenant) => {
+    expect(() => requireOrganizationId(tenant as never)).toThrow(ApplicationError);
+    try {
+      requireOrganizationId(tenant as never);
+    } catch (error) {
+      expect(error).toMatchObject({ kind: 'forbidden', key: 'errors.FORBIDDEN' });
+      expect(error).not.toHaveProperty('getStatus');
     }
   });
 });

@@ -297,3 +297,22 @@ test('new application files cannot hide outer dependencies and adapters cannot i
     },
   );
 });
+
+test('Party persistence rejects shared HTTP helpers but accepts neutral failures', () => {
+  fixture(
+    {
+      'src/common/errors/app-errors.ts': 'export const badRequest = () => new Error();',
+      'src/common/errors/application-error.ts': 'export class ApplicationError extends Error {}',
+      'src/modules/parties/infrastructure/queries/party.query.ts':
+        "import { badRequest as invalidRange } from '../../../../common/errors/app-errors';",
+      'src/modules/parties/infrastructure/queries/tenant.query.ts':
+        "import { ApplicationError } from '../../../../common/errors/application-error';",
+    },
+    ({ violations }) => {
+      assert.deepEqual(
+        violations.map(({ file, rule }) => ({ file, rule })),
+        [{ file: 'src/modules/parties/infrastructure/queries/party.query.ts', rule: 'party-adapter-dependency' }],
+      );
+    },
+  );
+});

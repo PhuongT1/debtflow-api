@@ -22,7 +22,7 @@ describe('owned Party SQL boundary', () => {
         { field: 'receivable', direction: 'asc' },
         pagination,
       ),
-    ).toThrow(expect.objectContaining({ status: 403 }));
+    ).toThrow(expect.objectContaining({ kind: 'forbidden', key: 'errors.FORBIDDEN' }));
   });
 
   it('binds tenant, hostile filter values and page bounds rather than interpolating them', () => {

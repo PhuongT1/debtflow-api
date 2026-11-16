@@ -76,7 +76,10 @@ describe('dashboard database summaries', () => {
   });
   it('requires tenant context before invoking domain queries', async () => {
     const s = setup();
-    await expect(s.service.get({}, undefined as never)).rejects.toMatchObject({ status: 403 });
+    await expect(s.service.get({}, undefined as never)).rejects.toMatchObject({
+      kind: 'forbidden',
+      key: 'errors.FORBIDDEN',
+    });
     expect(s.actionCenter.get).not.toHaveBeenCalled();
   });
 });

@@ -43,19 +43,22 @@ describe('debt application service using a fake persistence port', () => {
     async (organizationId) => {
       const s = setup();
       await expect(s.service.list(organizationId as never, {})).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       await expect(s.service.detail('d1', organizationId as never)).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       await expect(s.service.create(input, organizationId as never, 'actor')).rejects.toMatchObject(
-        { status: 403 },
+        { kind: 'forbidden', key: 'errors.FORBIDDEN' },
       );
       await expect(
         s.service.updateCollection('d1', {}, organizationId as never),
-      ).rejects.toMatchObject({ status: 403 });
+      ).rejects.toMatchObject({ kind: 'forbidden', key: 'errors.FORBIDDEN' });
       await expect(s.service.cancel('d1', organizationId as never)).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       expect(s.repository.inTransaction).not.toHaveBeenCalled();
       expect(s.repository.detail).not.toHaveBeenCalled();
