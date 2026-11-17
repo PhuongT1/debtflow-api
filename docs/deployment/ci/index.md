@@ -10,27 +10,33 @@ Workflow `API quality` chạy khi có `pull_request` hoặc `push`, hiện khôn
 Một job `quality` chạy trên Ubuntu, Node 24, npm cache; quyền GitHub chỉ `contents: read`.
 Các Actions đang được khóa theo commit SHA.
 
-Thứ tự: checkout → setup Node → `npm ci` → `ai:setup` → `check` → `docs:check` → `docs:build`.
+Thứ tự: checkout → setup Node → `npm ci` → `ai:setup` → `check` → test script release → `docs:check` → `docs:build`.
 Một bước lỗi sẽ chặn các bước tiếp theo trong job. Xem check của đúng commit trên PR hoặc tab Actions.
 
 ## Quality gates đang có
 
 `npm run check` gọi các nhóm dưới đây theo thứ tự trong `package.json`:
 
-| Nhóm | Lệnh | Phát hiện gì? |
-| --- | --- | --- |
-| Rules/skills AI | `ai:check`, `test:ai` | Cài đặt local khớp nguồn `.ai/`; installer không tạo file sai |
-| Build và kiểu dữ liệu | `build`, `typecheck` | Generate/compile ESM; lỗi TypeScript cả source/spec |
-| Ranh giới kiến trúc | `check:architecture` | Import sai layer, dịch vụ vượt qua repository boundary |
-| Hợp đồng API | `check:conventions` | Metadata auth/role, request DTO, response/status và SQL không an toàn theo checker |
-| Tái sử dụng và nơi đặt file | `check:maintainability` | Sai vị trí, vi phạm boundary và một số khai báo/helper trùng |
-| Công cụ dự án | `test:quality`, `test:response-models`, `test:database-tools`, `test:docs` | Regression của checker, generator, công cụ DB và navigation/docs |
-| Code style | `lint` | Lỗi theo ESLint hiện tại |
-| Hành vi ứng dụng | `test` | Các Vitest suite; DB suite cần opt-in sẽ không tự chạy |
-| Artifact chạy được | `test:runtime` | Smoke standalone/Vercel trên loopback với URL giả; không xác nhận DB thật |
+| Nhóm                        | Lệnh                                                                       | Phát hiện gì?                                                                      |
+| --------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Rules/skills AI             | `ai:check`, `test:ai`                                                      | Cài đặt local khớp nguồn `.ai/`; installer không tạo file sai                      |
+| Build và kiểu dữ liệu       | `build`, `typecheck`                                                       | Generate/compile ESM; lỗi TypeScript cả source/spec                                |
+| Ranh giới kiến trúc         | `check:architecture`                                                       | Import sai layer, dịch vụ vượt qua repository boundary                             |
+| Hợp đồng API                | `check:conventions`                                                        | Metadata auth/role, request DTO, response/status và SQL không an toàn theo checker |
+| Tái sử dụng và nơi đặt file | `check:maintainability`                                                    | Sai vị trí, vi phạm boundary và một số khai báo/helper trùng                       |
+| Công cụ dự án               | `test:quality`, `test:response-models`, `test:database-tools`, `test:docs` | Regression của checker, generator, công cụ DB và navigation/docs                   |
+| Code style                  | `lint`                                                                     | Lỗi theo ESLint hiện tại                                                           |
+| Hành vi ứng dụng            | `test`                                                                     | Các Vitest suite; DB suite cần opt-in sẽ không tự chạy                             |
+| Artifact chạy được          | `test:runtime`                                                             | Smoke standalone/Vercel trên loopback với URL giả; không xác nhận DB thật          |
 
 Sau `check`, `docs:check` regenerate reference rồi kiểm tra `docs/generated/` không còn thay đổi;
 `docs:build` build website và kiểm tra link nội bộ. Reference thay đổi phải commit cùng source tương ứng.
+
+Test script release chạy `npm run test:deployment`: chặn SHA cũ/CI lỗi,
+sai branch và phản hồi smoke sai. Các test dùng fixture, không gọi Vercel hay DB thật.
+
+CI xanh chưa deploy. Để phát hành, làm [thiết lập CD](../cd/github-actions-setup.md)
+và [chạy thủ công](../cd/manual-release.md).
 
 ## Rules nằm ở đâu?
 

@@ -1,59 +1,52 @@
-# Vercel: nhánh, env và chặn phát hành
+# Vercel: môi trường và GitHub Actions
 
-**Dùng khi:** vận hành cách deploy Vercel hiện tại. Cấu hình dashboard phải được maintainer kiểm tra;
-tài liệu không xác nhận các gate đã bật trên tài khoản.
+**Dùng khi:** triển khai DebtFlow bằng workflow GitHub Actions thủ công.
+Cấu hình đã có trong source; secrets, quyền và domain trên tài khoản phải được maintainer xác nhận.
 
 ## 1. Phân chia môi trường
 
-| Git branch | Vercel environment | Dữ liệu |
-| --- | --- | --- |
-| `develop` | Preview, dùng làm staging của team | DB và secrets staging |
-| `main` | Production Branch | DB và secrets production |
-| Nhánh khác | Git auto-deploy tắt trong `vercel.json` | Không có preview tự động theo cấu hình hiện tại |
+| Git branch | Target khi bấm Deploy API        | Dữ liệu                           |
+| ---------- | -------------------------------- | --------------------------------- |
+| `develop`  | Preview với env branch `develop` | DB/secrets staging                |
+| `main`     | Production                       | DB/secrets production             |
+| Nhánh khác | Workflow từ chối                 | Không phát hành bằng workflow này |
 
-Development trên Vercel phục vụ local tooling; không đồng nghĩa nhánh `develop`.
-Đặt Production Branch là `main` trong cấu hình environment/branch tracking. Preview secrets nên giới hạn
-đúng nhánh `develop`; không dùng chung DB production. [Vercel Git](https://vercel.com/docs/git) giải thích mapping này.
+Development của Vercel dùng cho local tooling, không đồng nghĩa nhánh `develop`.
+Git auto-deploy tắt bởi `git.deploymentEnabled: false` khi cấu hình đã được merge vào nhánh đích.
+Deployment hiện có vẫn hoạt động. CLI deploy do Actions gọi vẫn là một đường phát hành riêng.
 
 ## 2. Source và dashboard sở hữu gì?
 
-| Owner | Nội dung |
-| --- | --- |
-| `package.json` | Logic `npm run build`, Node 24 và dependencies |
-| Vercel Settings | Build Command `npm run build`, install settings, secrets, Production Branch, checks |
-| `vercel.json` | Cho phép nhánh, function include/duration, redirect và rewrite |
-| `api/index.js` → `dist/src/vercel.js` | Entrypoint serverless; không chạy `npm start` |
+| Owner                                 | Nội dung                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------- |
+| `package.json`                        | Logic build, Node 24 và dependencies                                             |
+| Vercel Settings                       | Build Command `npm run build`, runtime env, Production Branch, domain/protection |
+| `vercel.json`                         | Tắt Git auto-deploy, function include/duration, redirect và rewrite              |
+| `.github/workflows/deploy.yml`        | Nút chạy thủ công, branch/SHA/CI gates, build, DB và deploy                      |
+| GitHub Environments                   | Release credentials, giới hạn branch, approval nếu hỗ trợ                        |
+| `api/index.js` → `dist/src/vercel.js` | Entrypoint serverless, không chạy `npm start`                                    |
 
-Không xóa rewrite đang phục vụ `/docs`, assets và `/api/*` để xử lý một cảnh báo cấu hình.
-Nếu đổi routing, phải kiểm tra các đường dẫn này cùng nhau. Build/start không tự migrate DB.
+Không xóa rewrite đang phục vụ `/docs`, assets và `/api/*`. Build/start không tự migrate DB;
+workflow CD có bước migration riêng do người chạy chọn.
+Không upload env thật từ máy dev; runtime dùng biến Vercel của đúng target.
 
-Vercel cấp biến runtime theo environment; không upload `.env.staging`/`.env.production`.
-Giữ `NODE_ENV` theo runtime được nền tảng hỗ trợ; DB đích được quyết định bởi URL được cấp,
-không suy ra từ tên nhánh hay dựa vào fallback file env local.
+## 3. Thiết lập và phát hành
 
-## 3. Nối CI với việc nhận traffic production
+1. [Thiết lập GitHub Actions + Vercel](../cd/github-actions-setup.md): environments, secrets, branch protection.
+2. [Bấm Deploy staging/production](../cd/manual-release.md): inputs, từng bước, kết quả và xử lý lỗi.
+3. [Theo dõi và rollback](../cd/operations.md): kiểm tra dữ liệu/API và đường quay lui.
 
-Push có thể tạo deployment ngay khi CI còn chạy. Muốn ngăn bản CI lỗi nhận domain production:
+Vercel CI trong dashboard là sản phẩm CI dùng Turborepo, không phải nút bắt buộc cho pipeline này.
+Dự án giữ CI trên GitHub Actions để dễ theo dõi toàn bộ check và release.
+Nếu sau này quay lại Git auto-deploy + Deployment Checks, đó là thay đổi cơ chế phát hành cần review;
+không bật song song để cùng commit bị deploy hai lần.
 
-1. Chạy CI ít nhất một lần để check xuất hiện trên commit.
-2. Mở Project Settings → Deployment Checks, thêm check GitHub tương ứng job `quality`.
-3. Kiểm tra production automatic aliasing và điều kiện của tính năng trên tài khoản hiện tại.
-4. Thử bằng commit có check thất bại: deployment có thể được build nhưng không được tự nhận domain production.
-5. Check của đúng SHA phải pass trước khi promote; không Force Promote để né lỗi.
+## 4. Giới hạn phải hiểu
 
-Đây là chức năng chặn **promotion/alias**, không phải lời bảo đảm rằng build chưa diễn ra.
-Xem [Deployment Checks](https://vercel.com/docs/deployment-checks).
-Nếu tài khoản không hỗ trợ gate phù hợp, dùng release thủ công được kiểm soát hoặc pipeline Actions;
-không mặc định Git integration đã bảo vệ production.
+- Workflow build trên runner bằng `vercel build`, deploy bằng `--prebuilt`; cần kiểm chứng một lần staging thực tế.
+- Preview từ CLI dùng URL trong Summary; chưa tự cấu hình domain/alias staging cố định.
+- Smoke kiểm tra Swagger, login, identity, auth và Party DB read; không thay thế QA toàn bộ nghiệp vụ.
+- Production deploy với `--skip-domain`; smoke đạt mới promote. Lỗi trước promote giữ domain cũ, nhưng không rollback migration đã apply.
 
-## 4. Release có migration
-
-Trước khi merge bản cần schema mới, apply migration tương thích từ runner được phép và kiểm tra
-trạng thái theo [CD](../cd/index.md). Nếu không thể giữ tương thích, phải có kế hoạch maintenance/cutover
-và chặn traffic bản mới cho đến khi DB sẵn sàng. Deployment Checks không tự chạy migration hay approval DB.
-
-## 5. Xác nhận deployment
-
-Đối chiếu branch, commit, environment và build logs. Sau đó kiểm tra `/docs`, `/docs-json`,
-Swagger assets và một API đọc được cấp quyền. Deployment Ready chỉ xác nhận build/deploy hoàn tất,
-không xác nhận kết nối DB và dữ liệu đúng tenant. Theo dõi/rollback theo [hướng dẫn vận hành](../cd/operations.md).
+Nguồn: [Vercel + GitHub Actions](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel),
+[Vercel CI](https://vercel.com/docs/ci), [Vercel CLI deploy](https://vercel.com/docs/cli/deploy).

@@ -110,7 +110,9 @@ export function createDocumentationNavigation() {
             {
               text: 'Cài và cập nhật DB dev riêng',
               link: '/database/new-developer',
-              items: [{ text: 'Tạo migration khi thêm/sửa model', link: '/database/add-tables-fields' }],
+              items: [
+                { text: 'Tạo migration khi thêm/sửa model', link: '/database/add-tables-fields' },
+              ],
             },
           ],
         },
@@ -121,7 +123,10 @@ export function createDocumentationNavigation() {
               text: 'Chuẩn bị DB để phát hành',
               link: '/database/releases/',
               items: [
-                { text: 'Kết nối DB với API và release runner', link: '/database/releases/connect-runtime' },
+                {
+                  text: 'Kết nối DB với API và release runner',
+                  link: '/database/releases/connect-runtime',
+                },
                 {
                   text: 'Áp dụng migration: tạo mới và cập nhật DB',
                   link: '/database/initialize-empty',
@@ -132,7 +137,9 @@ export function createDocumentationNavigation() {
                 {
                   text: 'Tài khoản dev và kiểm thử',
                   link: '/database/create-user',
-                  items: [{ text: 'Kiểm tra login và phân quyền', link: '/database/verify-user-access' }],
+                  items: [
+                    { text: 'Kiểm tra login và phân quyền', link: '/database/verify-user-access' },
+                  ],
                 },
               ],
             },
@@ -256,9 +263,7 @@ export function createDocumentationNavigation() {
             {
               text: 'CI hiện có và các quality gates',
               link: '/deployment/ci/',
-              items: pages('/deployment/ci/', [
-                ['pull-requests', 'Bảo vệ nhánh và xử lý CI lỗi'],
-              ]),
+              items: pages('/deployment/ci/', [['pull-requests', 'Bảo vệ nhánh và xử lý CI lỗi']]),
             },
           ],
         },
@@ -269,11 +274,21 @@ export function createDocumentationNavigation() {
               text: 'Quy trình phát hành',
               link: '/deployment/cd/',
               items: [
+                {
+                  text: 'Thiết lập GitHub Actions + Vercel',
+                  link: '/deployment/cd/github-actions-setup',
+                },
+                { text: 'Bấm Deploy: staging / production', link: '/deployment/cd/manual-release' },
                 { text: '1. Triển khai staging', link: '/deployment/environments/staging' },
                 {
                   text: '2. Phát hành production',
                   link: '/deployment/environments/production',
-                  items: [{ text: 'Thêm, đổi, xóa field/bảng: thứ tự code và DB', link: '/deployment/environments/schema-changes' }],
+                  items: [
+                    {
+                      text: 'Thêm, đổi, xóa field/bảng: thứ tự code và DB',
+                      link: '/deployment/environments/schema-changes',
+                    },
+                  ],
                 },
               ],
             },

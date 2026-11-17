@@ -5,25 +5,25 @@ Chạy local và debug nằm ở [Bắt đầu](../getting-started/running/index
 
 ## CI và CD khác nhau thế nào?
 
-| Phần | Câu hỏi cần trả lời | Kết quả |
-| --- | --- | --- |
-| CI — Continuous Integration | Commit có build được, đúng quy tắc và qua test không? | Kết quả kiểm tra gắn với commit; chưa có nghĩa đã deploy |
-| CD — Continuous Delivery | Bản nào đã sẵn sàng và được duyệt để phát hành? | Release được kiểm soát; có thể cần người bấm phát hành |
-| CD — Continuous Deployment | Bản đạt điều kiện có tự được đưa lên môi trường đích không? | Triển khai tự động sau các điều kiện đã cấu hình |
+| Phần                        | Câu hỏi cần trả lời                                         | Kết quả                                                  |
+| --------------------------- | ----------------------------------------------------------- | -------------------------------------------------------- |
+| CI — Continuous Integration | Commit có build được, đúng quy tắc và qua test không?       | Kết quả kiểm tra gắn với commit; chưa có nghĩa đã deploy |
+| CD — Continuous Delivery    | Bản nào đã sẵn sàng và được duyệt để phát hành?             | Release được kiểm soát; có thể cần người bấm phát hành   |
+| CD — Continuous Deployment  | Bản đạt điều kiện có tự được đưa lên môi trường đích không? | Triển khai tự động sau các điều kiện đã cấu hình         |
 
-Với DebtFlow, chọn **CI tự động và phát hành production có kiểm soát**. Vercel vẫn có thể tự build;
-việc gán domain production phải theo gate đã thiết lập, không chỉ dựa vào build thành công.
+Với DebtFlow, chọn **CI tự động và phát hành production có kiểm soát**. GitHub Actions chạy CI khi push/PR;
+workflow **Deploy API** chỉ phát hành khi bấm Run workflow và xác minh CI đúng SHA.
 
 ## Hiện có gì trong repository?
 
-| Thành phần | Trạng thái xác minh từ source | Nguồn |
-| --- | --- | --- |
-| CI cho PR và push | Có workflow `API quality`, job `quality` | `.github/workflows/quality.yml` |
-| Kiểm tra code, test và docs | Có trong npm scripts và CI | `package.json` |
-| Cho phép Vercel Git deploy | Chỉ `develop`, `main`; các nhánh khác tắt | `vercel.json` |
-| Chọn Production Branch, secrets, Deployment Checks | Cấu hình bên ngoài repository; phải kiểm tra trên dashboard | [Hướng dẫn Vercel](./platforms/vercel.md) |
-| Job CD nối migration → deploy → smoke test | **Chưa có** trong `.github/workflows/` | [Thiết kế CD](./cd/index.md) |
-| Image chạy Node | Có Dockerfile; chưa có workflow publish image/rollout | `Dockerfile` |
+| Thành phần                                         | Trạng thái xác minh từ source                                                                                                                    | Nguồn                                        |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| CI cho PR và push                                  | Có workflow `API quality`, job `quality`                                                                                                         | `.github/workflows/quality.yml`              |
+| Kiểm tra code, test và docs                        | Có trong npm scripts và CI                                                                                                                       | `package.json`                               |
+| Vercel Git auto-deploy                             | Tắt mọi nhánh có cấu hình này; phải merge cấu hình vào nhánh tương ứng                                                                           | `vercel.json`                                |
+| Chọn Production Branch, secrets, Deployment Checks | Cấu hình bên ngoài repository; phải kiểm tra trên dashboard                                                                                      | [Hướng dẫn Vercel](./platforms/vercel.md)    |
+| CD thủ công                                        | Có `deploy.yml`: kiểm tra SHA/CI/staging → build → migration/status → deploy → smoke → promote production; secrets và environments cần thiết lập | [Thiết lập CD](./cd/github-actions-setup.md) |
+| Image chạy Node                                    | Có Dockerfile; chưa có workflow publish image/rollout                                                                                            | `Dockerfile`                                 |
 
 Tài liệu phân biệt **đang có** với **cần cấu hình**. Việc đọc trang này không tự bật branch protection,
 approval, migration hoặc một pipeline CD trên tài khoản hosting.
@@ -42,15 +42,18 @@ flowchart TD
   D --> E[PR phát hành vào main: CI và review]
   E --> F[Chọn commit và kiểm tra migration tương thích]
   F --> G[Apply migration nếu có, kiểm tra trạng thái]
-  G --> H[Cho phép bản production nhận traffic]
-  H --> I[Smoke test, logs và theo dõi]
+  G --> H[Deploy production chưa chuyển domain]
+  H --> S[Smoke: Swagger, login, auth và Party read]
+  S --> P[Đạt mới promote: chuyển domain production]
+  P --> I[Kiểm tra domain, logs và theo dõi]
   I --> J{Ổn định?}
   J -- Không --> K[Rollback code tương thích hoặc forward fix]
   J -- Có --> L[Ghi nhận release]
 ```
 
-Đây là quy trình mục tiêu. Vercel Git hiện có thể build ngay khi push, chạy song song với CI.
-Cách chặn phát hành và phối hợp schema được giải thích trong [CD](./cd/index.md).
+Push chỉ chạy CI theo cấu hình Git auto-deploy đã tắt. Workflow CD không tự chạy khi merge.
+Bắt đầu từ [thiết lập GitHub/Vercel](./cd/github-actions-setup.md), rồi [bấm Deploy](./cd/manual-release.md).
+Quy trình không được coi là hoạt động trên tài khoản cho đến khi cấu hình và kiểm chứng staging.
 
 <SectionIndex section="/deployment/" />
 

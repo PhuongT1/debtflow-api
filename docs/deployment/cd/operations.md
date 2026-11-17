@@ -5,26 +5,31 @@ thời điểm và người phát hành để truy vết đúng bản.
 
 ## 1. Smoke test bản vừa phát hành
 
-| Kiểm tra | Kết quả mong đợi |
-| --- | --- |
-| URL `/docs`, `/docs-json` và Swagger assets | Trang/schema tải được, không lỗi route hoặc asset |
-| API bảo vệ không có token | Bị từ chối đúng hợp đồng, không lộ dữ liệu |
-| Login và API list bằng tài khoản kiểm tra được cấp | Thành công với đúng tenant, đúng quyền và pagination |
-| Kết nối DB và trạng thái migration | API đọc được DB đúng môi trường; không có migration thất bại/chưa apply của release |
-| Thời gian phản hồi và logs | Không tăng lỗi 5xx, timeout hoặc lỗi kết nối so với trước release |
+| Kiểm tra                                           | Kết quả mong đợi                                                                    |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| URL `/docs`, `/docs-json` và Swagger assets        | Trang/schema tải được, không lỗi route hoặc asset                                   |
+| API bảo vệ không có token                          | Bị từ chối đúng hợp đồng, không lộ dữ liệu                                          |
+| Login và API list bằng tài khoản kiểm tra được cấp | Thành công với đúng tenant, đúng quyền và pagination                                |
+| Kết nối DB và trạng thái migration                 | API đọc được DB đúng môi trường; không có migration thất bại/chưa apply của release |
+| Thời gian phản hồi và logs                         | Không tăng lỗi 5xx, timeout hoặc lỗi kết nối so với trước release                   |
 
 Chỉ mở Swagger chưa kiểm chứng DB. Không chạy seed hoặc tạo giao dịch thật để smoke test production
 nếu chưa có kịch bản được phép. Không gửi password/token/DB URL trong ảnh hoặc release log.
 
+Workflow hiện tự kiểm tra các HTTP path cụ thể tại `scripts/deployment/smoke.mjs` trước promote.
+Smoke trên URL riêng không chứng minh domain chính đã được chuyển: sau promote vẫn kiểm tra domain/logs.
+Nếu smoke production lỗi trước promote, domain giữ bản cũ; DB migration thành công trước đó vẫn còn.
+Nếu step promote timeout, kiểm tra Vercel trước khi retry: promotion có thể vẫn đang tiếp tục.
+
 ## 2. Xem lỗi ở đâu?
 
-| Triệu chứng | Nơi xem |
-| --- | --- |
-| CI fail trước deploy | GitHub Actions → workflow/run/step lỗi của commit |
-| Không build được | Vercel Build Logs hoặc log job build image |
-| API 5xx/timeout lúc chạy | Vercel Runtime Logs hoặc stdout/stderr của container/process |
-| Query chậm, hết connection | Metric/log PostgreSQL và log runtime liên quan; không chỉ build log |
-| Sai dữ liệu nghiệp vụ | Request đã che thông tin nhạy cảm, user/tenant được phép và truy vấn đối chiếu DB chỉ đọc |
+| Triệu chứng                | Nơi xem                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| CI fail trước deploy       | GitHub Actions → workflow/run/step lỗi của commit                                         |
+| Không build được           | Vercel Build Logs hoặc log job build image                                                |
+| API 5xx/timeout lúc chạy   | Vercel Runtime Logs hoặc stdout/stderr của container/process                              |
+| Query chậm, hết connection | Metric/log PostgreSQL và log runtime liên quan; không chỉ build log                       |
+| Sai dữ liệu nghiệp vụ      | Request đã che thông tin nhạy cảm, user/tenant được phép và truy vấn đối chiếu DB chỉ đọc |
 
 Repository chưa cài một hệ thống APM/alert CD riêng. Nền tảng vận hành cần cấu hình cảnh báo lỗi,
 độ trễ và tài nguyên DB; đừng coi ví dụ trong tài liệu là dashboard đã tồn tại.
