@@ -6,13 +6,13 @@ file `.env.production`**, không phải Terminal bất kỳ đang trỏ DB dev.
 
 ## 1. Chọn đúng trường hợp trước khi bắt đầu
 
-| Release thay đổi gì? | Kế hoạch |
-| --- | --- |
-| Chỉ code, không thay schema | Kiểm tra DB hiện tại phù hợp; bỏ bước apply nếu không có migration pending |
-| Thêm bảng/cột nullable tương thích code cũ | Migration trước → code mới → smoke test |
-| Field bắt buộc, rename, đổi kiểu hoặc dữ liệu cần chuyển | Chia nhiều release: mở rộng → code chuyển tiếp/backfill → cleanup |
-| Xóa field/bảng | Bản code ngừng dùng phải chạy hết trên mọi consumer trước release chứa DROP |
-| Production là DB trống | Tạo DB/credentials → apply toàn bộ migration → tạo dữ liệu/account bắt buộc → deploy |
+| Release thay đổi gì?                                     | Kế hoạch                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Chỉ code, không thay schema                              | Kiểm tra DB hiện tại phù hợp; bỏ bước apply nếu không có migration pending           |
+| Thêm bảng/cột nullable tương thích code cũ               | Migration trước → code mới → smoke test                                              |
+| Field bắt buộc, rename, đổi kiểu hoặc dữ liệu cần chuyển | Chia nhiều release: mở rộng → code chuyển tiếp/backfill → cleanup                    |
+| Xóa field/bảng                                           | Bản code ngừng dùng phải chạy hết trên mọi consumer trước release chứa DROP          |
+| Production là DB trống                                   | Tạo DB/credentials → apply toàn bộ migration → tạo dữ liệu/account bắt buộc → deploy |
 
 Xem [các tình huống code và DB](./schema-changes.md) để chọn thứ tự. Không dùng một lần
 merge để vừa xóa field cũ đang dùng, vừa hy vọng mọi instance chuyển sang code mới cùng lúc.
@@ -46,22 +46,22 @@ npm ci
 
 `npm ci` chưa apply schema. Không dùng runtime image đã prune dev dependencies làm migration runner.
 
-| Việc cần xác nhận | Kết quả cần có trước khi ghi DB |
-| --- | --- |
-| Đúng DB | `.env.production` có cả hai URL đúng DB production; runner kết nối được |
-| Runtime cùng DB đích | Secrets Production trên Vercel/host/container đúng môi trường; không dùng URL dev/staging |
-| Backup/restore | Có điểm khôi phục và quy trình restore khả thi; biết dữ liệu nào có nguy cơ mất |
-| Quyền và thời gian chạy | Người được giao thao tác, một release/migration runner cho môi trường tại một thời điểm |
-| Kế hoạch schema | Tương thích code cũ hoặc có maintenance/cutover đã duyệt; backfill đã review |
-| Code quay lui | Deployment/image cũ và khả năng tương thích với schema sau migration |
-| Chặn code phát hành sớm | Có gate/promotion thủ công phù hợp trước khi merge `main` |
+| Việc cần xác nhận       | Kết quả cần có trước khi ghi DB                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| Đúng DB                 | `.env.production` có cả hai URL đúng DB production; runner kết nối được                   |
+| Runtime cùng DB đích    | Secrets Production trên Vercel/host/container đúng môi trường; không dùng URL dev/staging |
+| Backup/restore          | Có điểm khôi phục và quy trình restore khả thi; biết dữ liệu nào có nguy cơ mất           |
+| Quyền và thời gian chạy | Người được giao thao tác, một release/migration runner cho môi trường tại một thời điểm   |
+| Kế hoạch schema         | Tương thích code cũ hoặc có maintenance/cutover đã duyệt; backfill đã review              |
+| Code quay lui           | Deployment/image cũ và khả năng tương thích với schema sau migration                      |
+| Chặn code phát hành sớm | Có gate/promotion thủ công phù hợp trước khi merge `main`                                 |
 
 Làm theo [kết nối runtime và runner](../../database/releases/connect-runtime.md) nếu chưa chuẩn bị URL.
 **Dừng nếu không xác định được DB đích hoặc thứ tự code/schema.**
 
-Trên Vercel, push/merge `main` có thể tạo production deployment ngay. Cần cấu hình
-[gate phát hành](../platforms/vercel.md) trước. Nếu chưa có gate đáng tin cậy, phải kiểm soát auto-promotion/
-phát hành thủ công trước khi đẩy commit phụ thuộc schema mới; không giả định CI tự chặn nó.
+Trên Vercel, Git auto-deploy được tắt bằng `vercel.json` khi cấu hình đã có trên nhánh đích.
+Dùng [Deploy API thủ công](../cd/manual-release.md); push/merge không thay thế việc bấm phát hành.
+Workflow kiểm tra CI đúng SHA, không tự xác nhận review hoặc tương thích SQL.
 
 ## 4. Kiểm tra trước: production thiếu migration nào?
 
@@ -72,11 +72,11 @@ phát hành thủ công trước khi đẩy commit phụ thuộc schema mới; k
 npm run db:migrate:status:production
 ```
 
-| Output | Ý nghĩa và việc tiếp theo |
-| --- | --- |
-| Liệt kê migration chưa apply | Đối chiếu từng tên/SQL với release; status có thể exit khác 0 vì pending, chưa phải apply thất bại |
-| `Database schema is up to date!` | Không còn pending theo lịch sử; với release code-only có thể bỏ bước 5 |
-| Failed migration, lịch sử khác nhau, không kết nối được | Dừng; xử lý đúng nguyên nhân, không reset hoặc đánh dấu applied để né lỗi |
+| Output                                                  | Ý nghĩa và việc tiếp theo                                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Liệt kê migration chưa apply                            | Đối chiếu từng tên/SQL với release; status có thể exit khác 0 vì pending, chưa phải apply thất bại |
+| `Database schema is up to date!`                        | Không còn pending theo lịch sử; với release code-only có thể bỏ bước 5                             |
+| Failed migration, lịch sử khác nhau, không kết nối được | Dừng; xử lý đúng nguyên nhân, không reset hoặc đánh dấu applied để né lỗi                          |
 
 Lệnh apply chạy **tất cả migration pending theo thứ tự**, không chỉ file bạn vừa thêm.
 Nếu thấy migration không thuộc kế hoạch, dừng và review cả chuỗi. Status không kiểm chứng DB chưa bị sửa tay.
@@ -121,9 +121,12 @@ không gọi script suffix production nếu job không có file env mà script y
 
 ## 6. Phát hành code đã kiểm thử
 
-**Vercel:** sau schema tương thích đã sẵn sàng, merge PR release vào `main` hoặc cho deployment đã
-build nhận traffic theo gate. Xác nhận CI của commit thực tế sau merge đạt, SQL vẫn đúng bộ đã áp dụng,
-Production variables đúng và deployment trỏ đúng commit. Không Force Promote để bỏ qua lỗi.
+**Vercel:** merge PR release vào `main`, chờ CI push của SHA sau merge đạt, rồi chạy
+[Deploy API](../cd/manual-release.md) với Branch `main`, environment `production`, SHA đó và ID staging run thành công có cùng nội dung source.
+Nếu đã apply DB ở bước 5, chọn `migrations=verify`; nếu giao workflow apply, chưa chạy bước 5 riêng và
+chỉ chọn `apply` sau khi đã review toàn bộ pending/tương thích. Không chạy hai migration runner đồng thời.
+Workflow deploy với `--skip-domain`, kiểm tra Swagger/assets/OpenAPI rồi mới promote tự động.
+Không có nút approve thứ hai giữa smoke và promote; sau đó kiểm tra domain thật và Runtime Logs.
 
 **Host Node:** ở build runner, chạy `npm run build`, tạo artifact gồm `dist/`, `package.json` và runtime
 dependencies tương thích OS/CPU. Có thể build trước bước 5 nhưng chưa start bản mới nhận traffic.

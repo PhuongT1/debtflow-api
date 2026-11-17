@@ -12,7 +12,7 @@ test('architecture has its own top menu and sidebar', () => {
   const { docSections, nav, sidebar } = createDocumentationNavigation();
   assert.deepEqual(
     nav.map(({ text }) => text),
-    ['Bắt đầu', 'Kiến trúc', 'Database', 'Phát triển', 'Rules & AI', 'Triển khai', 'Tra cứu'],
+    ['Bắt đầu', 'Kiến trúc', 'Database', 'Phát triển', 'Rules & AI', 'CI/CD', 'Triển khai', 'Tra cứu'],
   );
   const onboarding = docSections[0].groups[0].items;
   const architecture = docSections.find(({ text }) => text === 'Kiến trúc').groups[0];
@@ -125,6 +125,15 @@ test('release documentation owns deployment pages and stays separate from local 
     assert.deepEqual(nav.filter(({ activeMatch }) => new RegExp(activeMatch).test(link)).map(({ text }) => text), ['Triển khai']);
   }
   assert.equal(sidebar['/deployment/'][0].text, 'Triển khai');
+  const automation = docSections.find(({ text }) => text === 'CI/CD');
+  const workflowPages = flatten(automation.groups.flatMap(({ items }) => items));
+  for (const { link } of workflowPages) {
+    assert.ok(!release.some((item) => item.link === link), link);
+    assert.deepEqual(nav.filter(({ activeMatch }) => new RegExp(activeMatch).test(link)).map(({ text }) => text), ['CI/CD']);
+    const key = Object.keys(sidebar).find((prefix) => link.startsWith(prefix));
+    assert.equal(sidebar[key][0].text, 'CI/CD');
+  }
+
 });
 
 test('database navigation separates local authoring from release preparation', () => {

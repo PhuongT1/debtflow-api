@@ -110,7 +110,9 @@ export function createDocumentationNavigation() {
             {
               text: 'Cài và cập nhật DB dev riêng',
               link: '/database/new-developer',
-              items: [{ text: 'Tạo migration khi thêm/sửa model', link: '/database/add-tables-fields' }],
+              items: [
+                { text: 'Tạo migration khi thêm/sửa model', link: '/database/add-tables-fields' },
+              ],
             },
           ],
         },
@@ -121,7 +123,10 @@ export function createDocumentationNavigation() {
               text: 'Chuẩn bị DB để phát hành',
               link: '/database/releases/',
               items: [
-                { text: 'Kết nối DB với API và release runner', link: '/database/releases/connect-runtime' },
+                {
+                  text: 'Kết nối DB với API và release runner',
+                  link: '/database/releases/connect-runtime',
+                },
                 {
                   text: 'Áp dụng migration: tạo mới và cập nhật DB',
                   link: '/database/initialize-empty',
@@ -132,7 +137,9 @@ export function createDocumentationNavigation() {
                 {
                   text: 'Tài khoản dev và kiểm thử',
                   link: '/database/create-user',
-                  items: [{ text: 'Kiểm tra login và phân quyền', link: '/database/verify-user-access' }],
+                  items: [
+                    { text: 'Kiểm tra login và phân quyền', link: '/database/verify-user-access' },
+                  ],
                 },
               ],
             },
@@ -244,26 +251,47 @@ export function createDocumentationNavigation() {
       ],
     },
     {
+      text: 'CI/CD',
+      icon: 'decisions',
+      description: 'Cấu hình GitHub Actions, kiểm tra CI và chạy CD thủ công.',
+      link: '/deployment/ci-cd',
+      prefixes: [
+        '/deployment/ci-cd',
+        '/deployment/ci/',
+        '/deployment/cd/github-actions-setup',
+        '/deployment/cd/manual-release',
+      ],
+      groups: [
+        {
+          text: 'Cấu hình workflow',
+          items: [
+            { text: 'Thông tin cần cấp cho GitHub Actions', link: '/deployment/cd/github-actions-setup' },
+          ],
+        },
+        {
+          text: 'CI — kiểm tra code',
+          items: [
+            { text: 'CI chạy gì và xem kết quả ở đâu?', link: '/deployment/ci/' },
+            { text: 'Bảo vệ nhánh và xử lý CI lỗi', link: '/deployment/ci/pull-requests' },
+          ],
+        },
+        {
+          text: 'CD — chạy phát hành',
+          items: [
+            { text: 'Bấm Deploy: staging / production', link: '/deployment/cd/manual-release' },
+          ],
+        },
+      ],
+    },
+    {
       text: 'Triển khai',
       icon: 'decisions',
-      description: 'CI kiểm tra gì, CD phát hành thế nào và vận hành staging/production.',
+      description: 'Chuẩn bị code, database, hosting và vận hành staging/production.',
       link: '/deployment/',
       prefixes: ['/deployment/'],
       groups: [
         {
-          text: 'CI — kiểm tra trước khi merge',
-          items: [
-            {
-              text: 'CI hiện có và các quality gates',
-              link: '/deployment/ci/',
-              items: pages('/deployment/ci/', [
-                ['pull-requests', 'Bảo vệ nhánh và xử lý CI lỗi'],
-              ]),
-            },
-          ],
-        },
-        {
-          text: 'CD — phát hành ứng dụng',
+          text: 'Chuẩn bị và vận hành release',
           items: [
             {
               text: 'Quy trình phát hành',
@@ -273,7 +301,12 @@ export function createDocumentationNavigation() {
                 {
                   text: '2. Phát hành production',
                   link: '/deployment/environments/production',
-                  items: [{ text: 'Thêm, đổi, xóa field/bảng: thứ tự code và DB', link: '/deployment/environments/schema-changes' }],
+                  items: [
+                    {
+                      text: 'Thêm, đổi, xóa field/bảng: thứ tự code và DB',
+                      link: '/deployment/environments/schema-changes',
+                    },
+                  ],
                 },
               ],
             },
