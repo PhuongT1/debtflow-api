@@ -76,13 +76,31 @@ Follow the project's test placement policy. Keep specs and test-only fixtures in
 `_test/` folder, outside production responsibility folders and build output. Moving tests requires
 updating imports, runners, references and documented commands together. See [Testing](../workflow/testing.md).
 
-
 Place constants by owner and actual callers. Reuse the existing shared constants location for
 cross-feature contracts; keep feature-only values with the feature and private implementation values
 near their use. Do not create another constants folder/file or duplicate an enum without checking
 existing owners. Name constants for their meaning and functions for their actual input/output/action.
 
-
 If repository boundaries are selected by project policy, add `repositories/` for contracts and
 `infrastructure/` for database adapters. Keep existing feature folders; modules own DI bindings.
 Do not move business rules or authorization into an adapter just to remove an ORM import.
+
+## Shared runtime configuration
+
+- Keep environment reads, parsing and shared defaults in the project's configuration owner.
+  Expose a typed configuration object; inject it after environment loading in Nest providers.
+  Do not capture environment values in an import-time singleton or scatter string-key lookups/defaults.
+- Keep domain rules with their domain; global runtime configuration is not a container for all constants.
+- Write comments in English. Environment-variable comments must use at most two short lines per variable,
+  stating purpose and usage; keep credentials out of comments, logs and versioned templates.
+
+## Repository automation
+
+Group maintained automation by responsibility under the project's scripts directory (for example
+AI setup, quality gates, database, generators and build tooling). Keep tests with their script owner;
+do not create one-file folders for individual commands. Update package scripts, CI/Docker copies,
+generator registrations, relative root resolution and documentation together when moving files.
+Use native ESM `.mjs` for Node tooling that needs no TypeScript compilation; keep TypeScript when
+it consumes application types. Keep reusable tools parameterized by project root/configuration;
+separate project policy and fixtures from the executable. Do not claim a project-specific checker
+is portable without adapting its rules and testing it in a separate fixture project.

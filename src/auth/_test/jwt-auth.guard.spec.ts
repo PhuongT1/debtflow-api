@@ -1,3 +1,4 @@
+import { createAppConfig } from '@config/app.config.js';
 import { describe, expect, it, vi } from 'vitest';
 import type { ExecutionContext } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
@@ -28,7 +29,10 @@ function setup() {
   const getAllAndOverride = vi.fn().mockReturnValue(false);
   const guard = new JwtAuthGuard(
     { verifyAsync } as never,
-    { get: () => 'secret' } as never,
+    createAppConfig({
+      DATABASE_URL: 'postgresql://fixture:fixture@127.0.0.1:1/not_connected',
+      JWT_SECRET: 'fixture-secret-with-at-least-24-characters',
+    }),
     { getAllAndOverride } as never,
     { organizationMembership: { findFirst } } as never,
   );

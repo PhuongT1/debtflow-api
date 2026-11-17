@@ -15,7 +15,7 @@ an existing behavior does not authorize changing that behavior, production data 
 
 ## Verification scope
 
-Follow [proportional verification](verification.md#keep-verification-proportional): default to the
+Follow [proportional verification](./verification.md#keep-verification-proportional): default to the
 affected cases/suites, reuse passing results and ask before full-suite or deep verification. A
 request to test one behavior does not authorize testing the whole application.
 

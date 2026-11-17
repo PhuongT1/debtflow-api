@@ -46,19 +46,22 @@ describe('payment tenant context and transaction effects', () => {
     async (organizationId) => {
       const s = setup();
       await expect(s.service.create('d1', input, organizationId as never)).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       await expect(
         s.service.createAutoAllocated(
           { ...input, type: 'RECEIVABLE', partyId: 'p1' },
           organizationId as never,
         ),
-      ).rejects.toMatchObject({ status: 403 });
+      ).rejects.toMatchObject({ kind: 'forbidden', key: 'errors.FORBIDDEN' });
       await expect(s.service.list({}, organizationId as never)).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       await expect(s.service.remove('pay-1', organizationId as never)).rejects.toMatchObject({
-        status: 403,
+        kind: 'forbidden',
+        key: 'errors.FORBIDDEN',
       });
       expect(s.transaction).not.toHaveBeenCalled();
       expect(s.events.emit).not.toHaveBeenCalled();

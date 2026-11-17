@@ -27,5 +27,6 @@ jobs:
       - run: npm ci
       - run: npm run ai:setup
       - run: npm run check
+      - run: npm run test:deployment
       - run: npm run docs:check
       - run: npm run docs:build

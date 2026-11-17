@@ -1,3 +1,9 @@
+/* Keep diagram labels at Mermaid's measured line height instead of article typography. */
+.vp-doc .mermaid p,
+.diagram-canvas p {
+  margin: 0;
+  line-height: inherit;
+}
 .vp-doc .mermaid {
   position: relative;
   padding-top: 42px;

@@ -10,8 +10,8 @@ import {
   PARTY_LIST_QUERY,
   PARTY_COMPUTED_SORT_FIELDS,
   type PartyComputedSortField,
-} from '../../queries/party.list-query.js';
-import { PARTY_BALANCE_STATUSES } from '../../queries/party.query.js';
+} from '../../party.list-query.js';
+import { PARTY_BALANCE_STATUSES } from '../queries/party.query.js';
 import { partyColumn, partyWhereSql } from './party-filter.sql.js';
 
 const SORT_AGGREGATES = {
@@ -54,13 +54,15 @@ export function partyBalancePageSql(
   const active = Prisma.sql`d."status" IN (${Prisma.join(
     PARTY_BALANCE_STATUSES.map((status) => Prisma.sql`${status}::"DebtStatus"`),
   )})`;
-  const sortTotals = aggregate ? Prisma.sql`, sort_totals AS (
+  const sortTotals = aggregate
+    ? Prisma.sql`, sort_totals AS (
     SELECT d."partyId", ${aggregate.expression} AS value
     FROM "Debt" d JOIN filtered selected ON selected."id" = d."partyId"
     WHERE d."organizationId" = ${organizationId}
       ${aggregate.type ? Prisma.sql`AND ${active} AND d."type" = ${aggregate.type}::"DebtType"` : Prisma.empty}
     GROUP BY d."partyId"
-  )` : Prisma.empty;
+  )`
+    : Prisma.empty;
   const sortValue = aggregate ? Prisma.sql`COALESCE(sort_totals.value, 0)` : partyColumn(field);
   const order = direction === 'asc' ? Prisma.sql`ASC NULLS LAST` : Prisma.sql`DESC NULLS FIRST`;
 

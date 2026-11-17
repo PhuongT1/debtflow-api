@@ -1,3 +1,7 @@
+import {
+  OrganizationMembershipStatus,
+  OrganizationStatus,
+} from '@generated/prisma/client.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { Injectable } from '@nestjs/common';
 import { AUTH_USER_SELECT, MEMBERSHIP_CONTEXT_SELECT } from '../auth.select.js';
@@ -22,7 +26,11 @@ export class PrismaAuthRepository extends AuthRepository {
   }
   memberships(userId: string) {
     return this.prisma.organizationMembership.findMany({
-      where: { userId, status: 'ACTIVE', organization: { status: 'ACTIVE' } },
+      where: {
+        userId,
+        status: OrganizationMembershipStatus.ACTIVE,
+        organization: { status: OrganizationStatus.ACTIVE },
+      },
       select: MEMBERSHIP_CONTEXT_SELECT,
       orderBy: { createdAt: 'asc' },
     });
@@ -31,8 +39,8 @@ export class PrismaAuthRepository extends AuthRepository {
     const memberships = await this.prisma.organizationMembership.findMany({
       where: {
         userId,
-        status: 'ACTIVE',
-        organization: { status: 'ACTIVE' },
+        status: OrganizationMembershipStatus.ACTIVE,
+        organization: { status: OrganizationStatus.ACTIVE },
         ...(organizationId ? { organizationId } : {}),
         ...(membershipId ? { id: membershipId } : {}),
       },

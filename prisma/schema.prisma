@@ -6,12 +6,12 @@ generator client {
 }
 
 generator listQueryMetadata {
-  provider = "node ./scripts/generate-list-query-metadata.mjs"
+  provider = "node ./scripts/prisma/generate-list-query-metadata.mjs"
   output = "../src/generated/list-query"
 }
 
 generator responseModels {
-  provider = "node ./scripts/generate-response-models.mjs"
+  provider = "node ./scripts/prisma/generate-response-models.mjs"
   output   = "../src/generated/response-models"
   model    = "Party"
 }

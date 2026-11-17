@@ -1,3 +1,4 @@
+import { createAppConfig } from '@config/app.config.js';
 import { PrismaAuthRepository } from '../infrastructure/prisma-auth.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import * as bcrypt from 'bcryptjs';
@@ -32,17 +33,16 @@ function setup() {
     organizationMembership: { findMany: vi.fn().mockResolvedValue([membership]) },
   };
   const jwt = { signAsync: vi.fn().mockResolvedValue('test-placeholder'), verifyAsync: vi.fn() };
-  const config = { get: vi.fn() };
+  const config = createAppConfig({
+    DATABASE_URL: 'postgresql://fixture:fixture@127.0.0.1:1/not_connected',
+    JWT_SECRET: 'fixture-secret-with-at-least-24-characters',
+  });
   return {
     user,
     membership,
     prisma,
     jwt,
-    service: new AuthService(
-      new PrismaAuthRepository(prisma as never),
-      jwt as never,
-      config as never,
-    ),
+    service: new AuthService(new PrismaAuthRepository(prisma as never), jwt as never, config),
   };
 }
 

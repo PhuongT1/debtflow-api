@@ -10,7 +10,7 @@ import { AuthModule } from '@auth/auth.module.js';
 import { ApiExceptionFilter } from '@common/filters/api-exception.filter.js';
 import { I18nModule } from '@common/i18n/i18n.module.js';
 import { ApiResponseInterceptor } from '@common/interceptors/api-response.interceptor.js';
-import { validateEnv } from '@config/env.validation.js';
+import { appConfig, getEnvFilePaths } from '@config/app.config.js';
 import { DatabaseModule } from '@database/database.module.js';
 import { AuditLogsModule } from '@modules/audit-logs/audit-logs.module.js';
 import { AuthApiModule } from '@modules/auth/auth.module.js';
@@ -24,14 +24,13 @@ import { PaymentsModule } from '@modules/payments/payments.module.js';
 import { ReportsModule } from '@modules/reports/reports.module.js';
 import { UsersModule } from '@modules/users/users.module.js';
 
-const nodeEnv = process.env.NODE_ENV ?? 'development';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${nodeEnv}`, '.env'],
-      validate: validateEnv,
+      envFilePath: getEnvFilePaths(),
+      load: [appConfig],
+      skipProcessEnv: true,
     }),
     EventEmitterModule.forRoot(),
     I18nModule,

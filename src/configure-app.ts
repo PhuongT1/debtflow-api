@@ -1,5 +1,5 @@
 import { INestApplication, RequestMethod } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { appConfig, type AppConfig } from '@config/app.config.js';
 import { ListQueryAwareValidationPipe } from '@common/query/index.js';
 import { createValidationException } from '@common/validation/validation-exception.factory.js';
 import { configureSwagger } from '@common/swagger/swagger.setup.js';
@@ -7,7 +7,7 @@ import { API_PREFIX } from '@common/constants/api-routes.constants.js';
 import { SWAGGER_PATHS } from '@common/swagger/swagger-ui.js';
 
 export function configureApp(app: INestApplication) {
-  const config = app.get(ConfigService);
+  const config = app.get<AppConfig>(appConfig.KEY);
 
   app.setGlobalPrefix(API_PREFIX, {
     exclude: Object.values(SWAGGER_PATHS).map((path) => ({
@@ -16,7 +16,7 @@ export function configureApp(app: INestApplication) {
     })),
   });
   app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN')?.split(',') ?? ['http://localhost:3000'],
+    origin: config.server.corsOrigins,
     credentials: true,
   });
   app.useGlobalPipes(

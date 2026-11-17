@@ -94,7 +94,7 @@ model OrganizationMembership {
   id             String                       @id @default(cuid())
   organizationId String
   userId         String
-  /// Authorization role inside this organization (see docs/03-business-rules.md).
+  /// Authorization role inside this organization (see docs/reference/business-rules.md).
   role           OrganizationRole             @default(VIEWER)
   /// Only ACTIVE memberships can authenticate.
   status         OrganizationMembershipStatus @default(INVITED)

@@ -1,6 +1,11 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  OrganizationMembershipStatus,
+  OrganizationStatus,
+  UserStatus,
+} from '@generated/prisma/client.js';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { unauthorized } from '@common/errors/app-errors.js';
-import { ConfigService } from '@nestjs/config';
+import { appConfig, type AppConfig } from '@config/app.config.js';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@database/prisma.service.js';
@@ -11,7 +16,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    @Inject(appConfig.KEY) private readonly config: AppConfig,
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
   ) {}
@@ -30,7 +35,7 @@ export class JwtAuthGuard implements CanActivate {
     let payload: JwtAuthPayload;
     try {
       payload = await this.jwtService.verifyAsync<JwtAuthPayload>(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.config.auth.jwtSecret,
       });
       if (
         payload.type !== 'access' ||
@@ -48,9 +53,9 @@ export class JwtAuthGuard implements CanActivate {
         id: payload.membershipId,
         organizationId: payload.organizationId,
         userId: payload.sub,
-        status: 'ACTIVE',
-        user: { status: 'ACTIVE' },
-        organization: { status: 'ACTIVE' },
+        status: OrganizationMembershipStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
+        organization: { status: OrganizationStatus.ACTIVE },
       },
       select: { role: true, user: { select: { email: true, systemRole: true } } },
     });

@@ -1,3 +1,4 @@
+import { ApplicationError } from '@common/errors/application-error.js';
 import {
   ArgumentsHost,
   Catch,
@@ -60,6 +61,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
   }
 
   private normalizeException(exception: unknown, locale: AppLocale): NormalizedError {
+    if (exception instanceof ApplicationError) {
+      const status = {
+        invalid: HttpStatus.BAD_REQUEST,
+        forbidden: HttpStatus.FORBIDDEN,
+        'not-found': HttpStatus.NOT_FOUND,
+      } satisfies Record<ApplicationError['kind'], HttpStatus>;
+      return {
+        statusCode: status[exception.kind],
+        code: exception.key.split('.').pop()!,
+        message: this.i18n.t(exception.key, locale),
+      };
+    }
+
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       return this.normalizePrismaError(exception, locale);
     }

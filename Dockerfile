@@ -8,7 +8,8 @@ RUN npm ci --ignore-scripts
 FROM dependencies AS build
 COPY tsconfig*.json nest-cli.json prisma.config.ts ./
 COPY prisma ./prisma
-COPY scripts/generate-list-query-metadata.mjs scripts/generate-response-models.mjs scripts/rewrite-build-aliases.mjs ./scripts/
+COPY scripts/prisma ./scripts/prisma
+COPY scripts/build/rewrite-build-aliases.mjs ./scripts/build/rewrite-build-aliases.mjs
 COPY src ./src
 # Generation validates schema; these placeholders do not connect to a database.
 RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \

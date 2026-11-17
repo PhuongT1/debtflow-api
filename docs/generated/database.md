@@ -409,7 +409,7 @@ Properties as follows:
 - `id`:
 - `organizationId`:
 - `userId`:
-- `role`: Authorization role inside this organization (see docs/03-business-rules.md).
+- `role`: Authorization role inside this organization (see docs/reference/business-rules.md).
 - `status`: Only ACTIVE memberships can authenticate.
 - `invitedAt`:
 - `joinedAt`:
