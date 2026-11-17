@@ -1,0 +1,157 @@
+name: Deploy API
+run-name: Deploy ${{ inputs.environment }} at ${{ inputs.sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target: staging uses develop; production uses main'
+        required: true
+        type: choice
+        options: [staging, production]
+      sha:
+        description: 'Full branch-head commit SHA with successful API quality CI'
+        required: true
+        type: string
+      staging_run_id:
+        description: 'Production only: successful staging Deploy API run ID for the same source tree'
+        required: false
+        type: string
+      migrations:
+        description: 'verify: schema already ready; apply: run reviewed backward-compatible SQL'
+        required: true
+        type: choice
+        default: verify
+        options: [verify, apply]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Verify branch and exact commit CI
+        run: node scripts/deployment/verify-release.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ENVIRONMENT: ${{ inputs.environment }}
+          RELEASE_SHA: ${{ inputs.sha }}
+          STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Check credentials
+        env:
+          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          SMOKE_TEST_ORGANIZATION_ID: ${{ secrets.SMOKE_TEST_ORGANIZATION_ID }}
+        shell: bash
+        run: |
+          for key in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN SMOKE_TEST_EMAIL SMOKE_TEST_PASSWORD SMOKE_TEST_ORGANIZATION_ID; do
+            test -n "${!key}" || { echo "Missing $key in GitHub Environment"; exit 1; }
+          done
+      - run: npm ci
+      - name: Install pinned Vercel CLI
+        run: npm install --global vercel@65.14.0
+      - name: Pull target settings and environment
+        id: target
+        shell: bash
+        env:
+          TARGET: ${{ inputs.environment }}
+        run: |
+          if [ "$TARGET" = production ]; then
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+            echo 'env_file=.vercel/.env.production.local' >> "$GITHUB_OUTPUT"
+          else
+            vercel pull --yes --environment=preview --git-branch=develop --token="$VERCEL_TOKEN"
+            echo 'env_file=.vercel/.env.preview.local' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build Vercel output
+        shell: bash
+        env:
+          TARGET: ${{ inputs.environment }}
+        run: |
+          if [ "$TARGET" = production ]; then
+            vercel build --prod --token="$VERCEL_TOKEN"
+          else
+            vercel build --token="$VERCEL_TOKEN"
+          fi
+      - name: Verify release again after waiting and building
+        run: node scripts/deployment/verify-release.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ENVIRONMENT: ${{ inputs.environment }}
+          RELEASE_SHA: ${{ inputs.sha }}
+          STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+      - name: Apply reviewed migrations
+        if: inputs.migrations == 'apply'
+        run: node --env-file="$RELEASE_ENV_FILE" --run db:migrate:apply
+        env:
+          RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
+      - name: Require database migration history to be ready
+        run: node --env-file="$RELEASE_ENV_FILE" node_modules/prisma/build/index.js migrate status
+        env:
+          RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
+      - name: Deploy the built output
+        id: deploy
+        shell: bash
+        env:
+          TARGET: ${{ inputs.environment }}
+        run: |
+          if [ "$TARGET" = production ]; then
+            url=$(vercel deploy --prebuilt --prod --skip-domain --yes --token="$VERCEL_TOKEN")
+          else
+            url=$(vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          printf '\nDeployment: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check Swagger and API contract on deployed URL
+        run: node scripts/deployment/smoke.mjs
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          SMOKE_TEST_ORGANIZATION_ID: ${{ secrets.SMOKE_TEST_ORGANIZATION_ID }}
+      - name: Promote verified production deployment
+        if: inputs.environment == 'production'
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          vercel promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
+          echo 'Production promotion completed. Verify the public domain and runtime metrics.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove downloaded environment files
+        if: always()
+        run: rm -f .vercel/.env.*.local

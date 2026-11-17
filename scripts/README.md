@@ -3,14 +3,15 @@
 Run the npm commands in the [root command reference](../README.md#command-reference) from the
 repository root. Script paths are implementation details; npm names are the member-facing entrypoints.
 
-| Owner | Files and responsibility | Entrypoints |
-| --- | --- | --- |
-| `ai/` | Offline rule/skill installation and portability tests. Sources remain in `.ai/`. | `ai:setup`, `ai:check`, `test:ai` |
-| `quality/` | Architecture, conventions and reuse checkers; reviewed route policies and baselines. | `check:architecture`, `check:conventions`, `check:maintainability`, `test:quality` |
-| `database/` | Explicit staging/production migration commands and project-specific Party demo import. | `db:migrate:apply:staging`, `db:migrate:apply:production`, `db:migrate:status:staging`, `db:migrate:status:production`, `db:import:parties`, `test:database-tools` |
-| `prisma/` | Schema-to-TypeScript list-query metadata and Swagger response-model generators. | `db:generate`, `test:response-models` |
-| `docs/` | OpenAPI and Markdown generation using the compiled application. | `docs:generate:api` (build first) |
-| `build/` | Compiled import rewriting and standalone/Vercel runtime smoke tests. | `build`, `test:runtime` (build first) |
+| Owner         | Files and responsibility                                                               | Entrypoints                                                                                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ai/`         | Offline rule/skill installation and portability tests. Sources remain in `.ai/`.       | `ai:setup`, `ai:check`, `test:ai`                                                                                                                                  |
+| `quality/`    | Architecture, conventions and reuse checkers; reviewed route policies and baselines.   | `check:architecture`, `check:conventions`, `check:maintainability`, `test:quality`                                                                                 |
+| `database/`   | Explicit staging/production migration commands and project-specific Party demo import. | `db:migrate:apply:staging`, `db:migrate:apply:production`, `db:migrate:status:staging`, `db:migrate:status:production`, `db:import:parties`, `test:database-tools` |
+| `prisma/`     | Schema-to-TypeScript list-query metadata and Swagger response-model generators.        | `db:generate`, `test:response-models`                                                                                                                              |
+| `docs/`       | OpenAPI and Markdown generation using the compiled application.                        | `docs:generate:api` (build first)                                                                                                                                  |
+| `deployment/` | Exact-SHA CI release gate and deployed Swagger smoke checks; no implicit DB writes.    | `test:deployment`, GitHub **Deploy API** workflow                                                                                                                  |
+| `build/`      | Compiled import rewriting and standalone/Vercel runtime smoke tests.                   | `build`, `test:runtime` (build first)                                                                                                                              |
 
 Tests for tooling stay beside their subject as `*.test.mjs`; application specs belong in
 `src/<owner>/_test/`. Do not create another folder per one-line npm command.
