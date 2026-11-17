@@ -125,7 +125,7 @@ không gọi script suffix production nếu job không có file env mà script y
 [Deploy API](../cd/manual-release.md) với Branch `main`, environment `production`, SHA đó và ID staging run thành công có cùng nội dung source.
 Nếu đã apply DB ở bước 5, chọn `migrations=verify`; nếu giao workflow apply, chưa chạy bước 5 riêng và
 chỉ chọn `apply` sau khi đã review toàn bộ pending/tương thích. Không chạy hai migration runner đồng thời.
-Workflow deploy với `--skip-domain`, kiểm tra Swagger/login/Party read rồi mới promote tự động.
+Workflow deploy với `--skip-domain`, kiểm tra Swagger/assets/OpenAPI rồi mới promote tự động.
 Không có nút approve thứ hai giữa smoke và promote; sau đó kiểm tra domain thật và Runtime Logs.
 
 **Host Node:** ở build runner, chạy `npm run build`, tạo artifact gồm `dist/`, `package.json` và runtime

@@ -73,13 +73,9 @@ jobs:
           node-version: '24'
           cache: npm
       - name: Check credentials
-        env:
-          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
-          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
-          SMOKE_TEST_ORGANIZATION_ID: ${{ secrets.SMOKE_TEST_ORGANIZATION_ID }}
         shell: bash
         run: |
-          for key in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN SMOKE_TEST_EMAIL SMOKE_TEST_PASSWORD SMOKE_TEST_ORGANIZATION_ID; do
+          for key in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN; do
             test -n "${!key}" || { echo "Missing $key in GitHub Environment"; exit 1; }
           done
       - run: npm ci
@@ -137,14 +133,11 @@ jobs:
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           printf '\nDeployment: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
-      - name: Check Swagger and API contract on deployed URL
+      - name: Check Swagger and OpenAPI on deployed URL
         run: node scripts/deployment/smoke.mjs
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
-          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
-          SMOKE_TEST_ORGANIZATION_ID: ${{ secrets.SMOKE_TEST_ORGANIZATION_ID }}
       - name: Promote verified production deployment
         if: inputs.environment == 'production'
         env:

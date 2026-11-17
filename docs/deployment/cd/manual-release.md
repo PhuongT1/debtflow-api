@@ -18,7 +18,7 @@ sequenceDiagram
   GH->>V: Pull Preview settings/env và build
   GH->>DB: Apply nếu được chọn, luôn kiểm tra migration status
   GH->>V: Deploy Preview
-  GH->>V: Smoke Swagger, login, identity, Party read và auth
+  GH->>V: Smoke Swagger, assets và OpenAPI
   GH-->>Dev: Run staging thành công + URL
   Dev->>Dev: QA tính năng thay đổi, review release
   Dev->>GH: Merge main, chờ CI push đạt
@@ -49,13 +49,10 @@ Bản production chờ promote **vẫn dùng DB/secrets production**; URL riêng
 | --------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
 | Code + migration được review                        | CI không tự đánh giá SQL có làm mất dữ liệu hay không | PR và `prisma/migrations/*/migration.sql`           |
 | CI `API quality` thành công trên commit đầu nhánh   | Tránh phát hành source chưa được kiểm tra             | Actions → API quality, event **push**, SHA đầy đủ   |
-| Smoke account riêng, role VIEWER, đúng tổ chức      | Kiểm tra login và DB read bằng quyền tối thiểu        | GitHub Environment secrets và tài khoản đã được cấp |
 | DB đúng môi trường, kế hoạch backup/restore phù hợp | Migration có tác động thật ngay khi apply             | Vercel env + người vận hành DB                      |
 | Bản đang tốt và URL/domain đã ghi nhận              | Có đích quay về khi release lỗi                       | Vercel Deployments và release record                |
 
-DB trống cũng cần được chuẩn bị tài khoản smoke trước lần phát hành đầu tiên. Dùng quy trình
-[tạo tài khoản](../../database/users/create-user.md); không tự seed demo production trong CD.
-Smoke không cần tài khoản OWNER/ADMIN. Nếu `/docs` bị tắt theo chính sách môi trường, cần điều chỉnh
+Nếu `/docs` bị tắt theo chính sách môi trường, cần điều chỉnh
 smoke có review trước khi dùng workflow này; không mở public tài liệu chỉ để làm check xanh.
 
 ### Chọn `migrations`: lệnh nào ghi DB?
@@ -145,14 +142,14 @@ Trong chính lần production, output chỉ build một lần; smoke và promote
 | Apply, nếu chọn         | Prisma báo hoàn tất hoặc không còn pending                        | Nếu lỗi, dừng và điều tra migration; không reset/resolve tùy tiện                        |
 | Migration status        | `Database schema is up to date!` theo Prisma đang dùng            | Pending/failed thì xử lý trước; status không tự sửa schema                               |
 | Deploy                  | Có URL bản mới trong Summary                                      | DB có thể đã migrate; không mặc định rollback DB                                         |
-| Smoke                   | Swagger, login, identity, auth và Party read đạt                  | Production chưa promote: domain cũ còn giữ; sửa config/code rồi kiểm tra lại             |
+| Smoke                   | Swagger, assets và OpenAPI đạt                  | Production chưa promote: domain cũ còn giữ; sửa config/code rồi kiểm tra lại             |
 | Promote, chỉ production | CLI báo promote hoàn tất                                          | Timeout không chắc đã hủy promotion; kiểm tra Vercel domain/deployment trước khi thử lại |
 
-Smoke thực hiện: `/docs`, assets cùng origin, `/docs-json`, login account được cấp,
-`GET /api/auth/me`, `GET /api/parties` thiếu token phải 401, và list có token phải đúng tenant/phân trang.
-Không ghi log response/token, không gửi credentials sang CDN, không tạo/sửa/xóa Party hay nợ.
-Login hiện tại chỉ đọc user/membership và ký token; nếu auth sau này thêm session write, cần review lại tác động smoke.
-Tenant check với một account không thay thế bộ test chống truy cập chéo tenant hoặc kiểm thử tất cả quyền.
+Smoke tự động chỉ gọi `/docs`, các Swagger assets cùng origin và `/docs-json`; kiểm tra schema có
+route login/Party. Không gửi mật khẩu, JWT hay truy vấn API nghiệp vụ.
+**Smoke đạt không chứng minh API login, kết nối DB hoặc phân quyền đúng.** Sau deploy, người kiểm thử
+phải [kiểm tra login và quyền truy cập](../../database/users/verify-user-access.md) bằng tài khoản môi trường đó.
+Khi chạy staging, hoàn thành bước này trước khi dùng run làm bằng chứng phát hành production.
 
 Nếu smoke lỗi, không có bước promote chạy tiếp. Nếu đã promote rồi mới có sự cố, dùng
 [rollback code tương thích schema](./operations.md); workflow không tự rollback code/DB.
@@ -178,5 +175,5 @@ Kiểm tra domain production sau promote vẫn là bước của người phát 
 - [GitHub Environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments): secrets, branch restrictions và approval.
 - [Prisma expand/contract](https://www.prisma.io/dataguide/types/relational/expand-and-contract-pattern): triển khai schema tương thích theo nhiều giai đoạn.
 
-Đối chiếu Git tree staging/main, bắt buộc smoke account và input `verify/apply` là **chính sách DebtFlow**,
+Đối chiếu Git tree staging/main và input `verify/apply` là **chính sách DebtFlow**,
 không phải cơ chế tự động GitHub/Vercel áp đặt. Thay chính sách phải sửa script/test và tài liệu cùng lúc.
