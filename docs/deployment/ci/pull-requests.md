@@ -34,3 +34,17 @@ tạm thời, không lặp lại để chờ test flaky tình cờ pass.
 Không. Check xanh chỉ chứng minh các bước đã cấu hình hoàn tất. Xem deployment của đúng commit bên Vercel
 hoặc nền tảng CD; xác nhận môi trường, migration, URL và smoke test theo [quy trình CD](../cd/index.md).
 Branch protection chặn merge; nó không tự ngăn một deployment Vercel đã được tạo bởi push.
+
+## 4. Giới hạn nhánh và người duyệt CD
+
+Trên **GitHub repository → Settings → Environments**, mở từng environment →
+**Deployment branches and tags** → chỉ cho phép nhánh tương ứng:
+
+| Environment | Nhánh |
+| --- | --- |
+| `staging` | `develop` |
+| `production` | `main` |
+
+Trong **production → Deployment protection rules**, đặt **Required reviewers** và
+**Prevent self-review** nếu gói GitHub hỗ trợ. Đây là duyệt job phát hành, khác review Pull Request.
+Nếu không đặt reviewer rule thì workflow không có bước duyệt độc lập.

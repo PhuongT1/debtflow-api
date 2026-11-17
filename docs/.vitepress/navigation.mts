@@ -251,34 +251,52 @@ export function createDocumentationNavigation() {
       ],
     },
     {
+      text: 'CI/CD',
+      icon: 'decisions',
+      description: 'Cấu hình GitHub Actions, kiểm tra CI và chạy CD thủ công.',
+      link: '/deployment/ci-cd',
+      prefixes: [
+        '/deployment/ci-cd',
+        '/deployment/ci/',
+        '/deployment/cd/github-actions-setup',
+        '/deployment/cd/manual-release',
+      ],
+      groups: [
+        {
+          text: 'Cấu hình workflow',
+          items: [
+            { text: 'Thông tin cần cấp cho GitHub Actions', link: '/deployment/cd/github-actions-setup' },
+          ],
+        },
+        {
+          text: 'CI — kiểm tra code',
+          items: [
+            { text: 'CI chạy gì và xem kết quả ở đâu?', link: '/deployment/ci/' },
+            { text: 'Bảo vệ nhánh và xử lý CI lỗi', link: '/deployment/ci/pull-requests' },
+          ],
+        },
+        {
+          text: 'CD — chạy phát hành',
+          items: [
+            { text: 'Bấm Deploy: staging / production', link: '/deployment/cd/manual-release' },
+          ],
+        },
+      ],
+    },
+    {
       text: 'Triển khai',
       icon: 'decisions',
-      description: 'CI kiểm tra gì, CD phát hành thế nào và vận hành staging/production.',
+      description: 'Chuẩn bị code, database, hosting và vận hành staging/production.',
       link: '/deployment/',
       prefixes: ['/deployment/'],
       groups: [
         {
-          text: 'CI — kiểm tra trước khi merge',
-          items: [
-            {
-              text: 'CI hiện có và các quality gates',
-              link: '/deployment/ci/',
-              items: pages('/deployment/ci/', [['pull-requests', 'Bảo vệ nhánh và xử lý CI lỗi']]),
-            },
-          ],
-        },
-        {
-          text: 'CD — phát hành ứng dụng',
+          text: 'Chuẩn bị và vận hành release',
           items: [
             {
               text: 'Quy trình phát hành',
               link: '/deployment/cd/',
               items: [
-                {
-                  text: 'Thiết lập GitHub Actions + Vercel',
-                  link: '/deployment/cd/github-actions-setup',
-                },
-                { text: 'Bấm Deploy: staging / production', link: '/deployment/cd/manual-release' },
                 { text: '1. Triển khai staging', link: '/deployment/environments/staging' },
                 {
                   text: '2. Phát hành production',

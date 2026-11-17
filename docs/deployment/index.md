@@ -1,6 +1,7 @@
 # Triển khai: từ CI đến production
 
 **Dùng khi:** chuẩn bị kiểm tra một PR, phát hành staging/production hoặc đổi nền tảng hosting.
+Cấu hình workflows và cách chạy nằm ở [CI/CD](./ci-cd.md).
 Chạy local và debug nằm ở [Bắt đầu](../getting-started/running/index.md).
 
 ## CI và CD khác nhau thế nào?
@@ -43,7 +44,7 @@ flowchart TD
   E --> F[Chọn commit và kiểm tra migration tương thích]
   F --> G[Apply migration nếu có, kiểm tra trạng thái]
   G --> H[Deploy production chưa chuyển domain]
-  H --> S[Smoke: Swagger, login, auth và Party read]
+  H --> S[Smoke: Swagger, assets và OpenAPI]
   S --> P[Đạt mới promote: chuyển domain production]
   P --> I[Kiểm tra domain, logs và theo dõi]
   I --> J{Ổn định?}
