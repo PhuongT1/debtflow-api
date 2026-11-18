@@ -13,7 +13,7 @@ Chạy local và debug nằm ở [Bắt đầu](../getting-started/running/index
 | CD — Continuous Deployment  | Bản đạt điều kiện có tự được đưa lên môi trường đích không? | Triển khai tự động sau các điều kiện đã cấu hình         |
 
 Với DebtFlow, chọn **CI tự động và phát hành production có kiểm soát**. GitHub Actions chạy CI khi push/PR;
-workflow **Deploy API** chỉ phát hành khi bấm Run workflow và xác minh CI đúng SHA.
+hai workflow **Deploy staging / Deploy production** chỉ phát hành khi bấm Run workflow và xác minh CI đúng SHA.
 
 ## Hiện có gì trong repository?
 

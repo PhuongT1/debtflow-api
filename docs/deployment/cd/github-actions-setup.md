@@ -1,7 +1,7 @@
 # Điền cấu hình cho GitHub Actions
 
 **Làm một lần:** lấy 3 giá trị trên **Vercel**, lưu vào **GitHub**. CI không cần thêm secrets;
-các giá trị dưới đây dùng cho job `deploy` của workflow `Deploy API`.
+các giá trị dưới đây dùng cho job `release / deploy` của hai workflow `Deploy staging` và `Deploy production`.
 
 ## 1. GitHub: tạo nơi lưu
 
@@ -35,13 +35,22 @@ Deployment không bật bảo vệ thì bỏ qua biến này.
 Nếu staging và production cùng project Vercel, có thể dùng cùng token/IDs khi quyền token phù hợp.
 **Kết quả:** mỗi environment có 3 secrets bắt buộc; bypass secret chỉ thêm khi cần.
 
+**Bạn đã lưu trong staging:** nút **Deploy staging** dùng ngay 3 secrets đó để deploy nhánh `develop`.
+Không cần tạo environment `dev` riêng nếu “dev” của bạn chính là nhánh develop/staging.
+Để chạy production, mở environment **production**, lưu cùng 3 tên. Có thể dùng lại giá trị token/IDs
+nếu vẫn cùng team/project và token còn quyền; không phải tạo token mới. GitHub không tự chia sẻ
+secrets giữa hai environments và không cho xem lại giá trị secret đã lưu.
+
+Ba secrets là **cấu hình một lần**. Nút deploy chỉ còn Branch và ô migration tùy chọn; SHA và bằng chứng
+staging được workflow tự kiểm tra. [Cách bấm từng bước](./manual-release.md).
+
 Không điền DB URL, JWT hoặc CORS ở đây. Những biến chạy API được quản lý tại
 [cấu hình runtime Vercel](../../database/releases/connect-runtime.md#vercel-runtime).
 
 ## Tiếp theo
 
 - [Giới hạn nhánh và quyền duyệt phát hành](../ci/pull-requests.md): staging dùng `develop`, production dùng `main`.
-- [Chạy CD từng bước](./manual-release.md): chọn commit và bấm Deploy.
+- [Chạy CD từng bước](./manual-release.md): chọn nút staging/production và bấm Run workflow.
 
 ## Xem GitHub Actions ngay tại đây
 
@@ -53,7 +62,19 @@ Nội dung bên dưới được lấy trực tiếp từ file YAML gốc khi ch
 
 </SourceCodeViewer>
 
-<SourceCodeViewer title="CD — .github/workflows/deploy.yml">
+<SourceCodeViewer title="Deploy staging — .github/workflows/deploy-staging.yml">
+
+<<< ../../../.github/workflows/deploy-staging.yml{yaml}
+
+</SourceCodeViewer>
+
+<SourceCodeViewer title="Deploy production — .github/workflows/deploy-production.yml">
+
+<<< ../../../.github/workflows/deploy-production.yml{yaml}
+
+</SourceCodeViewer>
+
+<SourceCodeViewer title="CD dùng chung — .github/workflows/deploy.yml">
 
 <<< ../../../.github/workflows/deploy.yml{yaml}
 
@@ -64,7 +85,9 @@ Nội dung bên dưới được lấy trực tiếp từ file YAML gốc khi ch
 | Workflow | File | Job |
 | --- | --- | --- |
 | CI: `API quality` — không cần secrets thật | `.github/workflows/quality.yml` | `quality` |
-| CD: `Deploy API` — secrets trên dùng trong `deploy` | `.github/workflows/deploy.yml` | `verify` → `deploy` |
+| Nút `Deploy staging` | `.github/workflows/deploy-staging.yml` | `release` |
+| Nút `Deploy production` | `.github/workflows/deploy-production.yml` | `release` |
+| CD dùng chung — nhận secrets của environment tương ứng | `.github/workflows/deploy.yml` | `verify` → `deploy` |
 
 Nguồn chính thức: [Vercel Tokens](https://vercel.com/docs/rest-api/getting-started),
 [Project ID](https://vercel.com/docs/project-configuration/general-settings#project-id),

@@ -1,28 +1,15 @@
-name: Deploy API
-run-name: Deploy ${{ inputs.environment }} at ${{ inputs.sha }}
+name: Deploy API (shared)
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       environment:
-        description: 'Target: staging uses develop; production uses main'
-        required: true
-        type: choice
-        options: [staging, production]
-      sha:
-        description: 'Full branch-head commit SHA with successful API quality CI'
         required: true
         type: string
-      staging_run_id:
-        description: 'Production only: successful staging Deploy API run ID for the same source tree'
+      apply_migrations:
         required: false
-        type: string
-      migrations:
-        description: 'verify: schema already ready; apply: run reviewed backward-compatible SQL'
-        required: true
-        type: choice
-        default: verify
-        options: [verify, apply]
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -48,8 +35,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_ENVIRONMENT: ${{ inputs.environment }}
-          RELEASE_SHA: ${{ inputs.sha }}
-          STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+          RELEASE_SHA: ${{ github.sha }}
 
   deploy:
     needs: verify
@@ -66,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ inputs.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -109,10 +95,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_ENVIRONMENT: ${{ inputs.environment }}
-          RELEASE_SHA: ${{ inputs.sha }}
-          STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+          RELEASE_SHA: ${{ github.sha }}
       - name: Apply reviewed migrations
-        if: inputs.migrations == 'apply'
+        if: inputs.apply_migrations
         run: node --env-file="$RELEASE_ENV_FILE" --run db:migrate:apply
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}

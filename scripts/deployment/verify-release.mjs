@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 // Verify the selected branch head and its latest push CI before exposing release credentials.
 export async function verifyRelease(env = process.env, request = fetch) {
   const branch = { staging: 'develop', production: 'main' }[env.RELEASE_ENVIRONMENT];
-  const sha = env.RELEASE_SHA;
+  const sha = env.RELEASE_SHA ?? env.GITHUB_SHA;
   if (!branch || env.GITHUB_REF !== `refs/heads/${branch}`)
     throw new Error('Select develop for staging or main for production.');
   if (!/^[a-f0-9]{40}$/.test(sha ?? ''))
@@ -44,10 +44,15 @@ export async function verifyRelease(env = process.env, request = fetch) {
     throw new Error('The latest API quality push run for this exact SHA must finish successfully.');
   let stagingUrl;
   if (branch === 'main') {
-    if (!/^[1-9]\d*$/.test(env.STAGING_RUN_ID ?? ''))
-      throw new Error('Production requires the successful staging Deploy API run ID.');
-    const staging = await get(`actions/runs/${env.STAGING_RUN_ID}`);
-    const workflow = await get('actions/workflows/deploy.yml');
+    const workflow = await get('actions/workflows/deploy-staging.yml');
+    const { workflow_runs: stagingRuns } = await get(
+      'actions/workflows/deploy-staging.yml/runs?branch=develop&event=workflow_dispatch&status=success&per_page=100',
+    );
+    const staging = (stagingRuns ?? [])
+      .filter((run) => run.status === 'completed' && run.conclusion === 'success')
+      .sort((a, b) => b.run_number - a.run_number || b.run_attempt - a.run_attempt)[0];
+    if (!staging)
+      throw new Error('Deploy staging must succeed before deploying production.');
     if (
       staging.workflow_id !== workflow.id ||
       staging.head_branch !== 'develop' ||
@@ -57,7 +62,7 @@ export async function verifyRelease(env = process.env, request = fetch) {
       staging.head_repository?.full_name !== env.GITHUB_REPOSITORY
     )
       throw new Error(
-        'Staging evidence must be a successful Deploy API run on develop in this repository.',
+        'Staging evidence must be a successful Deploy staging run on develop in this repository.',
       );
     const tested = await get(`commits/${staging.head_sha}`);
     if (!head.commit?.tree?.sha || head.commit.tree.sha !== tested.commit?.tree?.sha)

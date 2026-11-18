@@ -69,7 +69,6 @@ const production = {
   ...env,
   RELEASE_ENVIRONMENT: 'production',
   GITHUB_REF: 'refs/heads/main',
-  STAGING_RUN_ID: '10',
 };
 const staging = {
   ...run,
@@ -82,9 +81,9 @@ const productionApi =
   async (url) => ({
     ok: true,
     json: async () =>
-      url.endsWith('/actions/runs/10')
-        ? evidence
-        : url.endsWith('/actions/workflows/deploy.yml')
+      url.includes('/actions/workflows/deploy-staging.yml/runs?')
+        ? { workflow_runs: evidence ? [evidence] : [] }
+        : url.endsWith('/actions/workflows/deploy-staging.yml')
           ? { id: 7 }
           : url.endsWith('/commits/main')
             ? { sha, commit: { tree: { sha: 'tree-a' } } }
@@ -96,8 +95,8 @@ test('production requires successful staging of the same tree even with a differ
   const evidence = { ...staging, head_sha: 'c'.repeat(40) };
   assert.equal((await verifyRelease(production, productionApi(evidence))).sha, sha);
   await assert.rejects(
-    verifyRelease({ ...production, STAGING_RUN_ID: '' }, productionApi()),
-    /run ID/,
+    verifyRelease(production, productionApi(null)),
+    /Deploy staging must succeed/,
   );
   await assert.rejects(
     verifyRelease(production, productionApi(evidence, 'different-tree')),
@@ -115,7 +114,7 @@ test('rejects failed, running, foreign, wrong branch or wrong workflow staging e
   ])
     await assert.rejects(
       verifyRelease(production, productionApi({ ...staging, ...override })),
-      /Staging evidence/,
+      /Staging evidence|Deploy staging must succeed/,
     );
 });
 test('workflow context must match the selected commit', async () => {
@@ -123,4 +122,8 @@ test('workflow context must match the selected commit', async () => {
     verifyRelease({ ...env, GITHUB_SHA: 'd'.repeat(40) }, api()),
     /Workflow commit/,
   );
+});
+test('uses the workflow commit without a manually entered SHA', async () => {
+  const { RELEASE_SHA, ...automatic } = env;
+  assert.equal((await verifyRelease(automatic, api())).sha, sha);
 });
