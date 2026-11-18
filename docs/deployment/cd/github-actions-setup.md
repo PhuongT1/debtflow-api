@@ -47,6 +47,21 @@ staging được workflow tự kiểm tra. [Cách bấm từng bước](./manual
 Không điền DB URL, JWT hoặc CORS ở đây. Những biến chạy API được quản lý tại
 [cấu hình runtime Vercel](../../database/releases/connect-runtime.md#vercel-runtime).
 
+### Dùng lại env đang có trên Vercel
+
+Không cần copy `DATABASE_URL`, JWT hoặc CORS sang GitHub. Mỗi lần bấm deploy, workflow tải cấu hình
+mới nhất bằng `vercel pull`, rồi nạp file env vừa tải cho build và các lệnh migration/status.
+
+| Nút deploy | Lấy env tại Vercel → project debtflow-api → Settings → Environment Variables |
+| --- | --- |
+| Deploy staging | Preview, gồm giá trị riêng cho branch `develop` nếu có |
+| Deploy production | Production |
+
+Trong GitHub Actions → lần chạy → `release / deploy`, mở **Pull target settings and environment**
+để xem môi trường được tải. **Build Vercel output** kiểm tra có `DATABASE_URL` trước khi build,
+không in giá trị. Nếu báo thiếu, kiểm tra phạm vi biến trên Vercel; GitHub Environment `staging`
+chỉ chứa thông tin cấp quyền deploy, không tự chọn một Vercel Environment cùng tên.
+
 ## Tiếp theo
 
 - [Giới hạn nhánh và quyền duyệt phát hành](../ci/pull-requests.md): staging dùng `develop`, production dùng `main`.
@@ -94,3 +109,5 @@ Nguồn chính thức: [Vercel Tokens](https://vercel.com/docs/rest-api/getting-
 [Team ID](https://vercel.com/docs/accounts#find-your-team-id),
 [Automation bypass](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation),
 [GitHub Environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+Env cho build: [Vercel pull](https://vercel.com/docs/cli/pull),
+[Vercel build](https://vercel.com/docs/cli/build).

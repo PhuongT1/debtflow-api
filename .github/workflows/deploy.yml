@@ -84,11 +84,18 @@ jobs:
         shell: bash
         env:
           TARGET: ${{ inputs.environment }}
+          RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
         run: |
+          node --env-file="$RELEASE_ENV_FILE" --input-type=module -e '
+            if (!process.env.DATABASE_URL) {
+              console.error("DATABASE_URL is missing from the selected Vercel environment. Check Preview/develop or Production in Vercel Project Settings.");
+              process.exit(1);
+            }
+          '
           if [ "$TARGET" = production ]; then
-            vercel build --prod --token="$VERCEL_TOKEN"
+            node --env-file="$RELEASE_ENV_FILE" "$(command -v vercel)" build --prod --token="$VERCEL_TOKEN"
           else
-            vercel build --token="$VERCEL_TOKEN"
+            node --env-file="$RELEASE_ENV_FILE" "$(command -v vercel)" build --token="$VERCEL_TOKEN"
           fi
       - name: Verify release again after waiting and building
         run: node scripts/deployment/verify-release.mjs
