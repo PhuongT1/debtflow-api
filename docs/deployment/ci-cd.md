@@ -22,7 +22,9 @@ Cấu hình API/DB và kế hoạch phát hành được quản lý ở các ph�
 | Workflow | Job ID | File |
 | --- | --- | --- |
 | `API quality` (CI) | `quality` | `.github/workflows/quality.yml` |
-| `Deploy API` (CD) | `verify` → `deploy` | `.github/workflows/deploy.yml` |
+| `Deploy staging` | `release` | `.github/workflows/deploy-staging.yml` |
+| `Deploy production` | `release` | `.github/workflows/deploy-production.yml` |
+| CD dùng chung | `verify` → `deploy` | `.github/workflows/deploy.yml` |
 
 `quality` kiểm tra code. `verify` kiểm tra điều kiện phát hành. `deploy` build và triển khai sau khi `verify` đạt.
 CI không cần secrets thật; job `deploy` dùng cấu hình được giải thích tại

@@ -5,7 +5,7 @@ Cấu hình đã có trong source; secrets, quyền và domain trên tài khoả
 
 ## 1. Phân chia môi trường
 
-| Git branch | Target khi bấm Deploy API        | Dữ liệu                           |
+| Git branch | Target khi bấm Deploy        | Dữ liệu                           |
 | ---------- | -------------------------------- | --------------------------------- |
 | `develop`  | Preview với env branch `develop` | DB/secrets staging                |
 | `main`     | Production                       | DB/secrets production             |
@@ -22,7 +22,7 @@ Deployment hiện có vẫn hoạt động. CLI deploy do Actions gọi vẫn l�
 | `package.json`                        | Logic build, Node 24 và dependencies                                             |
 | Vercel Settings                       | Build Command `npm run build`, runtime env, Production Branch, domain/protection |
 | `vercel.json`                         | Tắt Git auto-deploy, function include/duration, redirect và rewrite              |
-| `.github/workflows/deploy.yml`        | Nút chạy thủ công, branch/SHA/CI gates, build, DB và deploy                      |
+| `.github/workflows/deploy.yml`        | Xử lý dùng chung cho hai nút staging/production: branch/SHA/CI gates, build, DB và deploy                      |
 | GitHub Environments                   | Release credentials, giới hạn branch, approval nếu hỗ trợ                        |
 | `api/index.js` → `dist/src/vercel.js` | Entrypoint serverless, không chạy `npm start`                                    |
 

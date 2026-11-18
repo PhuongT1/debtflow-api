@@ -1,7 +1,7 @@
 # CD: phát hành đúng commit, đúng môi trường
 
 **Dùng khi:** đưa bản đã kiểm tra từ staging lên production hoặc chọn công cụ tự động hóa.
-Repository có workflow thủ công **Deploy API** trong `.github/workflows/deploy.yml`.
+Repository có hai workflow thủ công **Deploy staging / Deploy production**, dùng chung `.github/workflows/deploy.yml`.
 Đọc [thiết lập lần đầu](./github-actions-setup.md) và [cách bấm Deploy](./manual-release.md).
 Secrets/environments trên tài khoản cần cấu hình riêng; chưa có bằng chứng deploy staging thành công.
 
