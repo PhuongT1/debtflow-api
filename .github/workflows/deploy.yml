@@ -49,6 +49,7 @@ jobs:
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_TELEMETRY_DISABLED: '1'
+      RELEASE_DB_ENV_FILE: ${{ runner.temp }}/debtflow-release-db.env
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -80,22 +81,22 @@ jobs:
             vercel pull --yes --environment=preview --git-branch=develop --token="$VERCEL_TOKEN"
             echo 'env_file=.vercel/.env.preview.local' >> "$GITHUB_OUTPUT"
           fi
+      - name: Prepare database environment for the release runner
+        env:
+          RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
+          RELEASE_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RELEASE_DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: node scripts/deployment/prepare-environment.mjs
       - name: Build Vercel output
         shell: bash
         env:
           TARGET: ${{ inputs.environment }}
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
         run: |
-          node --env-file="$RELEASE_ENV_FILE" --input-type=module -e '
-            if (!process.env.DATABASE_URL) {
-              console.error("DATABASE_URL is missing from the selected Vercel environment. Check Preview/develop or Production in Vercel Project Settings.");
-              process.exit(1);
-            }
-          '
           if [ "$TARGET" = production ]; then
-            node --env-file="$RELEASE_ENV_FILE" "$(command -v vercel)" build --prod --token="$VERCEL_TOKEN"
+            node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" "$(command -v vercel)" build --prod --token="$VERCEL_TOKEN"
           else
-            node --env-file="$RELEASE_ENV_FILE" "$(command -v vercel)" build --token="$VERCEL_TOKEN"
+            node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" "$(command -v vercel)" build --token="$VERCEL_TOKEN"
           fi
       - name: Verify release again after waiting and building
         run: node scripts/deployment/verify-release.mjs
@@ -105,11 +106,11 @@ jobs:
           RELEASE_SHA: ${{ github.sha }}
       - name: Apply reviewed migrations
         if: inputs.apply_migrations
-        run: node --env-file="$RELEASE_ENV_FILE" --run db:migrate:apply
+        run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" --run db:migrate:apply
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
       - name: Require database migration history to be ready
-        run: node --env-file="$RELEASE_ENV_FILE" node_modules/prisma/build/index.js migrate status
+        run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" node_modules/prisma/build/index.js migrate status
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
       - name: Deploy the built output
@@ -121,7 +122,7 @@ jobs:
           if [ "$TARGET" = production ]; then
             url=$(vercel deploy --prebuilt --prod --skip-domain --yes --token="$VERCEL_TOKEN")
           else
-            url=$(vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")
+            url=$(vercel deploy --prebuilt --yes --meta githubDeployment=1 --meta githubCommitRef=develop --token="$VERCEL_TOKEN")
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           printf '\nDeployment: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
@@ -139,4 +140,4 @@ jobs:
           echo 'Production promotion completed. Verify the public domain and runtime metrics.' >> "$GITHUB_STEP_SUMMARY"
       - name: Remove downloaded environment files
         if: always()
-        run: rm -f .vercel/.env.*.local
+        run: rm -f .vercel/.env.*.local "$RELEASE_DB_ENV_FILE"

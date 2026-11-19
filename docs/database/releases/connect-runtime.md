@@ -66,7 +66,6 @@ Tên file production không tự bảo đảm URL bên trong là production.
 [tạo schema](../migrations/index.md); cập nhật release thì theo
 [checklist production](../../deployment/environments/production.md).
 
-
 ## 5. Vercel: cấu hình chạy API {#vercel-runtime}
 
 **Website: vercel.com → project `debtflow-api` → Settings.** Phần này cấu hình API và DB đích;
@@ -94,5 +93,7 @@ Thay đổi cấu hình runtime có hiệu lực trên deployment mới dùng c�
 
 **Kết quả:** API Preview/develop dùng DB staging, API Production dùng DB production.
 Workflow CD hiện cũng tải cấu hình này qua `vercel pull` để chạy Prisma CLI; connection migration
-phải có quyền thay đổi schema. Nếu cần tách credentials migration khỏi runtime, phải cấu hình runner
-riêng trước khi dùng; hiện workflow không có secret DB riêng trên GitHub.
+phải có quyền thay đổi schema khi apply migration. Nếu Vercel giữ URL dưới dạng Secret/Sensitive,
+runner không đọc lại được giá trị: cấp `DATABASE_URL` và `DIRECT_URL` tương ứng trong GitHub
+Environment `staging`/`production`. Workflow ưu tiên DB secrets này cho build/migration/status;
+runtime vẫn dùng cấu hình trên Vercel. Hai bên phải cùng database/schema đích.
