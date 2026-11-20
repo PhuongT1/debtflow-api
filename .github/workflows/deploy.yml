@@ -49,8 +49,10 @@ jobs:
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_TELEMETRY_DISABLED: '1'
-      RELEASE_DB_ENV_FILE: ${{ runner.temp }}/debtflow-release-db.env
     steps:
+      - name: Set runner database env file path
+        shell: bash
+        run: printf 'RELEASE_DB_ENV_FILE=%s/debtflow-release-db.env\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.sha }}
