@@ -5,45 +5,39 @@ const schema = {
   openapi: '3.0.0',
   paths: { '/api/auth/login': { post: {} }, '/api/parties': { get: {} } },
 };
-const api =
-  (html = '<script src="./swagger-ui.js"></script>', document = schema) =>
-  async () => ({
-    ok: true,
-    text: async () => html,
-    json: async () => document,
-  });
-test('checks Swagger assets and contract with protection bypass header', async () => {
-  const paths = [];
-  await smokeDeployment('https://example.vercel.app', 'fixture-only', async (url, options) => {
-    paths.push(url.pathname);
+const url = 'https://example.vercel.app';
+
+test('checks the deployed OpenAPI route with the protection bypass header', async () => {
+  await smokeDeployment(url, 'fixture-only', async (target, options) => {
+    assert.equal(target.href, url + '/docs-json');
     assert.equal(options.headers['x-vercel-protection-bypass'], 'fixture-only');
-    return api()(url);
+    assert.equal(options.redirect, 'manual');
+    return Response.json(schema);
   });
-  assert.deepEqual(paths, ['/docs', '/docs/swagger-ui.js', '/docs-json']);
 });
-test('fails on HTTP errors, protection pages or missing API routes', async () => {
+
+test('blocks promotion on redirect, HTTP error or invalid API contract', async () => {
+  for (const status of [302, 401, 500]) {
+    await assert.rejects(
+      smokeDeployment(url, '', async () => new Response(null, { status })),
+      new RegExp(`HTTP ${status}`),
+    );
+  }
   await assert.rejects(
-    smokeDeployment('https://example.vercel.app', '', async () => ({ ok: false, status: 500 })),
-    /HTTP 500/,
+    smokeDeployment(url, '', async () => new Response('<h1>Login</h1>')),
+    /expected JSON/,
   );
   await assert.rejects(
-    smokeDeployment('https://example.vercel.app', '', api('<h1>Log in</h1>')),
-    /assets/,
-  );
-  await assert.rejects(
-    smokeDeployment(
-      'https://example.vercel.app',
-      '',
-      api(undefined, { openapi: '3.0.0', paths: {} }),
-    ),
+    smokeDeployment(url, '', async () => Response.json({ paths: {} })),
     /routes/,
   );
 });
-test('skips CDN assets and never sends bypass credentials to their origin', async () => {
-  const html =
-    '<script src="https://unpkg.com/swagger-ui.js"></script><script src="/docs/swagger-auth.js"></script>';
-  await smokeDeployment('https://example.vercel.app', 'fixture-only', async (url) => {
-    assert.equal(url.origin, 'https://example.vercel.app');
-    return api(html)(url);
-  });
+
+test('reports a failed request with its path and omits the underlying error details', async () => {
+  await assert.rejects(
+    smokeDeployment(url, '', async () => {
+      throw new Error('private request details');
+    }),
+    /\/docs-json: request failed before an HTTP response/,
+  );
 });

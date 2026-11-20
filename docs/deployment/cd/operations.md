@@ -16,7 +16,7 @@ thời điểm và người phát hành để truy vết đúng bản.
 Chỉ mở Swagger chưa kiểm chứng DB. Không chạy seed hoặc tạo giao dịch thật để smoke test production
 nếu chưa có kịch bản được phép. Không gửi password/token/DB URL trong ảnh hoặc release log.
 
-Workflow hiện tự kiểm tra các HTTP path cụ thể tại `scripts/deployment/smoke.mjs` trước promote.
+Workflow production kiểm tra `/docs-json` và các route OpenAPI cần thiết qua `scripts/deployment/smoke.mjs` trước promote.
 Smoke trên URL riêng không chứng minh domain chính đã được chuyển: sau promote vẫn kiểm tra domain/logs.
 Nếu smoke production lỗi trước promote, domain giữ bản cũ; DB migration thành công trước đó vẫn còn.
 Nếu step promote timeout, kiểm tra Vercel trước khi retry: promotion có thể vẫn đang tiếp tục.

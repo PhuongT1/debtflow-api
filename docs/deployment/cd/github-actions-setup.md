@@ -19,11 +19,11 @@ Bấm **New environment**, nhập `staging` → **Configure environment**. Tạo
 **Project Settings và Team Settings là hai trang khác nhau.** Copy ID, không dùng tên project/team hoặc domain.
 Các liên kết trên trỏ tới team/project trong ảnh bạn cung cấp.
 
-### Chỉ khi Vercel bật bảo vệ deployment
+### Chỉ khi Vercel bảo vệ deployment production
 
 Tại **Vercel → project debtflow-api → Settings → Deployment Protection → Protection Bypass for Automation**,
 lấy automation secret. Lưu trên GitHub với Name **`VERCEL_AUTOMATION_BYPASS_SECRET`** theo bước 3.
-Deployment không bật bảo vệ thì bỏ qua biến này.
+Thêm secret này vào GitHub Environment **production** khi deployment cần bypass để chạy smoke trước promote. Staging kết thúc sau khi Vercel báo deploy thành công.
 
 ## 3. GitHub: điền giá trị vừa lấy
 
