@@ -111,7 +111,8 @@ jobs:
         run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" --run db:migrate:apply
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
-      - name: Require database migration history to be ready
+      - name: Check database migration status
+        if: inputs.apply_migrations
         run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" node_modules/prisma/build/index.js migrate status
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}

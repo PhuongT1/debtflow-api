@@ -62,8 +62,8 @@ Runner và API phải trỏ cùng database/schema của môi trường đích; k
 `DIRECT_URL` đã cấu hình trên Vercel nhưng không đọc được phải được cấp riêng, tránh dùng nhầm pooler
 cho migration. Nếu không cấu hình `DIRECT_URL`, Prisma config giữ cơ chế dùng `DATABASE_URL` hiện có.
 Các URL được kiểm tra và ghi vào file tạm quyền `0600`, mask trong log và xóa khi job kết thúc.
-Build, migration và status cùng nạp file này; runtime vẫn dùng env trên Vercel.
-Ngay cả khi bỏ chọn apply migrations, bước `migrate status` vẫn cần kết nối DB thật.
+Build và bước migration tùy chọn cùng nạp file này; runtime vẫn dùng env trên Vercel.
+Ô **Apply all pending database migrations** mặc định tắt. Khi bật, workflow áp dụng migration rồi kiểm tra trạng thái trước khi deploy.
 
 | Nút deploy | Lấy env tại Vercel → project debtflow-api → Settings → Environment Variables |
 | --- | --- |

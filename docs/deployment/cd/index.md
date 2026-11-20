@@ -13,7 +13,7 @@ Secrets/environments trên tài khoản cần cấu hình riêng; chưa có bằ
 | 2      | Chuẩn bị môi trường đích                                    | DB, secrets, CORS, runtime Node và domain đúng môi trường                 |
 | 3      | Xem thay đổi schema                                         | Migration đã review; tương thích với code đang chạy và phương án quay lui |
 | 4      | Build bản phát hành                                         | Artifact/deployment có định danh gắn với commit                           |
-| 5      | Apply migration nếu có                                      | Release runner duy nhất, đúng DB; migration/status không lỗi              |
+| 5      | Apply migration nếu có                                      | Release runner duy nhất, đúng DB; migration không lỗi nếu được chọn              |
 | 6      | Deploy bản chưa chuyển domain, smoke rồi promote production | Deployment đúng commit, không bỏ qua CI/approval                          |
 | 7      | Kiểm tra sau phát hành                                      | Swagger/assets, API auth/read và logs; ghi nhận kết quả                   |
 

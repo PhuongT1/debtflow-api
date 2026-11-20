@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       apply_migrations:
-        description: 'Apply reviewed database migrations before deploying (changes the database)'
+        description: 'Apply all pending database migrations and verify status before deploying (changes the database)'
         type: boolean
         default: false
 
