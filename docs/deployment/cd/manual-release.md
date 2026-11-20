@@ -30,7 +30,7 @@ Merge các file này không tự deploy vì chỉ có trigger thủ công `workf
 7. Khi run **Success**, mở URL trong **Summary** để kiểm tra login và tính năng thay đổi.
 
 **Tự động:** khóa SHA của run → xác nhận vẫn là đầu develop → xác nhận CI push đạt → tải cấu hình
-Vercel Preview/develop → build → kiểm tra lại gate → migration tùy chọn → deploy → kiểm tra Swagger/OpenAPI.
+Vercel Preview/develop → build → kiểm tra lại gate → migration tùy chọn → deploy. Sau khi job thành công, kiểm tra Swagger/OpenAPI qua URL trong Summary.
 
 **Kết quả:** Summary có SHA, liên kết CI và deployment URL. Không cần tìm hoặc nhập staging run ID.
 Preview hiện dùng URL trong Summary; chưa có alias staging cố định do workflow này tạo.
@@ -46,7 +46,7 @@ Preview hiện dùng URL trong Summary; chưa có alias staging cố định do 
 6. Workflow tự tìm **lần Deploy staging thành công mới nhất trong 100 run gần nhất**, xác minh đúng
    workflow/repository/branch và nội dung source trùng main. Không có hoặc khác source thì dừng.
 7. Build bằng cấu hình Production → kiểm tra gate lại → migration tùy chọn → deploy với `--skip-domain`.
-   Swagger/OpenAPI đạt thì tự promote chính deployment đó sang domain production.
+   OpenAPI đạt thì tự promote chính deployment đó sang domain production.
 8. Mở domain production, kiểm tra login/API liên quan và **Vercel → project → Logs**.
 
 **Kết quả:** Summary ghi commit, CI, staging run được chọn và deployment URL.

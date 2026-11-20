@@ -45,7 +45,7 @@ không bật song song để cùng commit bị deploy hai lần.
 
 - Workflow build trên runner bằng `vercel build`, deploy bằng `--prebuilt`; cần kiểm chứng một lần staging thực tế.
 - Preview từ CLI dùng URL trong Summary; chưa tự cấu hình domain/alias staging cố định.
-- Smoke tự động kiểm tra Swagger, assets và OpenAPI; login, quyền truy cập và dữ liệu nghiệp vụ do người kiểm thử xác nhận.
+- Production kiểm tra `/docs-json` trước promote. Trên staging, dùng URL trong Summary để kiểm tra Swagger và các luồng nghiệp vụ cần xác nhận.
 - Production deploy với `--skip-domain`; smoke đạt mới promote. Lỗi trước promote giữ domain cũ, nhưng không rollback migration đã apply.
 
 Nguồn: [Vercel + GitHub Actions](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel),
