@@ -260,12 +260,14 @@ export function createDocumentationNavigation() {
         '/deployment/ci/',
         '/deployment/cd/github-actions-setup',
         '/deployment/cd/manual-release',
+        '/deployment/cd/vercel-env-inspector',
       ],
       groups: [
         {
           text: 'Cấu hình workflow',
           items: [
             { text: 'Thông tin cần cấp cho GitHub Actions', link: '/deployment/cd/github-actions-setup' },
+            { text: 'Thử API env Vercel', link: '/deployment/cd/vercel-env-inspector' },
           ],
         },
         {

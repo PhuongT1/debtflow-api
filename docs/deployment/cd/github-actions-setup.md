@@ -49,6 +49,8 @@ JWT và CORS không cần copy sang GitHub. DB credentials cho runner có thể 
 
 ### Dùng lại env đang có trên Vercel
 
+Dùng [giao diện thử API env Vercel](./vercel-env-inspector.md) trên docs local để kiểm tra dữ liệu API trả về.
+
 Mỗi lần bấm deploy, workflow tải cấu hình bằng `vercel pull`. Biến Config đọc được có thể dùng
 trực tiếp. Biến Secret/Sensitive là write-only, không thể lấy lại giá trị thật qua CLI/API quản lý.
 Nếu `DATABASE_URL` hoặc `DIRECT_URL` tải về rỗng/bị che, thêm secret cùng tên vào **GitHub →
