@@ -24,13 +24,13 @@ Merge các file này không tự deploy vì chỉ có trigger thủ công `workf
    develop thành công. CI của PR không thay thế CI push này.
 3. Mở **Actions → Deploy staging → Run workflow**.
 4. Trong **Use workflow from**, chọn **develop**.
-5. Giữ **Apply reviewed database migrations…** không chọn nếu DB đã sẵn sàng. Chỉ chọn khi muốn
+5. Giữ **Apply all pending database migrations…** không chọn nếu chỉ phát hành code. Chỉ chọn khi muốn
    chạy SQL migration đã review lên DB staging, theo mục 4.
 6. Bấm **Run workflow**. Mở run vừa tạo để xem các job `release / verify` và `release / deploy`.
 7. Khi run **Success**, mở URL trong **Summary** để kiểm tra login và tính năng thay đổi.
 
 **Tự động:** khóa SHA của run → xác nhận vẫn là đầu develop → xác nhận CI push đạt → tải cấu hình
-Vercel Preview/develop → build → kiểm tra lại gate → migration/status → deploy → kiểm tra Swagger/OpenAPI.
+Vercel Preview/develop → build → kiểm tra lại gate → migration tùy chọn → deploy → kiểm tra Swagger/OpenAPI.
 
 **Kết quả:** Summary có SHA, liên kết CI và deployment URL. Không cần tìm hoặc nhập staging run ID.
 Preview hiện dùng URL trong Summary; chưa có alias staging cố định do workflow này tạo.
@@ -45,7 +45,7 @@ Preview hiện dùng URL trong Summary; chưa có alias staging cố định do 
    **Review deployments**, kiểm tra SHA, staging/QA và migration rồi approve.
 6. Workflow tự tìm **lần Deploy staging thành công mới nhất trong 100 run gần nhất**, xác minh đúng
    workflow/repository/branch và nội dung source trùng main. Không có hoặc khác source thì dừng.
-7. Build bằng cấu hình Production → kiểm tra gate lại → migration/status → deploy với `--skip-domain`.
+7. Build bằng cấu hình Production → kiểm tra gate lại → migration tùy chọn → deploy với `--skip-domain`.
    Swagger/OpenAPI đạt thì tự promote chính deployment đó sang domain production.
 8. Mở domain production, kiểm tra login/API liên quan và **Vercel → project → Logs**.
 
@@ -58,14 +58,14 @@ Có thể lưu lại **cùng giá trị token Vercel** nếu token có quyền; 
 
 ## 4. Ô migration làm gì?
 
-| Ô Apply reviewed database migrations | Thao tác DB |
+| Ô Apply all pending database migrations | Hành vi trước khi deploy |
 | --- | --- |
-| Không chọn — mặc định | Chỉ chạy `prisma migrate status`; pending/failed chặn deploy |
-| Có chọn | **Chạy `prisma migrate deploy` lên DB đích**, rồi kiểm tra status |
+| Tắt (mặc định) | Bỏ qua áp dụng và kiểm tra migration |
+| Bật | Chạy `prisma migrate deploy` để áp dụng tất cả migration còn chờ, sau đó chạy `prisma migrate status` để xác minh. Nếu một bước thất bại, deploy dừng |
 
 Apply chạy SQL của **mọi migration còn pending**: có thể tạo bảng, thêm field/index hoặc xóa/đổi dữ liệu
 nếu SQL chứa thao tác đó. Không có pending thì không chạy lại migration đã applied.
-Workflow không sinh migration mới, reset hoặc seed dữ liệu. Status kiểm tra lịch sử, không bảo đảm không drift.
+Workflow không sinh migration mới, reset hoặc seed dữ liệu.
 
 Trước khi chọn apply: review SQL, xác nhận đúng DB, chuẩn bị backup/restore và bảo đảm SQL tương thích
 với code đang chạy. Rename/DROP/NOT NULL/backfill cần [kế hoạch nhiều release](../environments/schema-changes.md).

@@ -95,5 +95,5 @@ Thay đổi cấu hình runtime có hiệu lực trên deployment mới dùng c�
 Workflow CD hiện cũng tải cấu hình này qua `vercel pull` để chạy Prisma CLI; connection migration
 phải có quyền thay đổi schema khi apply migration. Nếu Vercel giữ URL dưới dạng Secret/Sensitive,
 runner không đọc lại được giá trị: cấp `DATABASE_URL` và `DIRECT_URL` tương ứng trong GitHub
-Environment `staging`/`production`. Workflow ưu tiên DB secrets này cho build/migration/status;
+Environment `staging`/`production`. Workflow ưu tiên DB secrets này cho build và migration tùy chọn;
 runtime vẫn dùng cấu hình trên Vercel. Hai bên phải cùng database/schema đích.
