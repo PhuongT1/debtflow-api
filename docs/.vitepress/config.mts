@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { vercelEnvInspector } from '../../scripts/docs/vercel-env-inspector.mjs';
 import { sourceLinks } from './source-links.mts';
 import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
@@ -56,7 +57,7 @@ export default withMermaid(
     },
     // Pre-bundle CommonJS deps that mermaid pulls in, otherwise the dev server shows a blank page.
     vite: {
-      plugins: [watchCorePages()],
+      plugins: [watchCorePages(), vercelEnvInspector()],
       optimizeDeps: { include: ['mermaid', 'fastdom', 'dayjs'] },
     },
     themeConfig: {

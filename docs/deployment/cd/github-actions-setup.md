@@ -44,13 +44,26 @@ secrets giữa hai environments và không cho xem lại giá trị secret đã 
 Ba secrets là **cấu hình một lần**. Nút deploy chỉ còn Branch và ô migration tùy chọn; SHA và bằng chứng
 staging được workflow tự kiểm tra. [Cách bấm từng bước](./manual-release.md).
 
-Không điền DB URL, JWT hoặc CORS ở đây. Những biến chạy API được quản lý tại
+JWT và CORS không cần copy sang GitHub. DB credentials cho runner có thể cần bổ sung như bên dưới. Những biến chạy API được quản lý tại
 [cấu hình runtime Vercel](../../database/releases/connect-runtime.md#vercel-runtime).
 
 ### Dùng lại env đang có trên Vercel
 
-Không cần copy `DATABASE_URL`, JWT hoặc CORS sang GitHub. Mỗi lần bấm deploy, workflow tải cấu hình
-mới nhất bằng `vercel pull`, rồi nạp file env vừa tải cho build và các lệnh migration/status.
+Dùng [giao diện thử API env Vercel](./vercel-env-inspector.md) trên docs local để kiểm tra dữ liệu API trả về.
+
+Mỗi lần bấm deploy, workflow tải cấu hình bằng `vercel pull`. Biến Config đọc được có thể dùng
+trực tiếp. Biến Secret/Sensitive là write-only, không thể lấy lại giá trị thật qua CLI/API quản lý.
+Nếu `DATABASE_URL` hoặc `DIRECT_URL` tải về rỗng/bị che, thêm secret cùng tên vào **GitHub →
+Settings → Environments → staging** (hoặc **production** khi phát hành production).
+Lấy URL gốc từ nơi quản lý credentials DB; không đổi Secret thành Config để vượt lỗi.
+
+GitHub DB secrets được ưu tiên cho runner khi đã cấu hình; nếu chưa có, dùng giá trị đọc được từ Vercel.
+Runner và API phải trỏ cùng database/schema của môi trường đích; không dùng URL production cho staging.
+`DIRECT_URL` đã cấu hình trên Vercel nhưng không đọc được phải được cấp riêng, tránh dùng nhầm pooler
+cho migration. Nếu không cấu hình `DIRECT_URL`, Prisma config giữ cơ chế dùng `DATABASE_URL` hiện có.
+Các URL được kiểm tra và ghi vào file tạm quyền `0600`, mask trong log và xóa khi job kết thúc.
+Build, migration và status cùng nạp file này; runtime vẫn dùng env trên Vercel.
+Ngay cả khi bỏ chọn apply migrations, bước `migrate status` vẫn cần kết nối DB thật.
 
 | Nút deploy | Lấy env tại Vercel → project debtflow-api → Settings → Environment Variables |
 | --- | --- |
@@ -58,9 +71,11 @@ mới nhất bằng `vercel pull`, rồi nạp file env vừa tải cho build v�
 | Deploy production | Production |
 
 Trong GitHub Actions → lần chạy → `release / deploy`, mở **Pull target settings and environment**
-để xem môi trường được tải. **Build Vercel output** kiểm tra có `DATABASE_URL` trước khi build,
-không in giá trị. Nếu báo thiếu, kiểm tra phạm vi biến trên Vercel; GitHub Environment `staging`
-chỉ chứa thông tin cấp quyền deploy, không tự chọn một Vercel Environment cùng tên.
+để xem môi trường được tải. **Prepare database environment for the release runner** kiểm tra DB URL
+và từ chối giá trị rỗng, `[SENSITIVE]` hoặc `[REDACTED]` trước khi build, không in giá trị.
+Nếu lỗi, kiểm tra phạm vi biến và bổ sung GitHub DB secrets tương ứng khi Vercel không trả giá trị.
+GitHub Environment `staging` không tự chọn một Vercel Environment cùng tên.
+Deployment Preview được gắn metadata GitHub branch `develop`, kể cả checkout bằng SHA.
 
 ## Tiếp theo
 
@@ -111,3 +126,5 @@ Nguồn chính thức: [Vercel Tokens](https://vercel.com/docs/rest-api/getting-
 [GitHub Environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
 Env cho build: [Vercel pull](https://vercel.com/docs/cli/pull),
 [Vercel build](https://vercel.com/docs/cli/build).
+
+Secret/Config: [Vercel environment variable types](https://vercel.com/docs/environment-variables/sensitive-environment-variables).
