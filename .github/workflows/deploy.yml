@@ -108,7 +108,7 @@ jobs:
           RELEASE_SHA: ${{ github.sha }}
       - name: Apply reviewed migrations
         if: inputs.apply_migrations
-        run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" --run db:migrate:apply
+        run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" node_modules/prisma/build/index.js migrate deploy
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
       - name: Check database migration status
