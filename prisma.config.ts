@@ -15,9 +15,8 @@ export default defineConfig({
   migrations: {
     seed: 'tsx prisma/seed.ts',
   },
-  engine: 'classic',
   datasource: {
-    url: database.url,
-    directUrl: database.directUrl,
+    // Prisma 7 uses datasource.url for CLI commands. Prefer the direct connection for migrations.
+    url: database.directUrl,
   },
 });
