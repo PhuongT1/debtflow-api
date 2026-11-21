@@ -60,7 +60,7 @@ Lấy URL gốc từ nơi quản lý credentials DB; không đổi Secret thành
 GitHub DB secrets được ưu tiên cho runner khi đã cấu hình; nếu chưa có, dùng giá trị đọc được từ Vercel.
 Runner và API phải trỏ cùng database/schema của môi trường đích; không dùng URL production cho staging.
 `DIRECT_URL` đã cấu hình trên Vercel nhưng không đọc được phải được cấp riêng, tránh dùng nhầm pooler
-cho migration. Nếu không cấu hình `DIRECT_URL`, Prisma config giữ cơ chế dùng `DATABASE_URL` hiện có.
+cho migration. Khi chọn áp dụng migration, workflow yêu cầu `DIRECT_URL` rõ ràng và dừng trước build nếu thiếu.
 Các URL được kiểm tra và ghi vào file tạm quyền `0600`, mask trong log và xóa khi job kết thúc.
 Build và bước migration tùy chọn cùng nạp file này; runtime vẫn dùng env trên Vercel.
 Ô **Apply all pending database migrations** mặc định tắt. Khi bật, workflow áp dụng migration rồi kiểm tra trạng thái trước khi deploy.

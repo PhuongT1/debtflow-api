@@ -87,6 +87,7 @@ jobs:
         env:
           RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
           RELEASE_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RELEASE_APPLY_MIGRATIONS: ${{ inputs.apply_migrations }}
           RELEASE_DIRECT_URL: ${{ secrets.DIRECT_URL }}
         run: node scripts/deployment/prepare-environment.mjs
       - name: Build Vercel output
