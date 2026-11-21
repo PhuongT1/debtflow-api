@@ -101,3 +101,12 @@ test('runner writes a private file whose values override redacted pull output', 
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('requires an explicit direct URL for deploys that apply migrations', () => {
+  const options = { requireDirect: true };
+  assert.throws(() => prepareDatabaseEnvironment({ DATABASE_URL: url }, {}, options), /DIRECT_URL/);
+  assert.equal(
+    prepareDatabaseEnvironment({ DATABASE_URL: url }, { DIRECT_URL: direct }, options).DIRECT_URL,
+    direct,
+  );
+});

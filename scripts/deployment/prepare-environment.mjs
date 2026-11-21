@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 const redacted = new Set(['[SENSITIVE]', '[REDACTED]']);
 
-export function prepareDatabaseEnvironment(pulled, fallback = {}) {
+export function prepareDatabaseEnvironment(pulled, fallback = {}, { requireDirect = false } = {}) {
   const result = {};
   for (const key of ['DATABASE_URL', 'DIRECT_URL']) {
     const supplied = fallback[key]?.trim();
@@ -14,7 +14,8 @@ export function prepareDatabaseEnvironment(pulled, fallback = {}) {
     if (!value || redacted.has(value)) {
       // DIRECT_URL is optional only when it was never configured. A redacted direct
       // connection must not silently become a pooler connection for migrations.
-      if (key === 'DIRECT_URL' && !Object.hasOwn(pulled, key) && !supplied) continue;
+      if (key === 'DIRECT_URL' && !requireDirect && !Object.hasOwn(pulled, key) && !supplied)
+        continue;
       throw new Error(
         `${key} is empty or unavailable from Vercel. Set ${key} in the matching GitHub Environment (staging or production) using the original database credential. Vercel Secret values cannot be recovered with pull.`,
       );
@@ -37,10 +38,14 @@ export function prepareDatabaseEnvironment(pulled, fallback = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const pulled = parseEnv(readFileSync(process.env.RELEASE_ENV_FILE, 'utf8'));
-    const database = prepareDatabaseEnvironment(pulled, {
-      DATABASE_URL: process.env.RELEASE_DATABASE_URL,
-      DIRECT_URL: process.env.RELEASE_DIRECT_URL,
-    });
+    const database = prepareDatabaseEnvironment(
+      pulled,
+      {
+        DATABASE_URL: process.env.RELEASE_DATABASE_URL,
+        DIRECT_URL: process.env.RELEASE_DIRECT_URL,
+      },
+      { requireDirect: process.env.RELEASE_APPLY_MIGRATIONS === 'true' },
+    );
     for (const value of Object.values(database))
       console.log(`::add-mask::${value.replaceAll('%', '%25')}`);
     writeFileSync(
