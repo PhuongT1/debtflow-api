@@ -51,6 +51,7 @@
     "test:deployment": "node --test scripts/deployment/*/*.test.mjs",
     "test:runtime": "node --test scripts/build/runtime-smoke.test.mjs",
     "test:parties:postgres": "vitest run src/modules/parties/_test/party-balance-page.postgres.spec.ts",
+    "test:parties:repository:postgres": "vitest run src/modules/parties/_test/party-repository.postgres.spec.ts",
     "test:ai": "node --test scripts/ai/ai-setup.test.mjs",
 
     "docs:dev": "vitepress dev docs",

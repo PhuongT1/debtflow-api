@@ -303,7 +303,7 @@ test('Party persistence rejects shared HTTP helpers but accepts neutral failures
     {
       'src/common/errors/app-errors.ts': 'export const badRequest = () => new Error();',
       'src/common/errors/application-error.ts': 'export class ApplicationError extends Error {}',
-      'src/modules/parties/infrastructure/queries/party.query.ts':
+      'src/modules/parties/infrastructure/queries/party-list.query.ts':
         "import { badRequest as invalidRange } from '../../../../common/errors/app-errors';",
       'src/modules/parties/infrastructure/queries/tenant.query.ts':
         "import { ApplicationError } from '../../../../common/errors/application-error';",
@@ -311,7 +311,7 @@ test('Party persistence rejects shared HTTP helpers but accepts neutral failures
     ({ violations }) => {
       assert.deepEqual(
         violations.map(({ file, rule }) => ({ file, rule })),
-        [{ file: 'src/modules/parties/infrastructure/queries/party.query.ts', rule: 'party-adapter-dependency' }],
+        [{ file: 'src/modules/parties/infrastructure/queries/party-list.query.ts', rule: 'party-adapter-dependency' }],
       );
     },
   );

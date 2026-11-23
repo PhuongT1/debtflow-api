@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery } from '@common/query/index.js';
 import { partyBalancePageSql } from '../infrastructure/sql/party-balance-page.sql.js';
-import { buildPartyQuery } from '../infrastructure/queries/party.query.js';
+import { buildPartyListQuery } from '../infrastructure/queries/party-list.query.js';
 import { PARTY_LIST_QUERY } from '../party.list-query.js';
 import type { QueryPartiesDto } from '../presentation/dto/query-parties.dto.js';
 
@@ -89,7 +89,7 @@ describe.skipIf(!connectionString)('Party aggregate ordering on PostgreSQL', () 
     skip = 0,
   ) {
     const parsed = parseListQuery(raw, PARTY_LIST_QUERY);
-    const { where } = buildPartyQuery('org-a', query, parsed);
+    const { where } = buildPartyListQuery('org-a', query, parsed);
     const sql = partyBalancePageSql('org-a', where, parsed.sort[0], { take, skip });
     const result = await client.query<{ id: string; receivable: string; payable: string }>(
       sql.text,
@@ -254,7 +254,7 @@ describe.skipIf(!connectionString)('Party aggregate ordering on PostgreSQL', () 
       ANALYZE "Party"; ANALYZE "Debt";
     `);
     const parsed = parseListQuery({ sortBy: 'receivable', sortOrder: 'desc' }, PARTY_LIST_QUERY);
-    const { where } = buildPartyQuery('org-bulk', {}, parsed);
+    const { where } = buildPartyListQuery('org-bulk', {}, parsed);
     const sql = partyBalancePageSql('org-bulk', where, parsed.sort[0], { take: 20, skip: 0 });
     const result = await client.query<{ id: string; receivable: string }>(sql.text, sql.values);
     expect(result.rows).toHaveLength(20);
@@ -274,7 +274,7 @@ describe.skipIf(!connectionString)('Party aggregate ordering on PostgreSQL', () 
         databaseExecutionMs: plan['Execution Time'],
       }),
     );
-    const filtered = buildPartyQuery('org-bulk', { q: 'bulk 777' }, parsed);
+    const filtered = buildPartyListQuery('org-bulk', { q: 'bulk 777' }, parsed);
     const search = partyBalancePageSql('org-bulk', filtered.where, parsed.sort[0], {
       take: 20,
       skip: 0,

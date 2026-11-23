@@ -29,7 +29,7 @@ ownership; route decorators and service invariants define access.
 | Response envelope types             | `common/http/api-response.types.ts` reuses the DTO owner; do not create another pagination/error-field definition                                                                                                                                                      |
 | Optional text and phone format      | `common/utils/optional-text.util.ts`, `common/validation/phone.constants.ts`; no feature-specific clones                                                                                                                                                               |
 | Debt filters for list/report/export | `debts/queries/debt-query.ts`; preserve scope and intersect overlapping constraints                                                                                                                                                                                    |
-| Party/member list filters           | `parties/infrastructure/queries/party.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                               |
+| Party/member list filters           | `parties/infrastructure/queries/party-list.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                               |
 | Payment allocation and debt status  | `payments/payment-allocation.rules.ts` owns allocation/amount checks; `debts/rules/debt-payment.rules.ts` owns state derivation and is exposed through `debts/public/debts.ts`                                                                                         |
 | Payment list composition            | `payments/queries/payments.query.ts`; tenant and named filters intersect with shared dynamic filters; retain a unique sort tie-breaker                                                                                                                                 |
 | Swagger setup and browser helper    | `common/swagger/swagger.setup.ts` owns the document/routes; `swagger-ui.ts` owns HTML/paths; `swagger-auth.js` owns browser authorization and is linted/tested as an asset. Follow the [owner table](../../development/http/api-and-swagger.md#where-to-make-changes). |
@@ -95,8 +95,9 @@ use `export *`, register another feature's provider again or call this API over 
 in the same process. Import the owning module and inject its exported provider. Pure read builders
 and response DTOs may be reused through named public exports without a provider import.
 
-- `UsersModule` owns and exports `OrganizationMembersService`; Parties and Debts use its tenant-scoped
-  active membership/user/organization check. Callers keep their own localized error semantics.
+- `UsersModule` owns and exports `OrganizationMembersService`. The Prisma adapters for Users,
+  Parties and Debts share the tenant-scoped lookup in `src/database/active-organization-member.query.ts`.
+  Party and Debt writes use their transaction client. Callers keep their own localized error semantics.
 - `PartiesService.assertActive` owns active party access. Debt creation propagates the same transaction
   client through party/member/product checks, line preparation, code lookup and insert. This does not
   establish safe concurrent sequential-code generation or eliminate all read-check-write races.

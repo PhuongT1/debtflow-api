@@ -1,11 +1,8 @@
 import type { ListQueryResult } from '@common/query/index.js';
 import { getPagination, paginate } from '@common/utils/pagination.util.js';
+import { hasActiveOrganizationMember } from '@database/active-organization-member.query.js';
 import { PrismaService } from '@database/prisma.service.js';
-import {
-  OrganizationMembershipStatus,
-  OrganizationStatus,
-  UserStatus,
-} from '@generated/prisma/client.js';
+import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
 import type { CreateUserDto } from '../dto/create-user.dto.js';
 import type { QueryUsersDto } from '../dto/query-users.dto.js';
@@ -63,19 +60,8 @@ export class PrismaUsersRepository extends UsersRepository {
   countMemberships(userId: string) {
     return this.prisma.organizationMembership.count({ where: { userId } });
   }
-  async isActive(organizationId: string, userId: string) {
-    return Boolean(
-      await this.prisma.organizationMembership.findFirst({
-        where: {
-          organizationId,
-          userId,
-          status: OrganizationMembershipStatus.ACTIVE,
-          user: { status: UserStatus.ACTIVE },
-          organization: { status: OrganizationStatus.ACTIVE },
-        },
-        select: { id: true },
-      }),
-    );
+  isActive(organizationId: string, userId: string) {
+    return hasActiveOrganizationMember(this.prisma, organizationId, userId);
   }
   create(organizationId: string, body: CreateUserDto, passwordHash: string) {
     return this.prisma.organizationMembership.create({

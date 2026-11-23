@@ -211,13 +211,13 @@ Paginated list of active parties. Each item includes the outstanding receivable/
 
 | Parameter | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `createdFrom` | query | string | no | Created from the start of this date in Vietnam (`YYYY-MM-DD`, inclusive). |
+| `createdTo` | query | string | no | Created through the end of this date in Vietnam (`YYYY-MM-DD`, inclusive). |
 | `q` | query | string | no | Accent-insensitive search over name, code, phone and tax code. |
 | `type` | query | `CUSTOMER` \| `SUPPLIER` \| `BOTH` | no | Only customers, suppliers or both. |
 | `assignedToId` | query | string | no | Only parties assigned to this member. |
 | `balanceType` | query | `RECEIVABLE` \| `PAYABLE` | no | Only parties that still have unsettled debts of this direction. |
-| `createdRange` | query | `today` \| `last_7_days` \| `this_month` | no | Shortcut for the creation date window, used when `createdFrom`/`createdTo` are absent. |
-| `createdFrom` | query | string | no | Created on or after this date (`YYYY-MM-DD`). |
-| `createdTo` | query | string | no | Created on or before this date (`YYYY-MM-DD`). |
+| `createdRange` | query | `today` \| `last_7_days` \| `this_month` | no | Vietnam calendar window: today, the last seven days including today, or this month. Used when both explicit dates are absent. |
 | `page` | query | number | no |  |
 | `pageSize` | query | number | no |  |
 | `sortBy` | query | `name` \| `code` \| `type` \| `phone` \| `email` \| `taxCode` \| `provinceName` \| `creditLimit` \| `isActive` \| `createdAt` \| `updatedAt` \| `outstandingDocuments` \| `receivable` \| `payable` | no | One field to sort by. Omit to use the endpoint default order. |

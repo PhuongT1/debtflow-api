@@ -41,7 +41,7 @@ Those remaining type/value dependencies mean this is not a completely ORM-indepe
 
 Party application/domain contracts are deliberately independent of Nest, HTTP DTOs and Prisma.
 `application/party-read.types.ts` owns repository records and read models; `domain/party.rules.ts` owns pure business decisions.
-`application/` owns use-case inputs/read models/ports and `party-write.mapper.ts` normalizes accepted fields. `PartiesService` uses repository/member/audit ports only. The Nest module constructs
+`application/` owns use-case inputs/read models/ports and `party-write.mapper.ts` normalizes accepted fields. `PartiesService` uses repository and audit ports only. The Nest module constructs
 it with a factory; `PartyAuditAdapter` publishes the existing audit event after successful writes.
 
 Prisma payload inference remains inside `infrastructure/prisma-parties.repository.ts` and its
@@ -72,12 +72,14 @@ remain outside the transaction. A live concurrency guarantee needs real database
 mock tests establish orchestration/retry behavior only. Sequential debt codes retain their existing
 unique constraint; an unhandled unique conflict is not silently retried as a business success.
 
-Party updates read the scalar snapshot, derive searchText and write through one serializable store;
+Party create and update validate the assignee through the same serializable store used for the write.
+The Prisma membership lookup is shared with Users and Debts. Party updates read the scalar
+snapshot, derive searchText and write through one serializable store;
 conflict retries recompute from the new snapshot. Party deactivation checks unsettled debts and writes
 in that same boundary. Debt creation also uses Serializable: both writers must retain it so concurrent
 creation/deactivation retries and rechecks the business rule. Audit stays after commit. Native PostgreSQL
 opt-in tests cover both commit orders and concurrent PATCH; they do not cover arbitrary SQL/import writers.
-Party detail scopes both the parent and debt relation to the tenant.
+Party detail scopes both the parent and debt relation to the tenant and uses explicit projections.
 
 Parties read-model pagination keeps RepeatableRead and computed sorts in the database. Reports
 retain full-filtered-set aggregates. Dashboard/Catalog read adapters own projections; do not invent

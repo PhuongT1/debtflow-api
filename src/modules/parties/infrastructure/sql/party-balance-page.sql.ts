@@ -11,7 +11,7 @@ import {
   PARTY_COMPUTED_SORT_FIELDS,
   type PartyComputedSortField,
 } from '../../party.list-query.js';
-import { PARTY_BALANCE_STATUSES } from '../queries/party.query.js';
+import { PARTY_BALANCE_STATUSES } from '../queries/party-list.query.js';
 import { partyColumn, partyWhereSql } from './party-filter.sql.js';
 
 const SORT_AGGREGATES = {

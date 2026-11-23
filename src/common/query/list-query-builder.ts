@@ -1,6 +1,13 @@
 import { buildPrismaOrderBy, parseSortParams } from './list-query-sort.js';
 import { buildPrismaWhere, parseFilterParams } from './list-query-filter.js';
-import type { ListQueryConfig, ListQueryResult } from './list-query.types.js';
+import type { ListQueryConfig, ListQueryOptions, ListQueryResult } from './list-query.types.js';
+
+export function parseListQueryOptions(
+  query: Record<string, unknown>,
+  config: ListQueryConfig,
+): ListQueryOptions {
+  return { sort: parseSortParams(query, config), filter: parseFilterParams(query, config) };
+}
 
 /**
  * Turns the raw query string object into a ready-to-use result (Vendure: `ListQueryBuilder.build`).
@@ -10,13 +17,19 @@ export function parseListQuery(
   query: Record<string, unknown>,
   config: ListQueryConfig,
 ): ListQueryResult {
-  const sort = parseSortParams(query, config);
-  const filter = parseFilterParams(query, config);
+  return compileListQuery(parseListQueryOptions(query, config), config);
+}
+
+export function compileListQuery(
+  options: ListQueryOptions,
+  config: ListQueryConfig,
+): ListQueryResult {
+  const { sort, filter } = options;
   const where = buildPrismaWhere(filter, config);
   const orderBy = sort.length > 0 ? buildPrismaOrderBy(sort, config) : [];
 
   return {
-    options: { sort, filter },
+    options,
     sort,
     ...(where ? { where } : {}),
     ...(orderBy.length > 0 ? { orderBy } : {}),

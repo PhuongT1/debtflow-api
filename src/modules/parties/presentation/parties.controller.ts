@@ -26,7 +26,7 @@ import {
   ApiEnvelope,
   ApiErrorEnvelopes,
 } from '@common/swagger/decorators/api-envelope.decorator.js';
-import { ListQuery, type ListQueryResult } from '@common/query/index.js';
+import { ListQueryCriteria, type ListQueryOptions } from '@common/query/index.js';
 import { OrganizationRole } from '@generated/prisma/client.js';
 import { CreatePartyDto } from './dto/create-party.dto.js';
 import { PartyDetailDto, PartyListItemDto, PartyResponseDto } from './dto/party-response.dto.js';
@@ -56,9 +56,9 @@ export class PartiesController {
   list(
     @CurrentUser() u: JwtAuthPayload,
     @Query() q: QueryPartiesDto,
-    @ListQuery(PARTY_LIST_QUERY) listQuery: ListQueryResult,
+    @ListQueryCriteria(PARTY_LIST_QUERY) listQuery: ListQueryOptions,
   ) {
-    return this.service.list(u.organizationId, q, listQuery.options).then((page) => ({
+    return this.service.list(u.organizationId, q, listQuery).then((page) => ({
       ...page,
       items: page.items.map(toPartyListItem),
     }));

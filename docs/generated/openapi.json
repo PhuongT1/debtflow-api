@@ -1250,6 +1250,26 @@
         "operationId": "PartiesController_list",
         "parameters": [
           {
+            "name": "createdFrom",
+            "required": false,
+            "in": "query",
+            "description": "Created from the start of this date in Vietnam (`YYYY-MM-DD`, inclusive).",
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdTo",
+            "required": false,
+            "in": "query",
+            "description": "Created through the end of this date in Vietnam (`YYYY-MM-DD`, inclusive).",
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -1298,7 +1318,7 @@
             "name": "createdRange",
             "required": false,
             "in": "query",
-            "description": "Shortcut for the creation date window, used when `createdFrom`/`createdTo` are absent.",
+            "description": "Vietnam calendar window: today, the last seven days including today, or this month. Used when both explicit dates are absent.",
             "schema": {
               "type": "string",
               "enum": [
@@ -1306,26 +1326,6 @@
                 "last_7_days",
                 "this_month"
               ]
-            }
-          },
-          {
-            "name": "createdFrom",
-            "required": false,
-            "in": "query",
-            "description": "Created on or after this date (`YYYY-MM-DD`).",
-            "schema": {
-              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-              "type": "string"
-            }
-          },
-          {
-            "name": "createdTo",
-            "required": false,
-            "in": "query",
-            "description": "Created on or before this date (`YYYY-MM-DD`).",
-            "schema": {
-              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-              "type": "string"
             }
           },
           {

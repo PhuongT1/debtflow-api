@@ -1,37 +1,31 @@
 import type { ListQueryOptions, SortItem } from '@common/query/list-query-options.types.js';
-import { buildPrismaWhere } from '@common/query/list-query-filter.js';
-import { buildPrismaOrderBy } from '@common/query/list-query-sort.js';
+import { compileListQuery } from '@common/query/list-query-builder.js';
 import { getPagination, paginate, type Pagination } from '@common/utils/pagination.util.js';
 import { requireOrganizationId } from '@common/validation/require-organization-id.js';
+import { hasActiveOrganizationMember } from '@database/active-organization-member.query.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { serializableTransaction } from '@database/serializable-transaction.js';
-import {
-  DebtStatus,
-  DebtType,
-  OrganizationMembershipStatus,
-  OrganizationStatus,
-  UserStatus,
-  Prisma,
-} from '@generated/prisma/client.js';
+import { DebtStatus, DebtType, Prisma } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
 import type { PartyListInput } from '../application/party.inputs.js';
-import type { PartyRecord } from '../application/party-read.types.js';
-import type { PartyDetail } from '../application/party-read.types.js';
+import type {
+  PartyBalance,
+  PartyDetail,
+  PartyRecord,
+  PartyWithBalance,
+} from '../application/party-read.types.js';
 import { PARTY_LIST_QUERY } from '../party.list-query.js';
-import { buildPartyQuery, PARTY_BALANCE_STATUSES } from './queries/party.query.js';
+import { buildPartyListQuery, PARTY_BALANCE_STATUSES } from './queries/party-list.query.js';
 import { partyBalancePageSql } from './sql/party-balance-page.sql.js';
 import {
   partyListSelect,
   partyDetailSelect,
   PARTY_DEFAULT_SELECT,
 } from './queries/party.select.js';
-import type { PartyBalance, PartyWithBalance } from '../application/party-read.types.js';
-
 import {
   PartiesRepository,
   type PartyWriteStore,
 } from '../application/repositories/parties.repository.js';
-import type { PartyWriteData } from '../application/party.inputs.js';
 
 type PartyDatabaseRecord = Prisma.PartyGetPayload<{ select: typeof PARTY_DEFAULT_SELECT }>;
 type PartyListRecord = Prisma.PartyGetPayload<{ select: ReturnType<typeof partyListSelect> }>;
@@ -45,18 +39,9 @@ export class PrismaPartiesRepository extends PartiesRepository {
   }
   async list(organizationId: string, query: PartyListInput, options?: ListQueryOptions) {
     requireOrganizationId(organizationId);
-    const listQuery = options
-      ? {
-          options,
-          sort: options.sort,
-          where: buildPrismaWhere(options.filter, PARTY_LIST_QUERY),
-          orderBy: options.sort.length
-            ? buildPrismaOrderBy(options.sort, PARTY_LIST_QUERY)
-            : undefined,
-        }
-      : undefined;
+    const listQuery = options ? compileListQuery(options, PARTY_LIST_QUERY) : undefined;
     const pagination = getPagination(query);
-    const { where, orderBy } = buildPartyQuery(organizationId, query, listQuery);
+    const { where, orderBy } = buildPartyListQuery(organizationId, query, listQuery);
     const sort = listQuery?.sort[0];
     return this.prisma.$transaction(
       async (tx) => {
@@ -101,12 +86,7 @@ export class PrismaPartiesRepository extends PartiesRepository {
     return rows.map(({ id, receivable, payable }) => {
       const item = byId.get(id);
       if (!item) throw new Error('Party list snapshot is inconsistent');
-      return {
-        ...this.toRecord(item),
-        assignedTo: item.assignedTo,
-        _count: item._count,
-        balance: this.toBalance({ receivable, payable }),
-      };
+      return this.toListItem(item, { receivable, payable });
     });
   }
 
@@ -120,23 +100,20 @@ export class PrismaPartiesRepository extends PartiesRepository {
       organizationId,
       db,
     );
-    return items.map((party) => ({
-      ...this.toRecord(party),
-      assignedTo: party.assignedTo,
-      _count: party._count,
-      balance: this.toBalance(balances.get(party.id) ?? this.emptyBalance()),
-    }));
+    return items.map((party) =>
+      this.toListItem(party, balances.get(party.id) ?? this.emptyBalance()),
+    );
   }
 
   async detail(organizationId: string, id: string): Promise<PartyDetail> {
-    const record = await this.prisma.party.findFirstOrThrow({
+    const { assignedTo, debts, ...record } = await this.prisma.party.findFirstOrThrow({
       where: { id, organizationId },
       select: partyDetailSelect(organizationId),
     });
     return {
       ...this.toRecord(record),
-      assignedTo: record.assignedTo,
-      debts: record.debts.map((debt) => ({
+      assignedTo,
+      debts: debts.map((debt) => ({
         ...debt,
         originalAmount: debt.originalAmount.toString(),
         paidAmount: debt.paidAmount.toString(),
@@ -151,13 +128,6 @@ export class PrismaPartiesRepository extends PartiesRepository {
       }),
     );
   }
-  async create(organizationId: string, userId: string, data: PartyWriteData): Promise<PartyRecord> {
-    const record = await this.prisma.party.create({
-      data: { organizationId, createdById: userId, ...data },
-      select: PARTY_DEFAULT_SELECT,
-    });
-    return this.toRecord(record);
-  }
   /** Same serializable boundary as debt creation: retry the entire read/check/write on conflict. */
   inTransaction<T>(work: (store: PartyWriteStore) => Promise<T>): Promise<T> {
     return serializableTransaction(this.prisma, (tx) =>
@@ -169,17 +139,13 @@ export class PrismaPartiesRepository extends PartiesRepository {
               select: PARTY_DEFAULT_SELECT,
             }),
           ),
-        hasActiveMember: async (organizationId, userId) =>
-          Boolean(
-            await tx.organizationMembership.findFirst({
-              where: {
-                organizationId,
-                userId,
-                status: OrganizationMembershipStatus.ACTIVE,
-                user: { status: UserStatus.ACTIVE },
-                organization: { status: OrganizationStatus.ACTIVE },
-              },
-              select: { id: true },
+        hasActiveMember: (organizationId, userId) =>
+          hasActiveOrganizationMember(tx, organizationId, userId),
+        create: async (organizationId, userId, data) =>
+          this.toRecord(
+            await tx.party.create({
+              data: { organizationId, createdById: userId, ...data },
+              select: PARTY_DEFAULT_SELECT,
             }),
           ),
         update: async (organizationId, id, data) =>
@@ -246,8 +212,16 @@ export class PrismaPartiesRepository extends PartiesRepository {
     return { ...record, creditLimit: record.creditLimit?.toString() ?? null };
   }
 
-  private toBalance(balance: PartyDatabaseBalance): PartyBalance {
-    return { receivable: balance.receivable.toString(), payable: balance.payable.toString() };
+  private toListItem(
+    item: PartyListRecord,
+    { receivable, payable }: PartyDatabaseBalance,
+  ): PartyWithBalance {
+    const { assignedTo, _count, ...record } = item;
+    const balance: PartyBalance = {
+      receivable: receivable.toString(),
+      payable: payable.toString(),
+    };
+    return { ...this.toRecord(record), assignedTo, _count, balance };
   }
 
   private emptyBalance(): PartyDatabaseBalance {

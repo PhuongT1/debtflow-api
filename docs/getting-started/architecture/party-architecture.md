@@ -14,12 +14,13 @@ Các module khác vẫn theo ranh giới repository hiện có; chưa được c
 | Application    | `application/parties.service.ts`, `application/repositories/parties.repository.ts`                                                       | Domain rules/types và các application port, không Nest/DTO/Prisma      |
 | Domain         | `domain/party.rules.ts`                                                                                         | Quy tắc thuần: điều kiện deactivate      |
 | Infrastructure | `infrastructure/prisma-parties.repository.ts`, `infrastructure/queries/`, `infrastructure/sql/`, `infrastructure/party-audit.adapter.ts` | Prisma/DB, SQL, EventEmitter2; triển khai contract bên trong           |
-| Composition    | `parties.module.ts`                                                                                                                      | Nối repository, audit adapter và member provider bằng factory của Nest |
+| Composition    | `parties.module.ts`                                                                                                                      | Nối repository và audit adapter bằng factory của Nest |
 | Cấu hình adapter | `party.list-query.ts` | Allow-list dùng chung HTTP/Prisma, không được import vào core |
 
 Không tạo thêm lớp `PartyEntity` chỉ để bọc record CRUD. Quy tắc thuần vẫn là domain logic dù không
 có class entity. Core không nhận `Request`, DTO class, Prisma delegate, `where` hoặc `orderBy`.
-Member lookup và audit đi qua `PartyMembers` / `PartyAudit` trong `application/party.ports.ts`.
+Kiểm tra người phụ trách dùng `PartyWriteStore` trong cùng transaction với thao tác ghi.
+Audit đi qua `PartyAudit` sau commit.
 
 ```mermaid
 flowchart LR
@@ -28,7 +29,7 @@ flowchart LR
   end
   subgraph Application
     S[application: PartiesService]
-    P[Repository / member / audit ports]
+    P[Repository / audit ports]
   end
   subgraph Domain
     D[domain: party.rules.ts]
@@ -139,17 +140,22 @@ query cho relation. Count, page và balance được đọc trong cùng snapshot
 | Bước | File / hàm                                                    | Vai trò                                                                |
 | ---- | ------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | 1    | `parties.module.ts`                                           | Bind `PartiesRepository` → `PrismaPartiesRepository` khi app khởi động |
-| 2    | `presentation/parties.controller.ts` → `list()`               | Route, context và `@ListQuery(PARTY_LIST_QUERY)`                       |
+| 2    | `presentation/parties.controller.ts` → `list()`               | Route, context và `@ListQueryCriteria(PARTY_LIST_QUERY)`                       |
 | 3    | `presentation/dto/query-parties.dto.ts`                       | Validate page và các filter riêng của Party                            |
 | 4    | `party.list-query.ts`                                         | Cho phép sort/filter field nào; dùng parser chung                      |
 | 5    | `application/parties.service.ts` → `list()`                   | Yêu cầu tenant, gọi repository contract                                |
 | 6    | `application/repositories/parties.repository.ts`              | Khai báo method; dùng Go to Implementations để tới adapter             |
 | 7    | `infrastructure/prisma-parties.repository.ts` → `list()`      | Nơi gọi DB và mở snapshot transaction                                  |
-| 8    | `infrastructure/queries/party.query.ts` → `buildPartyQuery()` | Ghép tenant, filter riêng và dynamic filters                           |
+| 8    | `infrastructure/queries/party-list.query.ts` → `buildPartyListQuery()` | Ghép tenant, filter riêng và dynamic filters                           |
 | 9    | `infrastructure/queries/party.select.ts`                      | Projection Prisma và nguồn để suy ra payload types                     |
 | 10   | `src/database/prisma.service.ts` (ngoài feature)              | PrismaClient dùng chung + PrismaPg / pg; thực thi query tới PostgreSQL |
 | 11   | `presentation/party.mapper.ts` → `toPartyListItem()`          | Chọn field theo public contract; tiền đã là string ở adapter           |
 | 12   | `presentation/dto/party-response.dto.ts`                      | Contract response cho Swagger; không tự thực thi mapper                |
+
+`createdRange` lọc theo lịch Việt Nam. `today` lấy trọn ngày hiện tại, `last_7_days` gồm hôm nay
+và sáu ngày trước, `this_month` lấy trọn tháng hiện tại. Khi có `createdFrom` hoặc `createdTo`,
+truy vấn dùng mốc ngày được cung cấp và bỏ preset. Prisma và SQL aggregate dùng chung
+điều kiện `createdAt` đã tính từ helper Luxon.
 
 `createdAt` là cột DateTime: bộ sort chung dựng `orderBy`, PostgreSQL sắp xếp. Không có hàm sort
 ngày riêng của Party. Đổi request sang `sortBy=receivable` sẽ dùng nhánh tính toán dưới đây.
@@ -158,7 +164,7 @@ ngày riêng của Party. Đổi request sang `sortBy=receivable` sẽ dùng nh�
 
 ```mermaid
 flowchart TD
-  A["Cùng where từ buildPartyQuery"] --> B["SQL: aggregate giá trị cần sort trên toàn tập phù hợp"]
+  A["Cùng where từ buildPartyListQuery"] --> B["SQL: aggregate giá trị cần sort trên toàn tập phù hợp"]
   B --> C["Sort + ID tie-breaker → chọn trang"]
   C --> D["Tính hai balance cho trang đã chọn"]
   D --> E["Prisma: hydrate đúng các ID trong trang"]
@@ -274,16 +280,17 @@ như trước. Không đưa HTTP exception vào domain để tiện trả respon
 
 ## Bảo vệ dữ liệu và giới hạn hiện tại
 
-Update và deactivate dùng `PartyWriteStore`: service không nhận Prisma client và không thể gọi
+Create, update và deactivate dùng `PartyWriteStore`: service không nhận Prisma client và không thể gọi
 các thao tác ghi này ngoài transaction qua repository contract. Deactivate đọc Party, đếm nợ đang mở
 và vô hiệu hóa trong cùng transaction `Serializable`; tạo nợ cũng dùng `Serializable`. Nếu hai luồng
 xung đột, retry sẽ đọc lại trạng thái: có nợ thì từ chối deactivate, Party đã tắt thì từ chối tạo nợ.
 Audit chỉ phát sau commit, không phát lại cho các attempt bị rollback. Luồng ghi mới phải giữ cơ chế
 này; ghi trực tiếp bằng SQL/import riêng không tự được bảo vệ bởi service.
 
-Detail lọc `organizationId` ở cả Party lẫn relation debts. Các test opt-in trong
-`_test/party-writes.postgres.spec.ts` dùng hai Prisma client trên PostgreSQL riêng với dữ liệu giả,
-kiểm tra hai thứ tự tạo nợ/deactivate, hai PATCH đồng thời và liên kết nợ sai tenant.
+Detail lọc `organizationId` ở cả Party lẫn relation debts và chỉ chọn các cột nợ thuộc contract. Các test opt-in trong
+`_test/party-repository.postgres.spec.ts` dùng hai Prisma client trên PostgreSQL riêng với dữ liệu giả,
+kiểm tra hai thứ tự tạo nợ/deactivate, hai PATCH đồng thời, liên kết nợ sai tenant và kết quả
+repository khi list bằng Prisma hoặc sort theo số dư.
 
 Các giới hạn còn lại:
 

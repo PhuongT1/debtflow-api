@@ -7,6 +7,7 @@ import type { PartyRecord, PartyDetail, PartyWithBalance } from '../party-read.t
 export type PartyWriteStore = {
   findRecord(organizationId: string, id: string): Promise<PartyRecord>;
   hasActiveMember(organizationId: string, userId: string): Promise<boolean>;
+  create(organizationId: string, userId: string, data: PartyWriteData): Promise<PartyRecord>;
   update(organizationId: string, id: string, data: Partial<PartyWriteData>): Promise<PartyRecord>;
   countActiveDebts(organizationId: string, partyId: string): Promise<number>;
   deactivate(organizationId: string, id: string): Promise<PartyRecord>;
@@ -20,10 +21,5 @@ export abstract class PartiesRepository {
   ): Promise<PaginatedResult<PartyWithBalance>>;
   abstract detail(organizationId: string, id: string): Promise<PartyDetail>;
   abstract isActive(organizationId: string, id: string): Promise<boolean>;
-  abstract create(
-    organizationId: string,
-    userId: string,
-    data: PartyWriteData,
-  ): Promise<PartyRecord>;
   abstract inTransaction<T>(work: (store: PartyWriteStore) => Promise<T>): Promise<T>;
 }

@@ -105,6 +105,7 @@ src/modules/parties/
     party.mapper.spec.ts
     party-balance-page.sql.spec.ts
     party-balance-page.postgres.spec.ts
+    party-repository.postgres.spec.ts
 src/common/query/_test/        # parser tests and test-config.ts
 src/auth/_test/                # auth infrastructure
 src/config/_test/              # environment validation
@@ -119,7 +120,8 @@ tests stay with their scripts under `scripts/` and are run by Node's test runner
 Vitest discovers `src/**/_test/**/*.spec.ts`. Typecheck includes these files; the production build
 excludes `_test/`. Architecture checks reject misplaced specs and imports from `_test/` into
 production. Update relative imports, fixtures, package commands and references together when moving
-suites. `npm run test:parties:postgres` stays opt-in and never falls back to the application's DB.
+suites. The Party SQL and repository commands are opt-in and documented in
+[Party database tests](../../database/party-indexes.md).
 
 Vendure reference: unit specs are beside subjects (for example
 `packages/core/src/service/services/channel.service.spec.ts`), while integration/e2e specs are in

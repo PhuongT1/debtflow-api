@@ -233,28 +233,29 @@ Shared read definitions and PostgreSQL SQL builders have distinct names and depe
 
 ```text
 parties/
-  queries/
-    party.list-query.ts                 # public filter/sort capabilities and computed aliases
-    party.query.ts                      # canonical Prisma where/orderBy and balance statuses
-    party.select.ts                     # shared typed projections and response field keys
+  party.list-query.ts                   # public filter/sort capabilities and computed aliases
   infrastructure/
-    prisma-parties.repository.ts        # DB calls, transaction and page hydration
+    prisma-parties.repository.ts        # DB calls, transactions and page hydration
+    queries/
+      party-list.query.ts                # scoped Prisma where/orderBy and balance statuses
+      party.select.ts                    # typed database projections
     sql/
       party-balance-page.sql.ts         # aggregate, sort and pagination SQL
       party-filter.sql.ts              # canonical Prisma predicates → SQL fragments
   _test/
     party-balance-page.sql.spec.ts
-    party-balance-page.postgres.spec.ts # opt-in PostgreSQL result checks
+    party-balance-page.postgres.spec.ts  # opt-in SQL and index checks
+    party-repository.postgres.spec.ts    # opt-in Prisma repository checks
 ```
 
-`queries/` owns definitions reused by the controller, DTOs, mapper and repository. `infrastructure/sql/`
-is private PostgreSQL implementation. Both build arguments/fragments only; the repository executes
-them. Shared payload types derive from the actual projection rather than redeclaring database fields.
+`party.list-query.ts` supplies the capabilities used by the controller and repository.
+`infrastructure/queries/` builds Prisma arguments and projections. `infrastructure/sql/` builds
+PostgreSQL fragments. The repository executes queries and infers database payload types from the projections.
 `outstandingDocuments` is a legacy sort alias for `_count.debts` (all tenant debts, including paid and
 cancelled). It is not a Party column or a separate response property. Balances aggregate only
 OPEN/PARTIAL debts. The computed alias registry is shared with a complete typed sort-aggregate map.
 
-`parties/infrastructure/queries/party.query.ts` composes the canonical authorized filters. Ordinary ordering uses
+`parties/infrastructure/queries/party-list.query.ts` composes the canonical authorized filters. Ordinary ordering uses
 Prisma; aggregate ordering is implemented by `party-balance-page.sql.ts`, which accepts one
 `SortItem` and adds the internal ID tie-breaker. There is no multi-sort loop or projection registry.
 It reuses the supported Prisma predicate subset adapted by `party-filter.sql.ts`. This adapter is private to Parties, not a

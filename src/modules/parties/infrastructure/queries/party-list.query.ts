@@ -7,18 +7,20 @@ import { ApplicationError } from '@common/errors/application-error.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
 import {
   addBusinessDays,
-  formatBusinessDate,
   getBusinessDayRange,
   getBusinessDayRangeForDate,
+  getBusinessMonthRange,
 } from '@common/utils/business-date.util.js';
 import { DebtStatus, Prisma } from '@generated/prisma/client.js';
-import type { PartyListInput } from '../../application/party.inputs.js';
+import type { PartyCreatedRange, PartyListInput } from '../../application/party.inputs.js';
+
+const LAST_SEVEN_DAYS_LENGTH = 7;
 
 /** Shared by the Prisma balance aggregate, SQL page aggregate and balance-type filter. */
 export const PARTY_BALANCE_STATUSES: DebtStatus[] = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 
 /** Compose Prisma arguments only; no database calls. Omitted filters add no conditions. */
-export function buildPartyQuery(
+export function buildPartyListQuery(
   organizationId: string,
   query: PartyListInput,
   listQuery?: ListQueryResult,
@@ -45,32 +47,36 @@ export function buildPartyQuery(
 }
 
 function createdAtFilter(query: PartyListInput): Prisma.DateTimeFilter | undefined {
-  if (!query.createdFrom && !query.createdTo) return createdRange(query.createdRange);
+  const { createdFrom, createdTo } = query;
+  if (createdFrom === undefined && createdTo === undefined) return createdRange(query.createdRange);
   let from: Date | undefined;
   let to: Date | undefined;
   try {
-    from = query.createdFrom ? getBusinessDayRangeForDate(query.createdFrom).start : undefined;
-    to = query.createdTo ? getBusinessDayRangeForDate(query.createdTo).end : undefined;
+    from = createdFrom === undefined ? undefined : getBusinessDayRangeForDate(createdFrom).start;
+    to = createdTo === undefined ? undefined : getBusinessDayRangeForDate(createdTo).end;
   } catch {
     throw new ApplicationError('invalid', 'parties.INVALID_DATE_RANGE');
   }
-  if (from && to && from > to)
-    throw new ApplicationError('invalid', 'parties.INVALID_DATE_RANGE');
+  if (from && to && from > to) throw new ApplicationError('invalid', 'parties.INVALID_DATE_RANGE');
   const range: Prisma.DateTimeFilter = {};
   if (from) range.gte = from;
   if (to) range.lte = to;
   return range;
 }
 
-function createdRange(range: PartyListInput['createdRange']): Prisma.DateTimeFilter | undefined {
-  if (!range) return undefined;
-  const { start } = getBusinessDayRange();
+function createdRange(range?: PartyCreatedRange): Prisma.DateTimeFilter | undefined {
   switch (range) {
-    case 'today':
-      return { gte: start };
-    case 'last_7_days':
-      return { gte: addBusinessDays(start, -6) };
-    case 'this_month':
-      return { gte: getBusinessDayRangeForDate(`${formatBusinessDate().slice(0, 7)}-01`).start };
+    case 'today': {
+      const { start, end } = getBusinessDayRange();
+      return { gte: start, lte: end };
+    }
+    case 'last_7_days': {
+      const { start, end } = getBusinessDayRange();
+      return { gte: addBusinessDays(start, 1 - LAST_SEVEN_DAYS_LENGTH), lte: end };
+    }
+    case 'this_month': {
+      const { start, end } = getBusinessMonthRange();
+      return { gte: start, lte: end };
+    }
   }
 }
