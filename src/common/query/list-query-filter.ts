@@ -1,6 +1,9 @@
 /** Parses/validates HTTP filters and compiles the validated tree into Prisma where fragments. */
 import { badRequest } from '@common/errors/app-errors.js';
-import { getBusinessDayRangeForDate } from '@common/utils/business-date.util.js';
+import {
+  BUSINESS_DATE_PATTERN,
+  getBusinessDayRangeForDate,
+} from '@common/utils/business-date.util.js';
 import {
   buildNestedPath,
   isFilterGroup,
@@ -21,7 +24,6 @@ import {
 
 const FILTER_KEY = /^filter\[([\w.]+)\](?:\[(\w+)\])?$/;
 const MAX_LIST_VALUES = 50;
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const DECIMAL = /^-?\d+(\.\d+)?$/;
 
 type RawQuery = Record<string, unknown>;
@@ -176,7 +178,7 @@ function coerceScalar(field: ListQueryField, value: string, fail: () => Error): 
       if (value !== 'true' && value !== 'false') throw fail();
       return value === 'true';
     case 'date': {
-      if (DATE_ONLY.test(value)) {
+      if (BUSINESS_DATE_PATTERN.test(value)) {
         try {
           const { start, end } = getBusinessDayRangeForDate(value);
           return { dayStart: start, dayEnd: end };

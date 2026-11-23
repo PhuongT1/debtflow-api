@@ -53,9 +53,12 @@ Names follow Vendure's operator vocabulary.
 | `boolean` | `eq`, `notEq`, `isNull`                                                                     | `true` / `false`                                                             |
 
 `isNull` exists only on fields declared `nullable`. For date-only values `eq` matches the whole day,
-`gte`/`after`-side bounds start at 00:00 and `lte`/`between` end at 23:59:59.999 Vietnam time, so
-`filter[dueDate][lte]=2026-09-30` includes the 30th. `before` is strictly earlier than the start of the day,
-`after` strictly later than its end.
+`gte` uses the start of the day, `lte` uses its end, and `between` includes both boundary days.
+`before` is strictly earlier than the start of the day. `after` is strictly later than its end.
+For example, `filter[dueDate][lte]=2026-09-30` includes September 30 in Vietnam.
+
+The shared `business-date.util.ts` helper uses Luxon with `Asia/Ho_Chi_Minh` for date-only
+parsing and calendar bounds. It returns JavaScript `Date` values to Prisma.
 
 ## Errors
 
