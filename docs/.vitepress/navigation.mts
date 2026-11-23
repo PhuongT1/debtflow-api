@@ -260,13 +260,15 @@ export function createDocumentationNavigation() {
         '/deployment/ci/',
         '/deployment/cd/github-actions-setup',
         '/deployment/cd/manual-release',
+        '/deployment/cd/deployment-sequence',
+        '/deployment/cd/deployment-results',
         '/deployment/cd/vercel-env-inspector',
       ],
       groups: [
         {
           text: 'Cấu hình workflow',
           items: [
-            { text: 'Thông tin cần cấp cho GitHub Actions', link: '/deployment/cd/github-actions-setup' },
+            { text: 'Cấu hình GitHub Actions và Vercel', link: '/deployment/cd/github-actions-setup' },
             { text: 'Thử API env Vercel', link: '/deployment/cd/vercel-env-inspector' },
           ],
         },
@@ -280,6 +282,8 @@ export function createDocumentationNavigation() {
         {
           text: 'CD — chạy phát hành',
           items: [
+            { text: 'Trình tự deploy', link: '/deployment/cd/deployment-sequence' },
+            { text: 'Kết quả và log', link: '/deployment/cd/deployment-results' },
             { text: 'Bấm Deploy: staging / production', link: '/deployment/cd/manual-release' },
           ],
         },

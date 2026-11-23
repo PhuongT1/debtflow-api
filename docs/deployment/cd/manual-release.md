@@ -13,7 +13,7 @@ SHA hoặc staging run ID. Workflow tự lấy commit của nhánh bạn chọn 
 Trong dự án này, “deploy dev/develop” nghĩa là deploy nhánh `develop` lên staging.
 Chạy local bằng `npm run dev` không cần Vercel hoặc GitHub secrets.
 
-Hai workflow dùng chung `.github/workflows/deploy.yml`, tránh lặp các bước build/deploy.
+Hai workflow dùng chung `.github/workflows/deploy-vercel.yml`, tránh lặp các bước build/deploy.
 Để hiện nút Run workflow, các file workflow phải có trên **default branch** của repository.
 Merge các file này không tự deploy vì chỉ có trigger thủ công `workflow_dispatch`.
 
@@ -94,8 +94,8 @@ CLI được khóa phiên bản; vẫn cần một lần staging thực tế đ�
 ## Nguồn và file gốc
 
 - Nút staging: `.github/workflows/deploy-staging.yml`; production: `.github/workflows/deploy-production.yml`.
-- Xử lý chung: `.github/workflows/deploy.yml`; gate: `scripts/deployment/verify-release.mjs`.
-- [Xem YAML trong modal](./github-actions-setup.md#xem-github-actions-ngay-tai-day).
+- Xử lý chung: `.github/workflows/deploy-vercel.yml`; gate: `scripts/deployment/github-actions/verify-release.mjs`.
+- [Xem YAML trong modal](./deployment-sequence.md#xem-github-actions-ngay-tai-day).
 - [GitHub: chạy workflow thủ công](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow),
   [tái sử dụng workflow](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows).
 - [Vercel với GitHub Actions](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel),

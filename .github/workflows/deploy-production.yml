@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   release:
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/deploy-vercel.yml
     with:
       environment: production
       apply_migrations: ${{ inputs.apply_migrations }}
