@@ -106,6 +106,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_ENVIRONMENT: ${{ inputs.environment }}
+      - name: Verify direct database connection from the runner
+        if: inputs.apply_migrations
+        run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" scripts/database/check-migration-connection.mjs
+        env:
+          RELEASE_ENV_FILE: ${{ steps.target.outputs.env_file }}
       - name: Apply reviewed migrations
         if: inputs.apply_migrations
         run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" node_modules/prisma/build/index.js migrate deploy

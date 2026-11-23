@@ -31,4 +31,17 @@ Nguồn: [Deploy từ Vercel CLI](https://vercel.com/docs/cli/deploying-from-cli
 3. **Job thành công nhưng API lỗi:** mở Runtime Logs của đúng deployment, lọc theo thời điểm và
    đường dẫn request. Dùng URL riêng của bản Preview khi đối chiếu staging.
 
+### Migration báo `P1001`
+
+1. Mở **Verify direct database connection from the runner** trong log GitHub. Bước này xác minh runner
+   kết nối được qua `DIRECT_URL` trước khi Prisma ghi migration.
+2. Với staging, đối chiếu `DIRECT_URL` ở **GitHub → Settings → Environments → staging** với chuỗi Direct
+   của đúng Neon branch, database và role. GitHub secret được ưu tiên khi có. Giữ thông số TLS từ Neon.
+3. Nếu lỗi DNS hoặc timeout, kiểm tra endpoint, trạng thái compute và quyền truy cập mạng từ runner đến
+   cổng PostgreSQL. Nếu preflight qua mà Prisma vẫn báo `P1001`, kiểm tra timeout riêng của Prisma qua
+   `connect_timeout` trên `DIRECT_URL` và đối chiếu thời điểm với Neon. API trên Vercel kết nối qua
+   `DATABASE_URL` nên một deployment Preview thành công chỉ xác nhận đường deploy của ứng dụng.
+   [Hướng dẫn chẩn đoán của Prisma](https://www.prisma.io/postgres/migration-cannot-reach-database) ·
+   [Neon về timeout kết nối](https://neon.com/blog/prisma-dx-improvements)
+
 Xem thêm [vận hành và rollback](./operations.md).
