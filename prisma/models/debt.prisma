@@ -18,6 +18,12 @@ enum CollectionStatus {
   ESCALATED
 }
 
+enum SalesChannel {
+  STORE
+  ONLINE
+  WHOLESALE
+}
+
 /// A receivable (customer owes us) or payable (we owe a supplier) document. Remaining = originalAmount - paidAmount.
 model Debt {
   id               String           @id @default(cuid())
@@ -69,4 +75,28 @@ model Debt {
   @@index([partyId])
   @@index([assignedToId])
   @@index([salesChannel])
+}
+
+/// Line item of a debt. Product code, name, category and brand are copied so history survives catalog changes.
+model DebtItem {
+  id           String   @id @default(cuid())
+  debtId       String
+  /// Nullable: the product may be deleted or the line may be free text.
+  productId    String?
+  productCode  String?
+  productName  String
+  categoryName String?
+  brandName    String?
+  quantity     Decimal  @default(1) @db.Decimal(14, 3)
+  unit         String   @default("Cái")
+  unitPrice    Decimal  @db.Decimal(18, 2)
+  lineAmount   Decimal  @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  debt    Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([debtId])
+  @@index([productId])
 }

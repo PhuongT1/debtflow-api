@@ -50,21 +50,6 @@ erDiagram
   DateTime createdAt
   DateTime updatedAt
 }
-"DebtItem" {
-  String id PK
-  String debtId FK
-  String productId FK "nullable"
-  String productCode "nullable"
-  String productName
-  String categoryName "nullable"
-  String brandName "nullable"
-  Decimal(14) quantity
-  String unit
-  Decimal(18) unitPrice
-  Decimal(18) lineAmount
-  DateTime createdAt
-  DateTime updatedAt
-}
 "Debt" {
   String id PK
   String organizationId FK
@@ -89,6 +74,21 @@ erDiagram
   DateTime nextFollowUpAt "nullable"
   String followUpNote "nullable"
   String createdById FK "nullable"
+  DateTime createdAt
+  DateTime updatedAt
+}
+"DebtItem" {
+  String id PK
+  String debtId FK
+  String productId FK "nullable"
+  String productCode "nullable"
+  String productName
+  String categoryName "nullable"
+  String brandName "nullable"
+  Decimal(14) quantity
+  String unit
+  Decimal(18) unitPrice
+  Decimal(18) lineAmount
   DateTime createdAt
   DateTime updatedAt
 }
@@ -176,12 +176,12 @@ erDiagram
 "Product" }o--|| "Organization" : organization
 "Product" }o--|| "Category" : category
 "Product" }o--o| "Brand" : brand
-"DebtItem" }o--|| "Debt" : debt
-"DebtItem" }o--o| "Product" : product
 "Debt" }o--|| "Organization" : organization
 "Debt" }o--|| "Party" : party
 "Debt" }o--o| "User" : assignedTo
 "Debt" }o--o| "User" : createdBy
+"DebtItem" }o--|| "Debt" : debt
+"DebtItem" }o--o| "Product" : product
 "Party" }o--|| "Organization" : organization
 "Party" }o--o| "User" : createdBy
 "Party" }o--o| "User" : assignedTo
@@ -257,26 +257,6 @@ Properties as follows:
 - `createdAt`:
 - `updatedAt`:
 
-### `DebtItem`
-
-Line item of a debt. Product code, name, category and brand are copied so history survives catalog changes.
-
-Properties as follows:
-
-- `id`:
-- `debtId`:
-- `productId`: Nullable: the product may be deleted or the line may be free text.
-- `productCode`:
-- `productName`:
-- `categoryName`:
-- `brandName`:
-- `quantity`:
-- `unit`:
-- `unitPrice`:
-- `lineAmount`:
-- `createdAt`:
-- `updatedAt`:
-
 ### `Debt`
 
 A receivable (customer owes us) or payable (we owe a supplier) document. Remaining = originalAmount - paidAmount.
@@ -306,6 +286,26 @@ Properties as follows:
 - `nextFollowUpAt`:
 - `followUpNote`:
 - `createdById`:
+- `createdAt`:
+- `updatedAt`:
+
+### `DebtItem`
+
+Line item of a debt. Product code, name, category and brand are copied so history survives catalog changes.
+
+Properties as follows:
+
+- `id`:
+- `debtId`:
+- `productId`: Nullable: the product may be deleted or the line may be free text.
+- `productCode`:
+- `productName`:
+- `categoryName`:
+- `brandName`:
+- `quantity`:
+- `unit`:
+- `unitPrice`:
+- `lineAmount`:
 - `createdAt`:
 - `updatedAt`:
 
