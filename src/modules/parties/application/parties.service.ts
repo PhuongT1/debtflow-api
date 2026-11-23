@@ -3,8 +3,8 @@ import { canDeactivateParty } from '../domain/party.rules.js';
 import { ApplicationError } from '@common/errors/application-error.js';
 import { AuditAction } from '@common/events/audit.types.js';
 import type { ListQueryOptions } from '@common/query/list-query-options.types.js';
-import type { PartiesRepository } from './repositories/parties.repository.js';
-import type { PartyAudit, PartyMembers } from './party.ports.js';
+import type { PartiesRepository, PartyWriteStore } from './repositories/parties.repository.js';
+import type { PartyAudit } from './party.ports.js';
 import type { CreatePartyInput, UpdatePartyInput, PartyListInput } from './party.inputs.js';
 import { buildPartyCreateData, buildPartyUpdateData } from './party-write.mapper.js';
 
@@ -12,7 +12,6 @@ export class PartiesService {
   constructor(
     private readonly repository: PartiesRepository,
     private readonly audit: PartyAudit,
-    private readonly members: PartyMembers,
   ) {}
   async list(organizationId: string, query: PartyListInput, listQuery?: ListQueryOptions) {
     assertPartyOrganization(organizationId);
@@ -30,9 +29,10 @@ export class PartiesService {
   async create(organizationId: string, userId: string, input: CreatePartyInput) {
     assertPartyOrganization(organizationId);
     const data = buildPartyCreateData(input);
-    await this.assertAssignee(organizationId, data.assignedToId);
-
-    const party = await this.repository.create(organizationId, userId, data);
+    const party = await this.repository.inTransaction(async (store) => {
+      await assertActiveAssignee(store, organizationId, data.assignedToId);
+      return store.create(organizationId, userId, data);
+    });
 
     this.audit.record({
       organizationId,
@@ -51,8 +51,7 @@ export class PartiesService {
     const { before, party } = await this.repository.inTransaction(async (store) => {
       const before = await store.findRecord(organizationId, id);
       const data = buildPartyUpdateData(input, before);
-      if (data.assignedToId && !(await store.hasActiveMember(organizationId, data.assignedToId)))
-        throw new ApplicationError('invalid', 'parties.ASSIGNEE_NOT_FOUND');
+      await assertActiveAssignee(store, organizationId, data.assignedToId);
       const party = await store.update(organizationId, id, data);
       return { before, party };
     });
@@ -93,14 +92,15 @@ export class PartiesService {
 
     return party;
   }
+}
 
-  /** The assignee must be an active member of the same organization (never a user of another tenant). */
-  private async assertAssignee(organizationId: string, userId?: string | null) {
-    if (!userId) return;
-
-    if (!(await this.members.isActive(organizationId, userId)))
-      throw new ApplicationError('invalid', 'parties.ASSIGNEE_NOT_FOUND');
-  }
+async function assertActiveAssignee(
+  store: PartyWriteStore,
+  organizationId: string,
+  userId?: string | null,
+) {
+  if (userId && !(await store.hasActiveMember(organizationId, userId)))
+    throw new ApplicationError('invalid', 'parties.ASSIGNEE_NOT_FOUND');
 }
 
 /** Reject missing trusted tenant context before any repository operation. */

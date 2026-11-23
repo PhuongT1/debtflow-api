@@ -79,9 +79,9 @@ parameters or change their counting/status semantics incidentally when improving
 
 ## Party Prisma/SQL synchronization
 
-`buildPartyQuery` is the sole owner of tenant, named and dynamic filters. Pass its final `where`
+`buildPartyListQuery` is the sole owner of tenant, named and dynamic filters. Pass its final `where`
 to both count/findMany and the private SQL adapter; never rebuild request filters in SQL separately.
-`PARTY_BALANCE_STATUSES` in `party.query.ts` owns eligible balance statuses for the balance-type
+`PARTY_BALANCE_STATUSES` in `party-list.query.ts` owns eligible balance statuses for the balance-type
 filter, Prisma aggregation and SQL aggregation. Document count intentionally keeps its all-debt semantics.
 
 When adding a Party filter/operator/sort, extend the existing SQL boundary suite. It walks the actual

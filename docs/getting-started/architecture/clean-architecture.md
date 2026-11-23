@@ -54,7 +54,6 @@ không phải các tầng nghiệp vụ mới. Controller không tự lấy tena
 | Port Party | Application cần gì? | Implementation được module cấp |
 | --- | --- | --- |
 | `PartiesRepository` | Đọc/ghi Party, thực hiện nhóm thao tác atomic qua `inTransaction` | `PrismaPartiesRepository` |
-| `PartyMembers` | Kiểm tra user còn là member active trong cùng tổ chức | `OrganizationMembersService` do `UsersModule` export |
 | `PartyAudit` | Gửi thông tin thay đổi để ghi lịch sử audit | `PartyAuditAdapter` |
 
 Input, read model và ports nằm trong Application vì chúng phục vụ use case. `party-write.mapper.ts`
@@ -320,7 +319,8 @@ flowchart LR
 
 Mũi tên thể hiện **phụ thuộc code**, không phải thứ tự chạy. Đặc biệt, **audit adapter dùng event
 emitter; repository adapter dùng Prisma**. Không nối chung hai adapter rồi vẽ cả hai gọi DB.
-Implementation của member lookup thuộc module Users, được nối vào `PartyMembers` qua Nest composition.
+Create và update kiểm tra membership qua transaction-scoped store. Prisma adapter dùng chung
+truy vấn membership với Users và Debts.
 
 Core không import `PrismaPartiesRepository` hoặc `PartyAuditAdapter`. Khi chạy, service gọi qua port;
 module đã cấp implementation tương ứng. Vì vậy runtime có lời gọi Application → Infrastructure,
@@ -406,7 +406,7 @@ Chỉ mở rộng các module khác theo cùng mô hình khi task yêu cầu; Pa
 
 ## Những gì đã áp dụng và cách giữ đúng kiến trúc
 
-Party có service thuần TypeScript, rules thuần, repository/member/audit ports và Prisma/event adapters.
+Party có service thuần TypeScript, rules thuần, repository/audit ports và Prisma/event adapters.
 `check:architecture` kiểm tra mọi file Domain/Application và dependency gián tiếp, bao gồm type imports.
 Domain không được phụ thuộc Application; cả hai không được phụ thuộc Presentation, Nest hay Prisma.
 HTTP và database adapter không được import implementation của nhau.
@@ -427,7 +427,7 @@ không thay thế kiểm tra khi có thay đổi mới.
 | Tầng | Đã đối chiếu trong code | Kết luận |
 | --- | --- | --- |
 | 1. Presentation | Controller gọi application service; DTO nhận request; mapper chọn fields; không gọi Prisma | Đúng ranh giới chính |
-| 2. Application | Service dùng repository/member/audit ports; không import HTTP DTO, Nest hoặc Prisma; phát audit sau write/commit | Đúng ranh giới chính |
+| 2. Application | Service dùng repository/audit ports; không import HTTP DTO, Nest hoặc Prisma; phát audit sau write/commit | Đúng ranh giới chính |
 | 3. Domain | `canDeactivateParty` chỉ quyết định từ số nợ; service gọi rule trước khi yêu cầu vô hiệu hóa | Đúng trách nhiệm; predicate vẫn cần caller thực thi |
 | 4. Infrastructure | Prisma query/select/SQL/Decimal và transaction nằm trong adapter; trả application contract | Đúng ranh giới persistence; lỗi khoảng ngày/tenant dùng contract trung lập |
 | Composition | `parties.module.ts` cấp adapter qua factory/provider bindings | Đúng nơi nối dependency |

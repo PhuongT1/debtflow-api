@@ -19,12 +19,16 @@ export type UpdatePartyInput = Partial<Omit<CreatePartyInput, 'name' | 'type'>> 
   type?: PartyRecord['type'] | null;
 };
 export type PartyWriteData = CreatePartyInput & Pick<PartyRecord, 'searchText'>;
+
+export const PARTY_CREATED_RANGES = ['today', 'last_7_days', 'this_month'] as const;
+export type PartyCreatedRange = (typeof PARTY_CREATED_RANGES)[number];
+
 export type PartyListInput = Partial<Pick<Pagination, 'page' | 'pageSize'>> & {
   q?: string;
   type?: PartyType;
   assignedToId?: string;
   balanceType?: 'RECEIVABLE' | 'PAYABLE';
-  createdRange?: 'today' | 'last_7_days' | 'this_month';
+  createdRange?: PartyCreatedRange;
   createdFrom?: string;
   createdTo?: string;
 };

@@ -1,13 +1,11 @@
 import { PARTY_DEFAULT_SELECT } from '../infrastructure/queries/party.select.js';
 import { PartyAuditAdapter } from '../infrastructure/party-audit.adapter.js';
-import { PrismaUsersRepository } from '@modules/users/infrastructure/prisma-users.repository.js';
 import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
 import { parseListQuery, getListQueryFieldNames } from '@common/query/index.js';
 import { PartiesService } from '../application/parties.service.js';
 import type { PartyWriteStore } from '../application/repositories/parties.repository.js';
-import { OrganizationMembersService } from '@modules/users/services/organization-members.service.js';
 import { PARTY_LIST_QUERY } from '../party.list-query.js';
 
 function setup() {
@@ -34,25 +32,29 @@ function setup() {
       { id: 'p2', receivable: new Prisma.Decimal(100), payable: new Prisma.Decimal(0) },
     ]);
   const count = vi.fn().mockResolvedValue(3);
-  const tx = { party: { findMany, count }, debt: { groupBy }, $queryRaw: queryRaw };
-  const transaction = vi.fn(async (run: (db: typeof tx) => unknown) => run(tx));
+
   const rootRead = vi.fn(() => {
     throw new Error('List read outside snapshot');
   });
   const findFirst = vi.fn().mockResolvedValue(null);
   const create = vi.fn();
+  const tx = {
+    party: { findMany, count, create },
+    organizationMembership: { findFirst },
+    debt: { groupBy },
+    $queryRaw: queryRaw,
+  };
+  const transaction = vi.fn(async (run: (db: typeof tx) => unknown) => run(tx));
   const events = { emit: vi.fn() };
   const service = new PartiesService(
     new PrismaPartiesRepository({
-      party: { findMany: rootRead, count: rootRead, create },
+      party: { findMany: rootRead, count: rootRead, create: rootRead },
+      organizationMembership: { findFirst: rootRead },
       debt: { groupBy: rootRead },
       $queryRaw: rootRead,
       $transaction: transaction,
     } as never),
     new PartyAuditAdapter(events as never),
-    new OrganizationMembersService(
-      new PrismaUsersRepository({ organizationMembership: { findFirst } } as never),
-    ),
   );
   return {
     service,
@@ -79,6 +81,31 @@ function transactionRepository(store: Partial<PartyWriteStore>) {
 afterEach(() => vi.useRealTimers());
 
 describe('PartiesService', () => {
+  it('scopes the detail debt query and selects only the published scalar fields', async () => {
+    const findFirstOrThrow = vi.fn().mockResolvedValue({
+      id: 'p1',
+      assignedTo: null,
+      debts: [
+        {
+          id: 'd1',
+          originalAmount: new Prisma.Decimal('10.25'),
+          paidAmount: new Prisma.Decimal('2.5'),
+        },
+      ],
+    });
+    const repository = new PrismaPartiesRepository({ party: { findFirstOrThrow } } as never);
+    const result = await repository.detail('org-1', 'p1');
+    const { where, select } = findFirstOrThrow.mock.calls[0][0];
+    expect(where).toEqual({ id: 'p1', organizationId: 'org-1' });
+    expect(select.debts).toMatchObject({
+      where: { organizationId: 'org-1' },
+      orderBy: [{ dueDate: 'asc' }, { id: 'asc' }],
+      select: { id: true, originalAmount: true, paidAmount: true },
+    });
+    expect(select.debts.select).not.toHaveProperty('items');
+    expect(result.debts).toEqual([{ id: 'd1', originalAmount: '10.25', paidAmount: '2.5' }]);
+  });
+
   it('reads only scalar fields for mutation snapshots', async () => {
     const findFirstOrThrow = vi.fn().mockResolvedValue({ id: 'p1' });
     const transaction = vi.fn(async (work) => work({ party: { findFirstOrThrow } }));
@@ -109,11 +136,7 @@ describe('PartiesService', () => {
     };
     const repository = transactionRepository(store);
     const events = { emit: vi.fn() };
-    const service = new PartiesService(
-      repository as never,
-      new PartyAuditAdapter(events as never),
-      {} as never,
-    );
+    const service = new PartiesService(repository as never, new PartyAuditAdapter(events as never));
     expect(await service.update('org-1', 'p1', { name: 'After' }, 'actor-1')).toEqual(after);
     expect(store.findRecord).toHaveBeenCalledWith('org-1', 'p1');
     expect(events.emit).toHaveBeenCalledWith(
@@ -131,11 +154,7 @@ describe('PartiesService', () => {
     };
     const repository = transactionRepository(store);
     const events = { emit: vi.fn() };
-    const service = new PartiesService(
-      repository as never,
-      new PartyAuditAdapter(events as never),
-      {} as never,
-    );
+    const service = new PartiesService(repository as never, new PartyAuditAdapter(events as never));
     await expect(service.deactivate('org-1', 'p1', 'actor-1')).rejects.toMatchObject({
       kind: 'invalid',
     });
@@ -144,20 +163,6 @@ describe('PartiesService', () => {
     store.countActiveDebts.mockResolvedValue(0);
     await service.deactivate('org-1', 'p1', 'actor-1');
     expect(store.deactivate).toHaveBeenCalledWith('org-1', 'p1');
-  });
-
-  it('scopes the detail debt relation to the same tenant as its parent', async () => {
-    const read = vi.fn().mockResolvedValue({ id: 'p1', debts: [] });
-    const repository = new PrismaPartiesRepository({ party: { findFirstOrThrow: read } } as never);
-    await repository.detail('org-1', 'p1');
-    expect(read).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'p1', organizationId: 'org-1' },
-        select: expect.objectContaining({
-          debts: { where: { organizationId: 'org-1' }, orderBy: { dueDate: 'asc' } },
-        }),
-      }),
-    );
   });
 
   it('uses only the scoped client for write-store reads, checks and writes', async () => {
@@ -239,7 +244,6 @@ describe('PartiesService', () => {
     const service = new PartiesService(
       new PrismaPartiesRepository({ $transaction: transaction } as never),
       new PartyAuditAdapter(events as never),
-      {} as never,
     );
     const result = await service.update('org-1', 'p1', { name: 'After' }, 'actor-1');
     expect(transaction).toHaveBeenCalledTimes(2);
@@ -260,28 +264,24 @@ describe('PartiesService', () => {
       update: vi.fn(),
     };
     const events = { emit: vi.fn() };
-    const rootMemberCheck = vi.fn(() => {
-      throw new Error('Member lookup outside transaction');
-    });
     const service = new PartiesService(
       transactionRepository(store) as never,
       new PartyAuditAdapter(events as never),
-      { isActive: rootMemberCheck } as never,
     );
     await expect(
       service.update('org-1', 'p1', { assignedToId: 'foreign-user' }),
     ).rejects.toMatchObject({ kind: 'invalid' });
     expect(store.hasActiveMember).toHaveBeenCalledWith('org-1', 'foreign-user');
     expect(store.update).not.toHaveBeenCalled();
-    expect(rootMemberCheck).not.toHaveBeenCalled();
     expect(events.emit).not.toHaveBeenCalled();
   });
 
-  it.each(['update', 'deactivate'] as const)(
+  it.each(['create', 'update', 'deactivate'] as const)(
     'does not audit %s when commit fails',
     async (operation) => {
       const before = { id: 'p1', name: 'Before', code: null, phone: null, taxCode: null };
       const store = {
+        create: vi.fn().mockResolvedValue(before),
         findRecord: vi.fn().mockResolvedValue(before),
         update: vi.fn().mockResolvedValue(before),
         countActiveDebts: vi.fn().mockResolvedValue(0),
@@ -297,12 +297,12 @@ describe('PartiesService', () => {
       const service = new PartiesService(
         repository as never,
         new PartyAuditAdapter(events as never),
-        {} as never,
       );
-      const request =
-        operation === 'update'
-          ? service.update('org-1', 'p1', { name: 'After' })
-          : service.deactivate('org-1', 'p1');
+      const request = {
+        create: () => service.create('org-1', 'actor', { name: 'Party', type: 'CUSTOMER' }),
+        update: () => service.update('org-1', 'p1', { name: 'After' }),
+        deactivate: () => service.deactivate('org-1', 'p1'),
+      }[operation]();
       await expect(request).rejects.toThrow('commit failed');
       expect(events.emit).not.toHaveBeenCalled();
     },
@@ -310,7 +310,7 @@ describe('PartiesService', () => {
 
   it('checks active party ownership through its repository contract', async () => {
     const isActive = vi.fn().mockResolvedValue(true);
-    const service = new PartiesService({ isActive } as never, {} as never, {} as never);
+    const service = new PartiesService({ isActive } as never, {} as never);
     await service.assertActive('org-1', 'p1');
     expect(isActive).toHaveBeenCalledWith('org-1', 'p1');
     isActive.mockResolvedValue(false);
@@ -457,12 +457,44 @@ describe('PartiesService', () => {
     const s = setup();
     await s.service.list(
       'org-1',
-      { createdFrom: '2026-10-31', createdTo: '2026-10-31' },
+      { createdRange: 'today', createdFrom: '2026-10-31', createdTo: '2026-10-31' },
       parseListQuery({ sortBy: 'receivable' }, PARTY_LIST_QUERY).options,
     );
     expect(s.count.mock.calls[0][0].where.createdAt).toEqual({
       gte: new Date('2026-10-30T17:00:00Z'),
       lte: new Date('2026-10-31T16:59:59.999Z'),
+    });
+  });
+
+  it.each([
+    ['today', '2028-02-28T17:00:00.000Z', '2028-02-29T16:59:59.999Z'],
+    ['last_7_days', '2028-02-22T17:00:00.000Z', '2028-02-29T16:59:59.999Z'],
+    ['this_month', '2028-01-31T17:00:00.000Z', '2028-02-29T16:59:59.999Z'],
+  ] as const)('bounds the %s preset by Vietnam calendar dates', async (createdRange, from, to) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2028-02-28T18:00:00Z'));
+    const s = setup();
+
+    await s.service.list('org-1', { createdRange });
+
+    const where = {
+      organizationId: 'org-1',
+      isActive: true,
+      createdAt: {
+        gte: new Date(from),
+        lte: new Date(to),
+      },
+    };
+    expect(s.count).toHaveBeenCalledWith({ where });
+    expect(s.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
+  });
+
+  it('uses a one-sided explicit bound in place of the preset', async () => {
+    const s = setup();
+    await s.service.list('org-1', { createdRange: 'this_month', createdTo: '2028-02-29' });
+
+    expect(s.count.mock.calls[0][0].where.createdAt).toEqual({
+      lte: new Date('2028-02-29T16:59:59.999Z'),
     });
   });
 
@@ -514,6 +546,7 @@ describe('PartiesService', () => {
       organization: { status: 'ACTIVE' },
     });
     expect(s.create).not.toHaveBeenCalled();
+    expect(s.rootRead).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
   });
 });
@@ -522,15 +555,17 @@ it('runs the create use case with plain ports and audits only its successful res
   const party = { id: 'party-plain', name: 'Plain', creditLimit: '0' };
   const create = vi.fn().mockResolvedValue(party);
   const record = vi.fn();
-  const isActive = vi.fn().mockResolvedValue(true);
-  const service = new PartiesService({ create } as never, { record }, { isActive });
+  const hasActiveMember = vi.fn().mockResolvedValue(true);
+  const service = new PartiesService(transactionRepository({ create, hasActiveMember }) as never, {
+    record,
+  });
   const result = await service.create('org-plain', 'actor-plain', {
     type: 'CUSTOMER',
     name: ' Plain ',
     assignedToId: 'member-plain',
     creditLimit: '0',
   });
-  expect(isActive).toHaveBeenCalledWith('org-plain', 'member-plain');
+  expect(hasActiveMember).toHaveBeenCalledWith('org-plain', 'member-plain');
   expect(create).toHaveBeenCalledWith(
     'org-plain',
     'actor-plain',
@@ -561,13 +596,16 @@ it('runs the create use case with plain ports and audits only its successful res
 it('converts Prisma money into exact application values at the adapter boundary', async () => {
   const stored = { id: 'p1', creditLimit: new Prisma.Decimal('9999999999999999.99') };
   const create = vi.fn().mockResolvedValue(stored);
-  const repository = new PrismaPartiesRepository({ party: { create } } as never);
-  const result = await repository.create('org-1', 'actor-1', {
-    type: 'CUSTOMER',
-    name: 'Exact',
-    searchText: 'exact',
-    creditLimit: '9999999999999999.99',
-  });
+  const transaction = vi.fn(async (work) => work({ party: { create } }));
+  const repository = new PrismaPartiesRepository({ $transaction: transaction } as never);
+  const result = await repository.inTransaction((store) =>
+    store.create('org-1', 'actor-1', {
+      type: 'CUSTOMER',
+      name: 'Exact',
+      searchText: 'exact',
+      creditLimit: '9999999999999999.99',
+    }),
+  );
   expect(result.creditLimit).toBe('9999999999999999.99');
   expect(stored.creditLimit).toBeInstanceOf(Prisma.Decimal);
   expect(create).toHaveBeenCalledWith({

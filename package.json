@@ -51,6 +51,7 @@
     "test:deployment": "node --test scripts/deployment/*/*.test.mjs",
     "test:runtime": "node --test scripts/build/runtime-smoke.test.mjs",
     "test:parties:postgres": "vitest run src/modules/parties/_test/party-balance-page.postgres.spec.ts",
+    "test:parties:repository:postgres": "vitest run src/modules/parties/_test/party-repository.postgres.spec.ts",
     "test:ai": "node --test scripts/ai/ai-setup.test.mjs",
 
     "docs:dev": "vitepress dev docs",
@@ -81,6 +82,7 @@
     "class-validator": "^0.14.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
+    "luxon": "^3.7.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.22.0",
@@ -94,6 +96,7 @@
     "@prisma/generator-helper": "^7.9.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
+    "@types/luxon": "^3.7.6",
     "@types/node": "^24.19.2",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",

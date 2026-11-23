@@ -4,10 +4,10 @@ import { Test } from '@nestjs/testing';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PaginationQueryDto } from '../../dto/pagination-query.dto.js';
-import { ListQuery } from '../list-query.decorator.js';
+import { ListQuery, ListQueryCriteria } from '../list-query.decorator.js';
 import { ApiListQuery } from '../../swagger/decorators/api-list-query.decorator.js';
 import { ListQueryAwareValidationPipe } from '../list-query.pipe.js';
-import type { ListQueryResult } from '../list-query.types.js';
+import type { ListQueryOptions, ListQueryResult } from '../list-query.types.js';
 import { TEST_CONFIG } from './test-config.js';
 
 @Controller('sort-fixture')
@@ -16,6 +16,11 @@ class SortFixtureController {
   @ApiListQuery(TEST_CONFIG)
   list(@Query() query: PaginationQueryDto, @ListQuery(TEST_CONFIG) list: ListQueryResult) {
     return { page: query.page, sort: list.sort, orderBy: list.orderBy };
+  }
+
+  @Get('criteria')
+  criteria(@ListQueryCriteria(TEST_CONFIG) list: ListQueryOptions) {
+    return list;
   }
 }
 // Vitest's transpiler does not emit decorator type metadata; use the production DTO explicitly.
@@ -56,6 +61,15 @@ describe('single-field list sort HTTP contract', () => {
       sort: [{ field: 'dueDate', direction: 'desc' }],
       orderBy: [{ dueDate: 'desc' }, { id: 'asc' }],
     });
+  });
+  it('passes validated criteria without Prisma fragments to application handlers', async () => {
+    const response = await fetch(`${origin}/sort-fixture/criteria?sortBy=dueDate&filter[code]=A`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      sort: [{ field: 'dueDate', direction: 'asc' }],
+      filter: { operator: 'AND', conditions: [{ field: 'code', operator: 'eq', value: 'A' }] },
+    });
+    expect((await fetch(`${origin}/sort-fixture/criteria?sortBy=unknown`)).status).toBe(400);
   });
   it.each([
     'sort=-code',

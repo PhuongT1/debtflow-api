@@ -12,6 +12,8 @@ import { DebtLineItemService } from '@modules/debts/services/debt-line-item.serv
 import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
 import { PartiesService } from '../application/parties.service.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
+import { parseListQueryOptions } from '@common/query/list-query-builder.js';
+import { PARTY_LIST_QUERY } from '../party.list-query.js';
 
 // Explicit opt-in, dedicated loopback database only. Never fall back to DATABASE_URL.
 const connectionString = process.env.PARTY_WRITE_TEST_DATABASE_URL;
@@ -52,7 +54,7 @@ function pauseFirstRead() {
   };
 }
 
-describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Prisma', () => {
+describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL', () => {
   const schema = `party_write_${randomUUID().replaceAll('-', '')}`;
   const admin = new Client({ connectionString });
   let first: PrismaClient;
@@ -88,7 +90,8 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       },
     );
     await admin.query(ddl.replace('CREATE SCHEMA IF NOT EXISTS "public";', ''));
-    first = new PrismaClient({ adapter: new PrismaPg(connectionString!, { schema }) });
+    const poolConfig = { connectionString, options: `-c search_path=${schema},public` };
+    first = new PrismaClient({ adapter: new PrismaPg(poolConfig, { schema }) });
     second = new PrismaClient({ adapter: new PrismaPg(connectionString!, { schema }) });
     await first.organization.create({
       data: {
@@ -159,11 +162,7 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       );
     const partyEvents = { emit: vi.fn() };
     const debtEvents = { emit: vi.fn() };
-    const parties = new PartiesService(
-      partyRepo,
-      new PartyAuditAdapter(partyEvents as never),
-      {} as never,
-    );
+    const parties = new PartiesService(partyRepo, new PartyAuditAdapter(partyEvents as never));
     const debts = new DebtsService(debtRepo, new DebtLineItemService(), debtEvents as never);
     const deactivation = parties.deactivate('org-a', 'deactivate-wins', 'actor-a');
     const creation = debts.create(
@@ -216,11 +215,7 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       );
     const partyEvents = { emit: vi.fn() };
     const debtEvents = { emit: vi.fn() };
-    const parties = new PartiesService(
-      partyRepo,
-      new PartyAuditAdapter(partyEvents as never),
-      {} as never,
-    );
+    const parties = new PartiesService(partyRepo, new PartyAuditAdapter(partyEvents as never));
     const debts = new DebtsService(debtRepo, new DebtLineItemService(), debtEvents as never);
     const deactivation = parties.deactivate('org-a', 'debt-wins', 'actor-a');
     const result = deactivation.then(
@@ -280,15 +275,10 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
           },
         });
       });
-    const firstService = new PartiesService(
-      firstRepo,
-      new PartyAuditAdapter(firstEvents as never),
-      {} as never,
-    );
+    const firstService = new PartiesService(firstRepo, new PartyAuditAdapter(firstEvents as never));
     const secondService = new PartiesService(
       secondRepo,
       new PartyAuditAdapter(secondEvents as never),
-      {} as never,
     );
     const patchName = firstService.update(
       'org-a',
@@ -344,11 +334,7 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       code: 'P2025',
     });
     const events = { emit: vi.fn() };
-    const service = new PartiesService(
-      repository,
-      new PartyAuditAdapter(events as never),
-      {} as never,
-    );
+    const service = new PartiesService(repository, new PartyAuditAdapter(events as never));
     await expect(
       service.update('org-b', 'detail-scope', { name: 'Forbidden edit' }),
     ).rejects.toMatchObject({ code: 'P2025' });
@@ -356,5 +342,70 @@ describe.skipIf(!connectionString)('Party writes on native PostgreSQL through Pr
       'Original',
     );
     expect(events.emit).not.toHaveBeenCalled();
+  });
+
+  it('keeps list count, scope and balances consistent between Prisma and computed sorting', async () => {
+    await first.party.createMany({
+      data: [
+        { id: 'parity-a', organizationId: 'org-a', type: 'CUSTOMER', name: 'Parity Alpha' },
+        {
+          id: 'parity-b',
+          organizationId: 'org-a',
+          type: 'CUSTOMER',
+          name: 'Parity Beta',
+          code: 'PARITY-B',
+        },
+        { id: 'parity-foreign', organizationId: 'org-b', type: 'CUSTOMER', name: 'Parity Alpha' },
+        {
+          id: 'parity-inactive',
+          organizationId: 'org-a',
+          type: 'CUSTOMER',
+          name: 'Parity Alpha',
+          isActive: false,
+        },
+      ],
+    });
+    const debt = {
+      partyId: 'parity-b',
+      type: 'RECEIVABLE' as const,
+      title: 'Parity invoice',
+      originalAmount: '100.50',
+      paidAmount: '20.25',
+      status: 'PARTIAL' as const,
+      issueDate: new Date('2026-11-10'),
+      dueDate: new Date('2026-11-11'),
+    };
+    await first.debt.createMany({
+      data: [
+        { ...debt, organizationId: 'org-a', code: 'PARITY-OWN' },
+        { ...debt, organizationId: 'org-b', code: 'PARITY-FOREIGN', originalAmount: '9999' },
+      ],
+    });
+    const repository = new PrismaPartiesRepository(first as never);
+    const list = (sortBy: string, sortOrder: string) =>
+      repository.list(
+        'org-a',
+        { pageSize: 2 },
+        parseListQueryOptions(
+          {
+            sortBy,
+            sortOrder,
+            'filter[name][eq]': 'Parity Alpha',
+            'filter[code][eq]': 'PARITY-B',
+            filterOperator: 'OR',
+          },
+          PARTY_LIST_QUERY,
+        ),
+      );
+    const ordinary = await list('name', 'asc');
+    const computed = await list('receivable', 'desc');
+    expect(ordinary.total).toBe(2);
+    expect(computed.total).toBe(2);
+    expect(ordinary.items.map(({ id }) => id)).toEqual(['parity-a', 'parity-b']);
+    expect(computed.items).toEqual([...ordinary.items].reverse());
+    expect(computed.items[0]).toMatchObject({
+      balance: { receivable: '80.25', payable: '0' },
+      _count: { debts: 1 },
+    });
   });
 });

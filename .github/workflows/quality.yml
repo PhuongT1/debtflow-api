@@ -1,8 +1,9 @@
 name: API quality
+run-name: "API quality ${{ github.event.pull_request.number && format('PR #{0}', github.event.pull_request.number) || 'manual' }} at ${{ github.sha }}"
 
 on:
   pull_request:
-  push:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:

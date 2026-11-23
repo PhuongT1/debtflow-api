@@ -6,7 +6,7 @@ trang này giải thích các lệnh đó, không tạo một bộ AI/backend ru
 
 ## Khi nào CI chạy?
 
-Workflow `API quality` chạy khi có `pull_request` hoặc `push`, hiện không giới hạn branch/path.
+Workflow `API quality` tự chạy khi mở, mở lại hoặc cập nhật PR. Merge không tạo lượt CI mới. Có thể chạy thủ công bằng **Run workflow** để kiểm tra trực tiếp commit đầu nhánh.
 Một job `quality` chạy trên Ubuntu, Node 24, npm cache; quyền GitHub chỉ `contents: read`.
 Các Actions đang được khóa theo commit SHA.
 

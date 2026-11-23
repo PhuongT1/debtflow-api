@@ -2,6 +2,70 @@ import { appendFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+function latestRun(runs = []) {
+  return runs.sort((a, b) => b.run_number - a.run_number || b.run_attempt - a.run_attempt)[0];
+}
+
+function succeeded(run) {
+  return run?.status === 'completed' && run.conclusion === 'success';
+}
+
+// PR run metadata reports the PR head SHA. The run title records the merge SHA tested by checkout.
+async function findQualityRun(get, workflow, head, branch, repository) {
+  const runsPath = `actions/workflows/${encodeURIComponent(workflow)}/runs`;
+  const manualQuery = new URLSearchParams({
+    head_sha: head.sha,
+    branch,
+    event: 'workflow_dispatch',
+  });
+  const { workflow_runs: manualRuns } = await get(`${runsPath}?${manualQuery}`);
+  const manual = latestRun(
+    (manualRuns ?? []).filter(
+      (run) =>
+        run.event === 'workflow_dispatch' &&
+        run.head_sha === head.sha &&
+        run.head_branch === branch,
+    ),
+  );
+  if (succeeded(manual)) return manual;
+
+  const pulls = await get(`commits/${head.sha}/pulls`);
+  const merged = pulls.find(
+    (pull) =>
+      pull.merged_at &&
+      pull.merge_commit_sha === head.sha &&
+      pull.base.ref === branch &&
+      pull.base.repo.full_name === repository,
+  );
+  if (!merged || !head.commit?.tree?.sha) return;
+
+  const prQuery = new URLSearchParams({
+    head_sha: merged.head.sha,
+    event: 'pull_request',
+    per_page: '100',
+  });
+  const { workflow_runs: prRuns } = await get(`${runsPath}?${prQuery}`);
+  const prefix = `API quality PR #${merged.number} at `;
+  const latest = latestRun(
+    (prRuns ?? []).filter(
+      (run) =>
+        run.event === 'pull_request' &&
+        run.head_sha === merged.head.sha &&
+        run.display_title?.startsWith(prefix),
+    ),
+  );
+  if (!succeeded(latest)) return;
+
+  const testedSha = latest.display_title.slice(prefix.length);
+  if (!/^[a-f0-9]{40}$/.test(testedSha)) return;
+  const tested = await get(`commits/${testedSha}`, { allowMissing: true });
+  if (
+    tested?.parents?.[1]?.sha === merged.head.sha &&
+    tested.commit?.tree?.sha === head.commit.tree.sha
+  )
+    return latest;
+}
+
 // Check the release against the policy selected by the calling workflow.
 export async function verifyRelease(policy, env = process.env, request = fetch) {
   const environment = env.RELEASE_ENVIRONMENT;
@@ -24,7 +88,7 @@ export async function verifyRelease(policy, env = process.env, request = fetch) 
     throw new Error('A full 40-character commit SHA is required.');
   if (!/^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPOSITORY ?? '') || !env.GH_TOKEN)
     throw new Error('GitHub repository and read token are required.');
-  const get = async (path) => {
+  const get = async (path, { allowMissing = false } = {}) => {
     const response = await request(
       `https://api.github.com/repos/${env.GITHUB_REPOSITORY}/${path}`,
       {
@@ -36,6 +100,7 @@ export async function verifyRelease(policy, env = process.env, request = fetch) 
         signal: AbortSignal.timeout(30_000),
       },
     );
+    if (allowMissing && [404, 422].includes(response.status)) return;
     if (!response.ok) throw new Error(`GitHub verification failed: HTTP ${response.status}.`);
     return response.json();
   };
@@ -46,16 +111,16 @@ export async function verifyRelease(policy, env = process.env, request = fetch) 
   const head = await get(`commits/${encodeURIComponent(branch)}`);
   if (head.sha !== sha)
     throw new Error('Release SHA must match the current branch head; stale releases are blocked.');
-  const ciQuery = new URLSearchParams({ head_sha: sha, branch, event: 'push', per_page: '100' });
-  const { workflow_runs: runs } = await get(
-    `actions/workflows/${encodeURIComponent(policy.qualityWorkflow)}/runs?${ciQuery}`,
+  const qualityRun = await findQualityRun(
+    get,
+    policy.qualityWorkflow,
+    head,
+    branch,
+    env.GITHUB_REPOSITORY,
   );
-  const latest = (runs ?? [])
-    .filter((run) => run.head_sha === sha && run.head_branch === branch && run.event === 'push')
-    .sort((a, b) => b.run_number - a.run_number || b.run_attempt - a.run_attempt)[0];
-  if (!latest || latest.status !== 'completed' || latest.conclusion !== 'success')
+  if (!qualityRun)
     throw new Error(
-      `The latest ${policy.qualityWorkflow} push run for this exact SHA must finish successfully.`,
+      `No successful ${policy.qualityWorkflow} run verified this source tree. Run API quality manually on ${branch}, then start a new deployment.`,
     );
   let stagingUrl;
   if (stagingEvidence) {
@@ -70,9 +135,7 @@ export async function verifyRelease(policy, env = process.env, request = fetch) 
     const { workflow_runs: stagingRuns } = await get(
       `actions/workflows/${stagingWorkflow}/runs?${stagingQuery}`,
     );
-    const staging = (stagingRuns ?? [])
-      .filter((run) => run.status === 'completed' && run.conclusion === 'success')
-      .sort((a, b) => b.run_number - a.run_number || b.run_attempt - a.run_attempt)[0];
+    const staging = latestRun((stagingRuns ?? []).filter(succeeded));
     if (!staging)
       throw new Error(`${stagingEvidence.workflow} must succeed before deploying ${environment}.`);
     if (
@@ -93,7 +156,7 @@ export async function verifyRelease(policy, env = process.env, request = fetch) 
       );
     stagingUrl = staging.html_url;
   }
-  return { branch, sha, ciUrl: latest.html_url, stagingUrl };
+  return { branch, sha, ciUrl: qualityRun.html_url, stagingUrl };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

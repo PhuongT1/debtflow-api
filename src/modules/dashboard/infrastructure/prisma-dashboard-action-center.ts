@@ -22,7 +22,8 @@ export class PrismaDashboardActionCenter {
 
   async get(period: DashboardQueryDto | undefined, organizationId: string) {
     requireOrganizationId(organizationId);
-    const { end: endOfToday, start: startOfToday } = getBusinessDayRange();
+    const now = new Date();
+    const { end: endOfToday, start: startOfToday } = getBusinessDayRange(now);
     const range = getDashboardPeriod(period);
     const periodStart = range.start ?? startOfToday;
     const periodEnd = range.end ?? endOfToday;
@@ -61,7 +62,7 @@ export class PrismaDashboardActionCenter {
     ]);
 
     return {
-      asOf: formatBusinessDate(),
+      asOf: formatBusinessDate(now),
       receivable: {
         dueNextSevenDays: receivableDueNextSevenDays,
         outstanding: receivableOutstanding,

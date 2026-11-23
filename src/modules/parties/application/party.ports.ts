@@ -8,6 +8,3 @@ export type PartyAuditEntry = Omit<AuditEntry, 'before' | 'after'> & {
 export interface PartyAudit {
   record(entry: PartyAuditEntry): void;
 }
-export interface PartyMembers {
-  isActive(organizationId: string, userId: string): Promise<boolean>;
-}

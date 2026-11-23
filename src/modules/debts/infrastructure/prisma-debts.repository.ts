@@ -1,5 +1,6 @@
 import type { ListQueryResult } from '@common/query/index.js';
 import { getPagination, paginate } from '@common/utils/pagination.util.js';
+import { hasActiveOrganizationMember } from '@database/active-organization-member.query.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { serializableTransaction } from '@database/serializable-transaction.js';
 import { Injectable } from '@nestjs/common';
@@ -44,19 +45,8 @@ export class PrismaDebtsRepository extends DebtsRepository {
               select: { id: true },
             }),
           ),
-        hasActiveMember: async (organizationId, userId) =>
-          Boolean(
-            await tx.organizationMembership.findFirst({
-              where: {
-                organizationId,
-                userId,
-                status: 'ACTIVE',
-                user: { status: 'ACTIVE' },
-                organization: { status: 'ACTIVE' },
-              },
-              select: { id: true },
-            }),
-          ),
+        hasActiveMember: (organizationId, userId) =>
+          hasActiveOrganizationMember(tx, organizationId, userId),
         products: (organizationId, ids) =>
           tx.product.findMany({
             where: { organizationId, id: { in: ids }, isActive: true },

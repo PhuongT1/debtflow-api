@@ -11,7 +11,7 @@ Secrets/environments trên tài khoản cần cấu hình riêng; chưa có bằ
 | --- | --- |
 | `.github/workflows/deploy-staging.yml`, `deploy-production.yml` | Hai điểm chạy thủ công. Chọn môi trường và truyền tùy chọn migration. |
 | `.github/workflows/deploy-vercel.yml` | Điều phối GitHub runner, build đầu ra Vercel và phát hành. |
-| `scripts/deployment/github-actions/verify-release.mjs` | Xác minh nhánh và CI theo SHA qua GitHub API. Kiểm tra thêm bằng chứng staging khi chính sách của môi trường yêu cầu. |
+| `scripts/deployment/github-actions/verify-release.mjs` | Xác minh đầu nhánh và bằng chứng CI qua GitHub API. Kiểm tra thêm bằng chứng staging khi chính sách của môi trường yêu cầu. |
 | `scripts/deployment/vercel/release-policy.json` | Khai báo workflow CI, nhánh phát hành và workflow staging mà production Vercel chấp nhận. |
 | `scripts/deployment/vercel/` | Chuẩn bị env tải từ Vercel và kiểm tra OpenAPI trước khi promote với cơ chế bảo vệ của Vercel. |
 | `Dockerfile` tại root | Build image của API. Xem [Docker và host Node](../platforms/docker.md). |
@@ -28,7 +28,7 @@ Phiên bản Node lấy từ `.nvmrc`. Action bên thứ ba được ghim theo S
 
 | Thứ tự | Trách nhiệm                                                 | Bằng chứng cần có                                                         |
 | ------ | ----------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 1      | Chọn commit được review, CI pass                            | SHA, link PR và run CI của chính SHA đó                                   |
+| 1      | Chọn commit được review, CI pass                            | SHA, link PR và kết quả CI cho cùng nội dung source                                   |
 | 2      | Chuẩn bị môi trường đích                                    | DB, secrets, CORS, runtime Node và domain đúng môi trường                 |
 | 3      | Xem thay đổi schema                                         | Migration đã review; tương thích với code đang chạy và phương án quay lui |
 | 4      | Build bản phát hành                                         | Artifact/deployment có định danh gắn với commit                           |
@@ -64,7 +64,7 @@ chưa gán domain, smoke đạt mới promote. Xem [từng nút bấm và kết 
 - Migration thất bại thì dừng phát hành; không reset, seed demo hoặc đánh dấu applied khi chưa điều tra.
 
 Workflow hiện dùng environment theo input, concurrency riêng và không tự hủy release đang chạy.
-Script xác minh SHA đầu nhánh và CI push trước khi cấp secrets, rồi kiểm tra lại sau build.
+Script xác minh SHA đầu nhánh và kết quả CI cho cùng cây mã nguồn trước khi cấp secrets, rồi kiểm tra lại sau build.
 Environment branch restrictions và approval phải cấu hình trên GitHub; file YAML không tự bật chúng.
 PR/fork không nhận secret phát hành. Giới hạn cạnh tranh với push mới và rollback được mô tả ở
 [hướng dẫn chạy](./manual-release.md).

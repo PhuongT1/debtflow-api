@@ -3,6 +3,7 @@
  * Record types, response fields and Swagger reuse these projections; DB calls live in the adapter.
  */
 import type { Prisma } from '@generated/prisma/client.js';
+import type { PartyDebt } from '../../application/party-read.types.js';
 
 /** Explicit Prisma projection: this is the source of the record type and public scalar fields. */
 export const PARTY_DEFAULT_SELECT = {
@@ -31,6 +32,34 @@ export const PARTY_DEFAULT_SELECT = {
 
 const ASSIGNEE_SELECT = { id: true, name: true, email: true } satisfies Prisma.UserSelect;
 
+const PARTY_DETAIL_DEBT_SELECT = {
+  id: true,
+  organizationId: true,
+  code: true,
+  type: true,
+  partyId: true,
+  assignedToId: true,
+  title: true,
+  invoiceNo: true,
+  orderNo: true,
+  contractNo: true,
+  poNo: true,
+  description: true,
+  originalAmount: true,
+  paidAmount: true,
+  currency: true,
+  salesChannel: true,
+  issueDate: true,
+  dueDate: true,
+  status: true,
+  collectionStatus: true,
+  nextFollowUpAt: true,
+  followUpNote: true,
+  createdById: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Record<keyof PartyDebt, true> & Prisma.DebtSelect;
+
 /** Both list paths use this exact projection; tenant-scoped debt counts stay in the DB. */
 export function partyListSelect(organizationId: string) {
   return {
@@ -45,6 +74,10 @@ export function partyDetailSelect(organizationId: string) {
   return {
     ...PARTY_DEFAULT_SELECT,
     assignedTo: { select: ASSIGNEE_SELECT },
-    debts: { where: { organizationId }, orderBy: { dueDate: 'asc' } },
+    debts: {
+      where: { organizationId },
+      orderBy: [{ dueDate: 'asc' }, { id: 'asc' }],
+      select: PARTY_DETAIL_DEBT_SELECT,
+    },
   } satisfies Prisma.PartySelect;
 }

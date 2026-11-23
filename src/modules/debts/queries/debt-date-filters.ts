@@ -2,9 +2,9 @@ import { getDebtAgingRanges } from '../rules/debt-aging.rules.js';
 import { badRequest } from '@common/errors/app-errors.js';
 import {
   addBusinessDays,
-  formatBusinessDate,
   getBusinessDayRange,
   getBusinessDayRangeForDate,
+  getBusinessMonthRange,
 } from '@common/utils/business-date.util.js';
 import type { Prisma } from '@generated/prisma/client.js';
 import type { QueryDebtsDto } from '../dto/query-debts.dto.js';
@@ -66,12 +66,8 @@ function dueRange(
     case 'next_7_days':
       return { gte: start, lte: addBusinessDays(end, 6) };
     case 'this_month': {
-      const first = formatBusinessDate(start).slice(0, 7) + '-01';
-      const [year, month] = first.split('-').map(Number);
-      return {
-        gte: getBusinessDayRangeForDate(first).start,
-        lte: new Date(Date.UTC(year, month, 1) - 7 * 60 * 60 * 1000 - 1),
-      };
+      const month = getBusinessMonthRange(start);
+      return { gte: month.start, lte: month.end };
     }
   }
 }

@@ -1,7 +1,13 @@
-import type { PartyListInput } from '../../application/party.inputs.js';
+import {
+  PARTY_CREATED_RANGES,
+  type PartyCreatedRange,
+  type PartyListInput,
+} from '../../application/party.inputs.js';
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString, Matches } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto.js';
+import { BUSINESS_DATE_PATTERN } from '@common/utils/business-date.util.js';
 import { DebtType, PartyType } from '@generated/prisma/client.js';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class QueryPartiesDto extends PaginationQueryDto implements PartyListInput {
   /** Accent-insensitive search over name, code, phone and tax code. */
@@ -24,20 +30,22 @@ export class QueryPartiesDto extends PaginationQueryDto implements PartyListInpu
   @IsEnum(DebtType)
   balanceType?: DebtType;
 
-  /** Shortcut for the creation date window, used when `createdFrom`/`createdTo` are absent. */
+  /** Vietnam calendar window: today, the last seven days including today, or this month. Used when both explicit dates are absent. */
   @IsOptional()
-  @IsIn(['today', 'last_7_days', 'this_month'])
-  createdRange?: 'today' | 'last_7_days' | 'this_month';
+  @IsIn(PARTY_CREATED_RANGES)
+  createdRange?: PartyCreatedRange;
 
-  /** Created on or after this date (`YYYY-MM-DD`). */
+  /** Created from the start of this date in Vietnam (`YYYY-MM-DD`, inclusive). */
+  @ApiPropertyOptional({ pattern: BUSINESS_DATE_PATTERN.source })
   @IsOptional()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  @Matches(BUSINESS_DATE_PATTERN)
   @IsDateString({ strict: true })
   createdFrom?: string;
 
-  /** Created on or before this date (`YYYY-MM-DD`). */
+  /** Created through the end of this date in Vietnam (`YYYY-MM-DD`, inclusive). */
+  @ApiPropertyOptional({ pattern: BUSINESS_DATE_PATTERN.source })
   @IsOptional()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  @Matches(BUSINESS_DATE_PATTERN)
   @IsDateString({ strict: true })
   createdTo?: string;
 }

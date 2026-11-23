@@ -8,7 +8,7 @@ import {
 } from '@common/query/index.js';
 import { partyBalancePageSql } from '../infrastructure/sql/party-balance-page.sql.js';
 import { partyWhereSql } from '../infrastructure/sql/party-filter.sql.js';
-import { buildPartyQuery } from '../infrastructure/queries/party.query.js';
+import { buildPartyListQuery } from '../infrastructure/queries/party-list.query.js';
 import { PARTY_LIST_QUERY, PARTY_COMPUTED_SORT_FIELDS } from '../party.list-query.js';
 
 const pagination = { take: 20, skip: 40 };
@@ -31,7 +31,7 @@ describe('owned Party SQL boundary', () => {
       { sortBy: 'receivable', sortOrder: 'desc', 'filter[name][contains]': hostile },
       PARTY_LIST_QUERY,
     );
-    const { where } = buildPartyQuery('tenant-fixture', {}, parsed);
+    const { where } = buildPartyListQuery('tenant-fixture', {}, parsed);
     const sql = partyBalancePageSql('tenant-fixture', where, parsed.sort[0], pagination);
     expect(sql.text).not.toContain(hostile);
     expect(sql.text).not.toContain('tenant-fixture');
@@ -75,7 +75,7 @@ describe('owned Party SQL boundary', () => {
             { sortBy: 'receivable', filterOperator, [`filter[${field}][${operator}]`]: value },
             PARTY_LIST_QUERY,
           );
-          const { where } = buildPartyQuery('org-1', {}, parsed);
+          const { where } = buildPartyListQuery('org-1', {}, parsed);
           expect(
             () => partyBalancePageSql('org-1', where, parsed.sort[0], pagination),
             `${field}.${operator} (${filterOperator})`,
@@ -86,7 +86,7 @@ describe('owned Party SQL boundary', () => {
   );
 
   it('adapts the canonical named filters without rebuilding their business rules', () => {
-    const { where } = buildPartyQuery('org-1', {
+    const { where } = buildPartyListQuery('org-1', {
       type: PartyType.CUSTOMER,
       assignedToId: 'member-1',
       balanceType: DebtType.RECEIVABLE,

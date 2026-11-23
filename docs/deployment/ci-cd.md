@@ -9,7 +9,7 @@ Chọn đúng việc cần làm. **Cấu hình**, **CI** và **chạy CD** là b
 | Bắt buộc CI đạt trước merge, xử lý check thất bại | [Bảo vệ nhánh và xử lý CI lỗi](./ci/pull-requests.md) |
 | Chọn commit, bấm Deploy staging/production và theo dõi từng step | [CD: chạy phát hành](./cd/manual-release.md) |
 
-**Luồng sử dụng:** cấu hình một lần → push/PR chạy CI → CI đạt → người phụ trách bấm chạy CD.
+**Luồng sử dụng:** cấu hình một lần → PR chạy CI → CI đạt → người phụ trách bấm chạy CD.
 CI không tự deploy; CD không tự chạy khi push theo cấu hình hiện tại.
 
 Cấu hình API/DB và kế hoạch phát hành được quản lý ở các phần tương ứng:
