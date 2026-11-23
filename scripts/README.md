@@ -10,7 +10,7 @@ repository root. Script paths are implementation details; npm names are the memb
 | `database/`   | Explicit staging/production migration commands and project-specific Party demo import. | `db:migrate:apply:staging`, `db:migrate:apply:production`, `db:migrate:status:staging`, `db:migrate:status:production`, `db:import:parties`, `test:database-tools` |
 | `prisma/`     | Schema-to-TypeScript list-query metadata and Swagger response-model generators.        | `db:generate`, `test:response-models`                                                                                                                              |
 | `docs/`       | OpenAPI and Markdown generation using the compiled application.                        | `docs:generate:api` (build first)                                                                                                                                  |
-| `deployment/` | Exact-SHA CI release gate and deployed Swagger smoke checks; no implicit DB writes.    | `test:deployment`, GitHub **Deploy API** workflow                                                                                                                  |
+| `deployment/` | GitHub release verification, Vercel release policy, runner environment setup, and production OpenAPI smoke check. | `test:deployment`, GitHub **Deploy staging** and **Deploy production** workflows |
 | `build/`      | Compiled import rewriting and standalone/Vercel runtime smoke tests.                   | `build`, `test:runtime` (build first)                                                                                                                              |
 
 Tests for tooling stay beside their subject as `*.test.mjs`; application specs belong in

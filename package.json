@@ -48,7 +48,7 @@
     "test:quality": "node --test scripts/quality/check-architecture.test.mjs scripts/quality/check-backend-conventions.test.mjs scripts/quality/check-maintainability.test.mjs",
     "test:database-tools": "node --import tsx --test scripts/database/*.test.mjs scripts/database/*.test.ts",
     "test:response-models": "node --test scripts/prisma/generate-response-models.test.mjs",
-    "test:deployment": "node --test scripts/deployment/*.test.mjs",
+    "test:deployment": "node --test scripts/deployment/*/*.test.mjs",
     "test:runtime": "node --test scripts/build/runtime-smoke.test.mjs",
     "test:parties:postgres": "vitest run src/modules/parties/_test/party-balance-page.postgres.spec.ts",
     "test:ai": "node --test scripts/ai/ai-setup.test.mjs",

@@ -1,4 +1,4 @@
-name: Deploy API (shared)
+name: Deploy API to Vercel (shared)
 
 on:
   workflow_call:
@@ -29,13 +29,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
       - name: Verify branch and exact commit CI
-        run: node scripts/deployment/verify-release.mjs
+        run: node scripts/deployment/github-actions/verify-release.mjs scripts/deployment/vercel/release-policy.json
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_ENVIRONMENT: ${{ inputs.environment }}
-          RELEASE_SHA: ${{ github.sha }}
 
   deploy:
     needs: verify
@@ -59,7 +58,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
           cache: npm
       - name: Check credentials
         shell: bash
@@ -80,7 +79,7 @@ jobs:
             vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
             echo 'env_file=.vercel/.env.production.local' >> "$GITHUB_OUTPUT"
           else
-            vercel pull --yes --environment=preview --git-branch=develop --token="$VERCEL_TOKEN"
+            vercel pull --yes --environment=preview --git-branch="$GITHUB_REF_NAME" --token="$VERCEL_TOKEN"
             echo 'env_file=.vercel/.env.preview.local' >> "$GITHUB_OUTPUT"
           fi
       - name: Prepare database environment for the release runner
@@ -89,7 +88,7 @@ jobs:
           RELEASE_DATABASE_URL: ${{ secrets.DATABASE_URL }}
           RELEASE_APPLY_MIGRATIONS: ${{ inputs.apply_migrations }}
           RELEASE_DIRECT_URL: ${{ secrets.DIRECT_URL }}
-        run: node scripts/deployment/prepare-environment.mjs
+        run: node scripts/deployment/vercel/prepare-environment.mjs
       - name: Build Vercel output
         shell: bash
         env:
@@ -102,11 +101,10 @@ jobs:
             node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" "$(command -v vercel)" build --token="$VERCEL_TOKEN"
           fi
       - name: Verify release again after waiting and building
-        run: node scripts/deployment/verify-release.mjs
+        run: node scripts/deployment/github-actions/verify-release.mjs scripts/deployment/vercel/release-policy.json
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_ENVIRONMENT: ${{ inputs.environment }}
-          RELEASE_SHA: ${{ github.sha }}
       - name: Apply reviewed migrations
         if: inputs.apply_migrations
         run: node --env-file="$RELEASE_ENV_FILE" --env-file="$RELEASE_DB_ENV_FILE" node_modules/prisma/build/index.js migrate deploy
@@ -126,13 +124,13 @@ jobs:
           if [ "$TARGET" = production ]; then
             url=$(vercel deploy --prebuilt --prod --skip-domain --yes --token="$VERCEL_TOKEN")
           else
-            url=$(vercel deploy --prebuilt --yes --meta githubDeployment=1 --meta githubCommitRef=develop --token="$VERCEL_TOKEN")
+            url=$(vercel deploy --prebuilt --yes --meta githubDeployment=1 --meta "githubCommitRef=$GITHUB_REF_NAME" --token="$VERCEL_TOKEN")
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           printf '\nDeployment: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
       - name: Check OpenAPI before production promotion
         if: inputs.environment == 'production'
-        run: node scripts/deployment/smoke.mjs
+        run: node scripts/deployment/vercel/smoke.mjs
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}

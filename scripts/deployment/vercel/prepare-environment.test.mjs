@@ -72,7 +72,7 @@ test('runner writes a private file whose values override redacted pull output', 
     const pulled = join(directory, 'pulled.env');
     const prepared = join(directory, 'database.env');
     writeFileSync(pulled, 'DATABASE_URL="[SENSITIVE]"\nDIRECT_URL=""\n');
-    const result = spawnSync(process.execPath, ['scripts/deployment/prepare-environment.mjs'], {
+    const result = spawnSync(process.execPath, ['scripts/deployment/vercel/prepare-environment.mjs'], {
       encoding: 'utf8',
       env: {
         ...process.env,

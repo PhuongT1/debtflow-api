@@ -1,4 +1,4 @@
-# Điền cấu hình cho GitHub Actions
+# Cấu hình GitHub Actions và Vercel
 
 **Làm một lần:** lấy 3 giá trị trên **Vercel**, lưu vào **GitHub**. CI không cần thêm secrets;
 các giá trị dưới đây dùng cho job `release / deploy` của hai workflow `Deploy staging` và `Deploy production`.
@@ -79,36 +79,8 @@ Deployment Preview được gắn metadata GitHub branch `develop`, kể cả ch
 
 ## Tiếp theo
 
-- [Giới hạn nhánh và quyền duyệt phát hành](../ci/pull-requests.md): staging dùng `develop`, production dùng `main`.
-- [Chạy CD từng bước](./manual-release.md): chọn nút staging/production và bấm Run workflow.
-
-## Xem GitHub Actions ngay tại đây
-
-Nội dung bên dưới được lấy trực tiếp từ file YAML gốc khi chạy/build tài liệu, không có bản sao để sửa riêng.
-
-<SourceCodeViewer title="CI — .github/workflows/quality.yml">
-
-<<< ../../../.github/workflows/quality.yml{yaml}
-
-</SourceCodeViewer>
-
-<SourceCodeViewer title="Deploy staging — .github/workflows/deploy-staging.yml">
-
-<<< ../../../.github/workflows/deploy-staging.yml{yaml}
-
-</SourceCodeViewer>
-
-<SourceCodeViewer title="Deploy production — .github/workflows/deploy-production.yml">
-
-<<< ../../../.github/workflows/deploy-production.yml{yaml}
-
-</SourceCodeViewer>
-
-<SourceCodeViewer title="CD dùng chung — .github/workflows/deploy.yml">
-
-<<< ../../../.github/workflows/deploy.yml{yaml}
-
-</SourceCodeViewer>
+1. [Trình tự deploy](./deployment-sequence.md) giải thích lệnh, file và đầu ra của từng bước.
+2. [Kết quả và log](./deployment-results.md) chỉ nơi xem trạng thái và cách tìm lỗi.
 
 ## File sử dụng và nguồn tham khảo
 
@@ -117,7 +89,7 @@ Nội dung bên dưới được lấy trực tiếp từ file YAML gốc khi ch
 | CI: `API quality` — không cần secrets thật | `.github/workflows/quality.yml` | `quality` |
 | Nút `Deploy staging` | `.github/workflows/deploy-staging.yml` | `release` |
 | Nút `Deploy production` | `.github/workflows/deploy-production.yml` | `release` |
-| CD dùng chung — nhận secrets của environment tương ứng | `.github/workflows/deploy.yml` | `verify` → `deploy` |
+| CD dùng chung — nhận secrets của environment tương ứng | `.github/workflows/deploy-vercel.yml` | `verify` → `deploy` |
 
 Nguồn chính thức: [Vercel Tokens](https://vercel.com/docs/rest-api/getting-started),
 [Project ID](https://vercel.com/docs/project-configuration/general-settings#project-id),

@@ -1,0 +1,15 @@
+{
+  "qualityWorkflow": "quality.yml",
+  "environments": {
+    "staging": {
+      "branch": "develop"
+    },
+    "production": {
+      "branch": "main",
+      "stagingEvidence": {
+        "environment": "staging",
+        "workflow": "deploy-staging.yml"
+      }
+    }
+  }
+}

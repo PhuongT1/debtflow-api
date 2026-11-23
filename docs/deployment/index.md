@@ -23,7 +23,7 @@ hai workflow **Deploy staging / Deploy production** chỉ phát hành khi bấm 
 | Kiểm tra code, test và docs                        | Có trong npm scripts và CI                                                                                                                       | `package.json`                               |
 | Vercel Git auto-deploy                             | Tắt mọi nhánh có cấu hình này; phải merge cấu hình vào nhánh tương ứng                                                                           | `vercel.json`                                |
 | Chọn Production Branch, secrets, Deployment Checks | Cấu hình bên ngoài repository; phải kiểm tra trên dashboard                                                                                      | [Hướng dẫn Vercel](./platforms/vercel.md)    |
-| CD thủ công                                        | Có `deploy.yml`: kiểm tra SHA/CI/staging → build → migration tùy chọn → deploy → smoke và promote riêng cho production; secrets và environments cần thiết lập | [Thiết lập CD](./cd/github-actions-setup.md) |
+| CD thủ công                                        | Có `deploy-vercel.yml`: kiểm tra SHA/CI/staging → build → migration tùy chọn → deploy → smoke và promote riêng cho production; secrets và environments cần thiết lập | [Thiết lập CD](./cd/github-actions-setup.md) |
 | Image chạy Node                                    | Có Dockerfile; chưa có workflow publish image/rollout                                                                                            | `Dockerfile`                                 |
 
 Tài liệu phân biệt **đang có** với **cần cấu hình**. Việc đọc trang này không tự bật branch protection,
@@ -44,7 +44,7 @@ flowchart TD
   E --> F[Chọn commit và kiểm tra migration tương thích]
   F --> G[Apply migration nếu có, kiểm tra trạng thái]
   G --> H[Deploy production chưa chuyển domain]
-  H --> S[Smoke: Swagger, assets và OpenAPI]
+  H --> S[Kiểm tra OpenAPI qua /docs-json]
   S --> P[Đạt mới promote: chuyển domain production]
   P --> I[Kiểm tra domain, logs và theo dõi]
   I --> J{Ổn định?}

@@ -1,9 +1,28 @@
 # CD: phát hành đúng commit, đúng môi trường
 
 **Dùng khi:** đưa bản đã kiểm tra từ staging lên production hoặc chọn công cụ tự động hóa.
-Repository có hai workflow thủ công **Deploy staging / Deploy production**, dùng chung `.github/workflows/deploy.yml`.
+Repository có hai workflow thủ công **Deploy staging / Deploy production**, dùng chung `.github/workflows/deploy-vercel.yml`.
 Đọc [thiết lập lần đầu](./github-actions-setup.md) và [cách bấm Deploy](./manual-release.md).
 Secrets/environments trên tài khoản cần cấu hình riêng; chưa có bằng chứng deploy staging thành công.
+
+## Vị trí workflow và script
+
+| Vị trí | Trách nhiệm |
+| --- | --- |
+| `.github/workflows/deploy-staging.yml`, `deploy-production.yml` | Hai điểm chạy thủ công. Chọn môi trường và truyền tùy chọn migration. |
+| `.github/workflows/deploy-vercel.yml` | Điều phối GitHub runner, build đầu ra Vercel và phát hành. |
+| `scripts/deployment/github-actions/verify-release.mjs` | Xác minh nhánh và CI theo SHA qua GitHub API. Kiểm tra thêm bằng chứng staging khi chính sách của môi trường yêu cầu. |
+| `scripts/deployment/vercel/release-policy.json` | Khai báo workflow CI, nhánh phát hành và workflow staging mà production Vercel chấp nhận. |
+| `scripts/deployment/vercel/` | Chuẩn bị env tải từ Vercel và kiểm tra OpenAPI trước khi promote với cơ chế bảo vệ của Vercel. |
+| `Dockerfile` tại root | Build image của API. Xem [Docker và host Node](../platforms/docker.md). |
+
+GitHub yêu cầu file workflow nằm trực tiếp dưới `.github/workflows/`. Các script hỗ trợ mới
+đi theo thư mục của hệ thống mà chúng gọi. Khi có pipeline AWS hoặc Docker, thêm workflow theo
+tên đích ở `.github/workflows/` và chỉ tạo thư mục script riêng khi có nhiều file cùng trách nhiệm.
+Workflow deploy chọn file chính sách trong repo. Khi thêm đích Docker/AWS, workflow đích có thể gọi
+cùng script xác minh với file chính sách riêng và khai báo workflow staging của đích đó.
+Vercel dùng nhánh của run đã qua xác minh để chọn Preview env và gắn metadata.
+Phiên bản Node lấy từ `.nvmrc`. Action bên thứ ba được ghim theo SHA để khóa phiên bản chạy.
 
 ## Một lần phát hành gồm những gì?
 

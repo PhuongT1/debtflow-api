@@ -22,7 +22,7 @@ Deployment hiện có vẫn hoạt động. CLI deploy do Actions gọi vẫn l�
 | `package.json`                        | Logic build, Node 24 và dependencies                                             |
 | Vercel Settings                       | Build Command `npm run build`, runtime env, Production Branch, domain/protection |
 | `vercel.json`                         | Tắt Git auto-deploy, function include/duration, redirect và rewrite              |
-| `.github/workflows/deploy.yml`        | Xử lý dùng chung cho hai nút staging/production: branch/SHA/CI gates, build, DB và deploy                      |
+| `.github/workflows/deploy-vercel.yml`        | Xử lý dùng chung cho hai nút staging/production: branch/SHA/CI gates, build, DB và deploy                      |
 | GitHub Environments                   | Release credentials, giới hạn branch, approval nếu hỗ trợ                        |
 | `api/index.js` → `dist/src/vercel.js` | Entrypoint serverless, không chạy `npm start`                                    |
 
