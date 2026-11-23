@@ -1,7 +1,7 @@
 # Bấm Deploy staging hoặc production
 
 **Cấu hình một lần:** [lưu 3 secrets GitHub](./github-actions-setup.md). Khi deploy, không nhập lại token,
-SHA hoặc staging run ID. Workflow tự lấy commit của nhánh bạn chọn và kiểm tra CI của đúng commit đó.
+SHA hoặc staging run ID. Workflow tự lấy commit của nhánh bạn chọn và đối chiếu kết quả CI với mã nguồn sẽ deploy.
 
 ## 1. Hai lựa chọn trên GitHub Actions
 
@@ -20,8 +20,7 @@ Merge các file này không tự deploy vì chỉ có trigger thủ công `workf
 ## 2. Deploy staging: từng bước
 
 1. Merge PR vào **develop**.
-2. Mở **GitHub → repository debtflow-api → Actions → API quality**. Chờ run **push** của đầu nhánh
-   develop thành công. CI của PR không thay thế CI push này.
+2. Kiểm tra PR có **API quality** thành công trước khi merge. Có thể mở workflow deploy ngay sau merge.
 3. Mở **Actions → Deploy staging → Run workflow**.
 4. Trong **Use workflow from**, chọn **develop**.
 5. Giữ **Apply all pending database migrations…** không chọn nếu chỉ phát hành code. Chỉ chọn khi muốn
@@ -29,7 +28,7 @@ Merge các file này không tự deploy vì chỉ có trigger thủ công `workf
 6. Bấm **Run workflow**. Mở run vừa tạo để xem các job `release / verify` và `release / deploy`.
 7. Khi run **Success**, mở URL trong **Summary** để kiểm tra login và tính năng thay đổi.
 
-**Tự động:** khóa SHA của run → xác nhận vẫn là đầu develop → xác nhận CI push đạt → tải cấu hình
+**Tự động:** khóa SHA của run → xác nhận vẫn là đầu develop → đối chiếu cây mã nguồn với lần CI thành công → tải cấu hình
 Vercel Preview/develop → build → kiểm tra lại gate → migration tùy chọn → deploy. Sau khi job thành công, kiểm tra Swagger/OpenAPI qua URL trong Summary.
 
 **Kết quả:** Summary có SHA, liên kết CI và deployment URL. Không cần tìm hoặc nhập staging run ID.
@@ -38,7 +37,7 @@ Preview hiện dùng URL trong Summary; chưa có alias staging cố định do 
 ## 3. Deploy production: từng bước
 
 1. Hoàn thành staging và QA trước; review PR **develop → main**, rồi merge.
-2. Chờ **API quality** của commit đầu **main**, event **push**, thành công.
+2. Dùng kết quả **API quality** của PR release khi nội dung đã kiểm tra trùng với đầu nhánh **main**.
 3. Mở **Actions → Deploy production → Run workflow → Use workflow from: main**.
 4. Giữ ô migration không chọn nếu DB production đã sẵn sàng; chỉ chọn sau khi review SQL và kế hoạch DB.
 5. Bấm **Run workflow**. Nếu GitHub Environment có required reviewers, người duyệt mở
@@ -75,7 +74,7 @@ Chỉ dùng một migration runner; không đồng thời apply từ laptop và 
 
 | Step | Cần thấy / cách xử lý |
 | --- | --- |
-| Verify | Chọn đúng develop/main, CI push đạt. Nhánh đã tiến lên thì chạy run mới |
+| Verify | Chọn đúng nhánh. Nếu thiếu kết quả CI cho cùng source, chạy **Actions → API quality → Run workflow** trên chính nhánh đó. Khi CI đạt, chạy deploy mới. |
 | Staging evidence, production | Deploy staging thành công với cùng source; hoàn thành QA trước production |
 | Check credentials | 3 secrets nằm đúng GitHub Environment; không dán token vào input/log |
 | Pull / Build | Xác nhận token/IDs và runtime env trên Vercel, xem log lỗi |

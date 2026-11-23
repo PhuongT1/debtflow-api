@@ -12,14 +12,14 @@ Chạy local và debug nằm ở [Bắt đầu](../getting-started/running/index
 | CD — Continuous Delivery    | Bản nào đã sẵn sàng và được duyệt để phát hành?             | Release được kiểm soát; có thể cần người bấm phát hành   |
 | CD — Continuous Deployment  | Bản đạt điều kiện có tự được đưa lên môi trường đích không? | Triển khai tự động sau các điều kiện đã cấu hình         |
 
-Với DebtFlow, chọn **CI tự động và phát hành production có kiểm soát**. GitHub Actions chạy CI khi push/PR;
-hai workflow **Deploy staging / Deploy production** chỉ phát hành khi bấm Run workflow và xác minh CI đúng SHA.
+Với DebtFlow, chọn **CI tự động và phát hành production có kiểm soát**. GitHub Actions chạy CI trên PR.
+Hai workflow **Deploy staging / Deploy production** chạy thủ công và xác minh nội dung source đã qua CI.
 
 ## Hiện có gì trong repository?
 
 | Thành phần                                         | Trạng thái xác minh từ source                                                                                                                    | Nguồn                                        |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| CI cho PR và push                                  | Có workflow `API quality`, job `quality`                                                                                                         | `.github/workflows/quality.yml`              |
+| CI cho PR và chạy thủ công                                  | Có workflow `API quality`, job `quality`                                                                                                         | `.github/workflows/quality.yml`              |
 | Kiểm tra code, test và docs                        | Có trong npm scripts và CI                                                                                                                       | `package.json`                               |
 | Vercel Git auto-deploy                             | Tắt mọi nhánh có cấu hình này; phải merge cấu hình vào nhánh tương ứng                                                                           | `vercel.json`                                |
 | Chọn Production Branch, secrets, Deployment Checks | Cấu hình bên ngoài repository; phải kiểm tra trên dashboard                                                                                      | [Hướng dẫn Vercel](./platforms/vercel.md)    |
@@ -52,7 +52,7 @@ flowchart TD
   J -- Có --> L[Ghi nhận release]
 ```
 
-Push chỉ chạy CI theo cấu hình Git auto-deploy đã tắt. Workflow CD không tự chạy khi merge.
+Merge không kích hoạt CI hoặc CD. Git auto-deploy lên Vercel đã tắt theo cấu hình trong repo.
 Bắt đầu từ [thiết lập GitHub/Vercel](./cd/github-actions-setup.md), rồi [bấm Deploy](./cd/manual-release.md).
 Quy trình không được coi là hoạt động trên tài khoản cho đến khi cấu hình và kiểm chứng staging.
 

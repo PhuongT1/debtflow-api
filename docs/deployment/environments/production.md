@@ -61,7 +61,7 @@ Làm theo [kết nối runtime và runner](../../database/releases/connect-runti
 
 Trên Vercel, Git auto-deploy được tắt bằng `vercel.json` khi cấu hình đã có trên nhánh đích.
 Dùng [Deploy API thủ công](../cd/manual-release.md); push/merge không thay thế việc bấm phát hành.
-Workflow kiểm tra CI đúng SHA, không tự xác nhận review hoặc tương thích SQL.
+Workflow đối chiếu nội dung source với kết quả CI. Việc review và đánh giá tương thích SQL thuộc người phát hành.
 
 ## 4. Kiểm tra trước: production thiếu migration nào?
 
@@ -121,7 +121,7 @@ không gọi script suffix production nếu job không có file env mà script y
 
 ## 6. Phát hành code đã kiểm thử
 
-**Vercel:** merge PR release vào `main`, chờ CI push của SHA sau merge đạt, rồi chạy
+**Vercel:** kiểm tra CI trên PR release, merge vào `main`, rồi chạy
 [Deploy production](../cd/manual-release.md) với Branch `main`; workflow tự lấy SHA và lần Deploy staging thành công mới nhất để đối chiếu cùng source.
 Nếu đã apply DB ở bước 5, không chọn ô apply migration; nếu giao workflow apply, chưa chạy bước 5 riêng và
 chỉ chọn ô apply migration sau khi đã review toàn bộ pending/tương thích. Không chạy hai migration runner đồng thời.

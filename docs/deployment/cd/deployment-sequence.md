@@ -12,9 +12,9 @@ Sau khi chạy, mở **Summary → release / verify** rồi **release / deploy**
 1. **Run workflow** đọc `.github/workflows/deploy-staging.yml` hoặc `deploy-production.yml`.
    File này nhận ô `apply_migrations` (mặc định tắt) và gọi workflow dùng chung `deploy-vercel.yml`
    tại commit của lần chạy. Mở **Workflow file** để xem phiên bản đã dùng.
-2. **Verify branch and exact commit CI** chạy `scripts/deployment/github-actions/verify-release.mjs`
+2. **Verify branch and tested source** chạy `scripts/deployment/github-actions/verify-release.mjs`
    với `scripts/deployment/vercel/release-policy.json`.
-   Script kiểm tra SHA được chọn còn là đầu nhánh và lần CI push mới nhất của đúng SHA đã thành công.
+   Script kiểm tra SHA được chọn còn là đầu nhánh và đối chiếu cây mã nguồn với lần CI thành công của PR đã merge. Lượt CI thủ công thành công trên đúng SHA cũng được chấp nhận.
    Production đối chiếu cây mã nguồn với lần deploy Vercel staging thành công theo chính sách này.
    Kết quả và link CI nằm trong Summary. Job deploy chỉ bắt đầu khi job verify thành công.
 
