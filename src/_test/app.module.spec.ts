@@ -433,12 +433,17 @@ describe('domain module composition and HTTP access', () => {
     const { PrismaService } = requireCompiled(
       '../../dist/src/database/prisma.service.js',
     ) as typeof import('../database/prisma.service.js');
-    const create = vi.fn().mockResolvedValue({ id: 'p-clean', creditLimit: '9999999999999999.99' });
+    const create = vi.fn().mockResolvedValue({
+      id: 'p-clean',
+      creditLimit: new Prisma.Decimal('9999999999999999.99'),
+    });
+    const tx = { party: { create } };
+    const transaction = vi.fn((work: (client: typeof tx) => Promise<unknown>) => work(tx));
     const worker = await Test.createTestingModule({
       imports: [DatabaseModule, EventEmitterModule.forRoot(), PartiesModule],
     })
       .overrideProvider(PrismaService)
-      .useValue({ party: { create } })
+      .useValue({ $transaction: transaction })
       .compile();
     try {
       const service = worker.get(PartiesService);
@@ -449,6 +454,9 @@ describe('domain module composition and HTTP access', () => {
         creditLimit: '9999999999999999.99',
       });
       expect(result.creditLimit).toBe('9999999999999999.99');
+      expect(transaction).toHaveBeenCalledExactlyOnceWith(expect.any(Function), {
+        isolationLevel: 'Serializable',
+      });
       expect(create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
