@@ -38,11 +38,13 @@ compile NestJS vào `dist/`, rồi rewrite import aliases. Vercel CLI đóng gó
 
 ## 3. Migration, upload và chuyển domain
 
-10. **Apply reviewed migrations → Check database migration status** chỉ chạy khi tick ô migration.
-    GitHub gọi Prisma CLI trực tiếp với hai file env. `migrate deploy` áp dụng SQL còn chờ trong
+10. **Verify direct database connection from the runner → Apply reviewed migrations → Check database migration status**
+    chỉ chạy khi tick ô migration. Bước đầu mở rồi đóng một kết nối PostgreSQL qua `DIRECT_URL`,
+    với timeout 20 giây. Kết nối này cũng đánh thức compute đang tạm ngủ và ghi chẩn đoán đã ẩn credentials
+    nếu thất bại. Sau đó GitHub gọi Prisma CLI với cùng hai file env. `migrate deploy` áp dụng SQL còn chờ trong
     `prisma/migrations/`, rồi `migrate status` đối chiếu lịch sử trong DB. `prisma.config.ts`
     đặt URL CLI từ `DIRECT_URL`. API chạy trên Vercel dùng `DATABASE_URL` từ môi trường runtime.
-    Khi để trống ô, cả hai bước hiện **Skipped**. Nếu apply hoặc status lỗi, job dừng trước upload.
+    Khi để trống ô, cả ba bước hiện **Skipped**. Nếu một bước migration lỗi, job dừng trước upload.
 11. **Deploy the built output** chạy `vercel deploy --prebuilt` để gửi `.vercel/output` lên Vercel.
     Staging tạo bản **Preview** gắn metadata nhánh `develop`. Production dùng
     `--prod --skip-domain` để tạo deployment trước khi chuyển domain production.
