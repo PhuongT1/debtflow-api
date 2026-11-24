@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { parseListQuery } from '@common/query/index.js';
-import { buildDebtQuery } from '../queries/debt-query.js';
-import { DEBT_LIST_QUERY } from '../queries/debts.list-query.js';
+import { buildDebtQuery } from '../infrastructure/queries/debt-query.js';
+import { DEBT_LIST_QUERY } from '../debts.list-query.js';
 
 describe('debt filter composition', () => {
   it('preserves tenant scope when a client ORs filters and combines business filters', () => {
@@ -101,7 +101,9 @@ describe('debt filter composition', () => {
     { dueDateFrom: '2026-11-03', dueDateTo: '2026-11-01' },
     { dueDateTo: 'not-a-date' },
   ])('rejects invalid or reversed date filters rather than silently dropping them: %j', (query) => {
-    expect(() => buildDebtQuery('org-1', query)).toThrow(expect.objectContaining({ status: 400 }));
+    expect(() => buildDebtQuery('org-1', query)).toThrow(
+      expect.objectContaining({ kind: 'invalid' }),
+    );
   });
 
   it('builds this-month boundaries in Vietnam independently of the server timezone', () => {

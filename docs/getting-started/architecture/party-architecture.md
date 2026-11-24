@@ -1,7 +1,6 @@
 # Ví dụ thực tế: module Party
 
-Đây là ví dụ áp dụng [Clean Architecture của DebtFlow](./clean-architecture.md), không phải một kiến trúc riêng cho Party.
-Sau khi xem [request flow](./request-flow.md), mở các file dưới đây trong `src/modules/parties/` để lần theo code.
+Party áp dụng [Clean Architecture của DebtFlow](./clean-architecture.md) trong một module NestJS. Đọc [request flow](./request-flow.md) để hiểu guard, validation và response envelope, rồi mở các file trong `src/modules/parties/` theo thứ tự ở trang này.
 
 ## Các layer của Party và file tương ứng
 
@@ -10,7 +9,7 @@ Các module khác vẫn theo ranh giới repository hiện có; chưa được c
 
 | Layer          | File sở hữu                                                                                                                              | Phụ thuộc được phép                                                    |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Presentation   | `presentation/parties.controller.ts`, `presentation/dto/`, `presentation/party.mapper.ts`                                                | Application contracts, HTTP validation, Swagger và response mapping    |
+| Presentation   | `presentation/parties.controller.ts`, `presentation/dto/`, `presentation/party-response.mapper.ts`                                                | Application contracts, HTTP validation, Swagger và response mapping    |
 | Application    | `application/parties.service.ts`, `application/repositories/parties.repository.ts`                                                       | Domain rules/types và các application port, không Nest/DTO/Prisma      |
 | Domain         | `domain/party.rules.ts`                                                                                         | Quy tắc thuần: điều kiện deactivate      |
 | Infrastructure | `infrastructure/prisma-parties.repository.ts`, `infrastructure/queries/`, `infrastructure/sql/`, `infrastructure/party-audit.adapter.ts` | Prisma/DB, SQL, EventEmitter2; triển khai contract bên trong           |
@@ -40,7 +39,6 @@ flowchart LR
   C --> S
   S --> P
   S --> D
-  P --> D
   I -. implements .-> P
   I --> DB[(PostgreSQL)]
 ```
@@ -95,7 +93,7 @@ sequenceDiagram
     participant DB as PostgreSQL
   end
   FE->>C: Input đã qua pipeline chung
-  C->>S: list(organizationId, query, listQuery.options)
+  C->>S: list(organizationId, query, listQuery)
   S->>S: Kiểm tra tenant context bắt buộc
   S->>R: repository.list(...)
   R->>R: Tenant, pagination, where, orderBy
@@ -149,7 +147,7 @@ query cho relation. Count, page và balance được đọc trong cùng snapshot
 | 8    | `infrastructure/queries/party-list.query.ts` → `buildPartyListQuery()` | Ghép tenant, filter riêng và dynamic filters                           |
 | 9    | `infrastructure/queries/party.select.ts`                      | Projection Prisma và nguồn để suy ra payload types                     |
 | 10   | `src/database/prisma.service.ts` (ngoài feature)              | PrismaClient dùng chung + PrismaPg / pg; thực thi query tới PostgreSQL |
-| 11   | `presentation/party.mapper.ts` → `toPartyListItem()`          | Chọn field theo public contract; tiền đã là string ở adapter           |
+| 11   | `presentation/party-response.mapper.ts` → `toPartyListItem()`          | Chọn field theo public contract; tiền đã là string ở adapter           |
 | 12   | `presentation/dto/party-response.dto.ts`                      | Contract response cho Swagger; không tự thực thi mapper                |
 
 `createdRange` lọc theo lịch Việt Nam. `today` lấy trọn ngày hiện tại, `last_7_days` gồm hôm nay
@@ -242,11 +240,11 @@ sequenceDiagram
   S->>S: Kiểm tra tenant context
   S->>R: inTransaction(work)
   R->>DB: Bắt đầu Serializable transaction
-  S->>R: store.findRecord + countActiveDebts
+  S->>R: store.findRecord + countUnsettledDebts
   R->>DB: Đọc Party và số nợ đang mở trong tenant
   DB-->>R: Record + count
   R-->>S: Record + count
-  S->>D: canDeactivateParty(activeDebtCount)
+  S->>D: canDeactivateParty(unsettledDebtCount)
   D-->>S: true / false
   alt Có nợ đang mở
     S-->>R: Throw ApplicationError
@@ -264,19 +262,25 @@ sequenceDiagram
   end
 ```
 
-Domain chỉ quyết định `activeDebtCount === 0`; không biết SQL, HTTP hay audit.
+Domain chỉ quyết định `unsettledDebtCount === 0`; không biết SQL, HTTP hay audit.
 Application map kết quả từ chối sang `ApplicationError` với error key hiện có. Adapter thực thi
 transaction/retry; các attempt lỗi không phát audit. Sơ đồ thể hiện nhánh thành công/nghiệp vụ,
 không liệt kê từng attempt retry hay mọi lỗi kết nối database.
 
 ## Khi bạn cần sửa hoặc thêm tính năng
 
-Dùng [bảng chọn đúng layer](../module-development.md#maintain-existing-feature), không copy toàn bộ Party.
-Tests nằm trong `_test/`: mapper, service/adapter, SQL builder và PostgreSQL opt-in.
-Service không import concrete adapter, DTO, Nest hoặc Prisma, kể cả qua type trung gian.
-`check:architecture` kiểm tra dependency bắc cầu của từng layer; Domain cũng không được import Application.
-Lỗi nghiệp vụ là `ApplicationError` thuần; `ApiExceptionFilter` map thành HTTP status/code và EN/VI
-như trước. Không đưa HTTP exception vào domain để tiện trả response.
+| Việc cần sửa | Nơi bắt đầu |
+| --- | --- |
+| Route, vai trò hoặc Swagger | `presentation/parties.controller.ts`. Tham số tenant và actor đến từ context đã xác thực. |
+| Field request hoặc response | DTO request trong `presentation/dto/`. Field response HTTP đi qua `party-response.fields.ts` và `toPartyResponse`, `toPartyListItem` hoặc `toPartyDetailResponse`. |
+| Ý nghĩa của thao tác ghi | `application/parties.service.ts` điều phối `create`, `update`, `deactivate`. `party-write.mapper.ts` chuẩn hóa dữ liệu và giữ đúng ngữ nghĩa PATCH. Quy tắc thuần như `canDeactivateParty` nằm ở `domain/party.rules.ts`. |
+| Kiểm tra người phụ trách | `assertActiveAssignee` gọi `PartyWriteStore.hasActiveMember` trên cùng transaction với thao tác ghi. Prisma adapter dùng `src/database/active-organization-member.query.ts`. |
+| Filter, sort hoặc projection | `party.list-query.ts` khai báo khả năng của API. `buildPartyListQuery` dựng điều kiện Prisma. `party.select.ts` chọn field. `partyBalancePageSql` dựng câu lệnh tổng hợp và phân trang. |
+| Kết nối adapter hoặc thêm test | `parties.module.ts` sở hữu DI. `_test/` chứa test rule, mapper, service/adapter, SQL builder và các suite PostgreSQL chạy theo yêu cầu. |
+
+Tên file mô tả vai trò và phạm vi. `parties.controller.ts`, `parties.service.ts` và `parties.module.ts` theo tên resource `parties`. `party.rules.ts`, `party-write.mapper.ts` và `party.select.ts` mô tả quy tắc, mapping và projection của một Party. `prisma-parties.repository.ts` nêu rõ công nghệ adapter. `buildPartyListQuery` dựng Prisma arguments, còn `partyBalancePageSql` trả một SQL fragment để repository thực thi. Handler `remove` xử lý HTTP `DELETE` và gọi use case `deactivate`, tên thể hiện thao tác đổi `isActive` trong nghiệp vụ.
+
+Lỗi nghiệp vụ dùng `ApplicationError` thuần và được `ApiExceptionFilter` chuyển thành HTTP status, code và bản dịch EN/VI. `check:architecture` kiểm tra chiều import, kể cả qua lớp trung gian. Xem thêm [cách chọn layer khi chỉnh module](../module-development.md#maintain-existing-feature).
 
 ## Bảo vệ dữ liệu và giới hạn hiện tại
 
@@ -289,7 +293,7 @@ này; ghi trực tiếp bằng SQL/import riêng không tự được bảo vệ
 
 Detail lọc `organizationId` ở cả Party lẫn relation debts và chỉ chọn các cột nợ thuộc contract. Các test opt-in trong
 `_test/party-repository.postgres.spec.ts` dùng hai Prisma client trên PostgreSQL riêng với dữ liệu giả,
-kiểm tra hai thứ tự tạo nợ/deactivate, hai PATCH đồng thời, liên kết nợ sai tenant và kết quả
+kiểm tra hai thứ tự tạo nợ/deactivate, hai PATCH đồng thời, việc từ chối liên kết nợ sai tenant và kết quả
 repository khi list bằng Prisma hoặc sort theo số dư.
 
 Các giới hạn còn lại:
@@ -298,10 +302,13 @@ Các giới hạn còn lại:
 | ------------------------------------- | ---------------------------------------------------------------------------- |
 | Detail trả toàn bộ debts              | Lịch sử lớn chưa được phân trang; thay đổi cần quyết định API riêng          |
 | SQL là raw template                   | Bind tham số không kiểm tra tên cột khi compile; cần test SQL liên quan      |
-| Detail debts chưa có allow-list riêng | Giữ contract hiện tại; khi thêm cột Debt phải review dữ liệu relation trả ra |
+| Detail có ba điểm cần đối chiếu khi đổi field nợ | Kiểm tra `PARTY_DETAIL_DEBT_SELECT`, `PartyDebt` và `DebtRecordDto` dùng cho Swagger để giữ projection, dữ liệu thực và schema API khớp nhau |
+| Audit xử lý sau commit trong cùng process | Nếu có yêu cầu giao nhận bền vững, cần thiết kế cơ chế lưu sự kiện theo transaction |
 
-Các test PostgreSQL là opt-in; test mock không xác nhận được hành vi transaction thực tế.
-Architecture checker kiểm tra
-một số import/placement, không thay cho review nghiệp vụ hay database tests.
+Các test mock và checker hỗ trợ xác minh phạm vi truy vấn, quy tắc và ranh giới import. Kiểm chứng concurrency thực tế cần các suite PostgreSQL riêng.
 
-Tiếp theo: [Cách sửa chức năng và thêm module mới](../module-development.md).
+## Đối chiếu với dự án và tài liệu tham chiếu
+
+- `CustomerResolver` của Vendure nhận context và quyền rồi giao việc cho `CustomerService`. Danh sách áp scope tại query. Vendure truyền transaction qua `RequestContext` và event bus có cơ chế chờ commit cho subscriber thông thường. DebtFlow áp dụng cùng nguyên tắc về trách nhiệm bằng REST, `PartyWriteStore` và audit sau khi `$transaction` hoàn tất. [Mã nguồn Vendure đã đối chiếu](../../guides/backend-rules/vendure-source-map.md) · [Vendure API Layer](https://docs.vendure.io/current/framework/developer-guide/the-api-layer)
+- Application sở hữu hợp đồng mà Prisma adapter triển khai. Nest nối chúng bằng `useClass` và `useFactory` tại `parties.module.ts`. Cách tổ chức này giữ business logic độc lập với ORM và phù hợp với modular monolith hiện tại. [NestJS Custom Providers](https://docs.nestjs.com/fundamentals/custom-providers) · [Microsoft về Clean Architecture](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures#clean-architecture)
+- Khi mở rộng, giữ một service theo feature khi các thao tác cùng sở hữu quy tắc và dữ liệu. Tách use case hoặc adapter khi xuất hiện trách nhiệm độc lập, chẳng hạn luồng xử lý riêng hay yêu cầu triển khai riêng. Với danh sách và audit lớn, đánh giá chi phí query và bảo đảm giao nhận trước khi đổi kiến trúc. [Vendure Service Layer](https://docs.vendure.io/current/framework/developer-guide/the-service-layer)

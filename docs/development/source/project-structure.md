@@ -82,7 +82,7 @@ Auth helpers live in:
 ```txt
 src/auth/decorators/auth-api.decorator.ts
 src/auth/auth.module.ts
-src/modules/auth/auth.service.ts
+src/modules/auth/application/auth.service.ts
 src/auth/decorators/current-user.decorator.ts
 src/auth/guards/jwt-auth.guard.ts
 src/auth/decorators/public.decorator.ts
@@ -105,25 +105,22 @@ The debt feature currently groups its cooperating providers, query builders and 
 ```text
 debts/
   debts.module.ts
-  debts.controller.ts
-  services/
+  debts.list-query.ts
+  presentation/
+    debts.controller.ts
+    dto/
+  application/
     debts.service.ts
     debt-line-item.service.ts
-  queries/
-    debts.list-query.ts
-    debt-query.ts
-    debt-date-filters.ts
-  repositories/debts.repository.ts
-  infrastructure/prisma-debts.repository.ts
+    repositories/debts.repository.ts
+  domain/
+    debt-aging.rules.ts
+    debt-payment.rules.ts
+  infrastructure/
+    prisma-debts.repository.ts
+    queries/
+  public/
   _test/
-    debts.service.spec.ts
-    prisma-debts.repository.spec.ts
-    debt-query.spec.ts
-  dto/
-    create-debt.dto.ts
-    update-debt-collection.dto.ts
-    query-debts.dto.ts
-    items/create-debt-item.dto.ts
 ```
 
 Collection updates select editable fields from `CreateDebtDto` with Swagger `PickType`; allocated
@@ -132,12 +129,12 @@ and document inputs have distinct meanings and remain separate contracts.
 
 The current layout is one modular NestJS application. Its feature ownership and provider exports
 allow focused additions without a new package or framework. Existing dependencies include
-Exports → Debts → Payments. Reports reuses the public `debts/queries/debt-query.ts` read-query builder and executes
+Exports → Debts → Payments. Reports reuses the debt query builder via `debts/public/debt-report.ts` and executes
 full-dataset Prisma aggregates directly, without importing the debt/payment controller modules.
 Keep dependencies intentional and avoid cycles or consumers
 reaching into another feature's private helpers. A new consumer imports the owning Nest module.
 
-`debts/queries/debt-query.ts` owns the shared tenant/base/client-filter composition for both paginated debt lists
+`debts/infrastructure/queries/debt-query.ts` owns the shared tenant/base/client-filter composition for both paginated debt lists
 and reports; do not duplicate that filter builder. `common/validation/phone.constants.ts` owns the
 phone format shared by Party and User DTOs. `require-organization-id.ts` rejects missing scope before
 the affected business services reach Prisma; it does not replace authentication or resource checks.
@@ -265,11 +262,11 @@ in the feature's `_test/` folder. There is no separate JavaScript full-result so
 
 ## Payment responsibilities
 
-`payments/payments.service.ts` orchestrates scoped reads, voucher/debt writes in one transaction
-and audit after commit. `payments/payment-allocation.rules.ts` owns pure amount/allocation
-checks; `payments/queries/payments.query.ts` owns list filters and stable default ordering. Shared
-balance-to-status calculation belongs to `debts/rules/debt-payment.rules.ts`, imported only through
-`debts/public/debts.ts`. It preserves the existing application/reversal semantics and is not a generic
+`payments/application/payments.service.ts` orchestrates scoped reads, voucher/debt writes in one transaction
+and audit after commit. `payments/domain/payment-allocation.rules.ts` owns pure amount/allocation
+checks; `payments/infrastructure/queries/payments.query.ts` owns list filters and stable default ordering. Shared
+balance-to-status calculation belongs to `debts/domain/debt-payment.rules.ts` and is bound by
+`payments.module.ts` through `debts/public/debt-payment.ts`. It preserves the existing application/reversal semantics and is not a generic
 state-machine framework. These pure helpers need no Nest provider registration or extra module.
 
 Middleware handles HTTP concerns, guards access, pipes validation, interceptors request/response

@@ -85,10 +85,10 @@ Each endpoint's allowed fields, their type and whether they can be sorted are li
 
 | Endpoint                                         | Definition                                                |
 | ------------------------------------------------ | --------------------------------------------------------- |
-| `GET /debts`, `/reports/aging`, `/exports/debts` | `src/modules/debts/queries/debts.list-query.ts`           |
+| `GET /debts`, `/reports/aging`, `/exports/debts` | `src/modules/debts/debts.list-query.ts`           |
 | `GET /parties`                                   | `src/modules/parties/party.list-query.ts`       |
-| `GET /payments`                                  | `src/modules/payments/queries/payments.list-query.ts`     |
-| `GET /users`                                     | `src/modules/users/queries/users.list-query.ts`           |
+| `GET /payments`                                  | `src/modules/payments/payments.list-query.ts`     |
+| `GET /users`                                     | `src/modules/users/users.list-query.ts`           |
 | `GET /audit-logs`                                | `src/modules/audit-logs/audit-logs.list-query.ts` |
 
 ## Extending it

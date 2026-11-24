@@ -149,7 +149,7 @@ describe('PartiesService', () => {
     const before = { id: 'p1', name: 'Before' };
     const store = {
       findRecord: vi.fn().mockResolvedValue(before),
-      countActiveDebts: vi.fn().mockResolvedValue(1),
+      countUnsettledDebts: vi.fn().mockResolvedValue(1),
       deactivate: vi.fn().mockResolvedValue(before),
     };
     const repository = transactionRepository(store);
@@ -160,7 +160,7 @@ describe('PartiesService', () => {
     });
     expect(store.deactivate).not.toHaveBeenCalled();
     expect(events.emit).not.toHaveBeenCalled();
-    store.countActiveDebts.mockResolvedValue(0);
+    store.countUnsettledDebts.mockResolvedValue(0);
     await service.deactivate('org-1', 'p1', 'actor-1');
     expect(store.deactivate).toHaveBeenCalledWith('org-1', 'p1');
   });
@@ -190,7 +190,7 @@ describe('PartiesService', () => {
       await store.findRecord('org-1', 'p1');
       await store.hasActiveMember('org-1', 'user-1');
       await store.update('org-1', 'p1', { name: 'Updated' });
-      await store.countActiveDebts('org-1', 'p1');
+      await store.countUnsettledDebts('org-1', 'p1');
       await store.deactivate('org-1', 'p1');
     });
     expect(transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -284,7 +284,7 @@ describe('PartiesService', () => {
         create: vi.fn().mockResolvedValue(before),
         findRecord: vi.fn().mockResolvedValue(before),
         update: vi.fn().mockResolvedValue(before),
-        countActiveDebts: vi.fn().mockResolvedValue(0),
+        countUnsettledDebts: vi.fn().mockResolvedValue(0),
         deactivate: vi.fn().mockResolvedValue(before),
       };
       const events = { emit: vi.fn() };
@@ -308,16 +308,6 @@ describe('PartiesService', () => {
     },
   );
 
-  it('checks active party ownership through its repository contract', async () => {
-    const isActive = vi.fn().mockResolvedValue(true);
-    const service = new PartiesService({ isActive } as never, {} as never);
-    await service.assertActive('org-1', 'p1');
-    expect(isActive).toHaveBeenCalledWith('org-1', 'p1');
-    isActive.mockResolvedValue(false);
-    await expect(service.assertActive('org-1', 'foreign')).rejects.toMatchObject({
-      kind: 'not-found',
-    });
-  });
   it.each(
     getListQueryFieldNames(PARTY_LIST_QUERY, 'sortable')
       .filter((field) => !PARTY_LIST_QUERY.fields[field].computed)

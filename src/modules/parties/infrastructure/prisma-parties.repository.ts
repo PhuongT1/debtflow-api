@@ -120,14 +120,6 @@ export class PrismaPartiesRepository extends PartiesRepository {
       })),
     };
   }
-  async isActive(organizationId: string, id: string) {
-    return Boolean(
-      await this.prisma.party.findFirst({
-        where: { id, organizationId, isActive: true },
-        select: { id: true },
-      }),
-    );
-  }
   /** Same serializable boundary as debt creation: retry the entire read/check/write on conflict. */
   inTransaction<T>(work: (store: PartyWriteStore) => Promise<T>): Promise<T> {
     return serializableTransaction(this.prisma, (tx) =>
@@ -156,7 +148,7 @@ export class PrismaPartiesRepository extends PartiesRepository {
               select: PARTY_DEFAULT_SELECT,
             }),
           ),
-        countActiveDebts: (organizationId, partyId) =>
+        countUnsettledDebts: (organizationId, partyId) =>
           tx.debt.count({
             where: {
               organizationId,

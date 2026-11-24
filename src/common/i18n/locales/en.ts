@@ -33,6 +33,8 @@ export const enTranslations: typeof viTranslations = {
     NO_ACTIVE_ORGANIZATION: 'The account does not belong to an active organization.',
   },
   debts: {
+    INVALID_ORIGINAL_AMOUNT: 'Debt amount must be positive, with at most 16 whole digits and 2 decimal places.',
+    INCONSISTENT_PAYMENT_BALANCE: 'The payment balance is inconsistent. Reconcile the allocations before retrying.',
     ASSIGNEE_NOT_FOUND: 'The assignee must be an active member of the organization.',
     DUE_DATE_BEFORE_ISSUE: 'Due date cannot be earlier than issue date.',
     CANNOT_CANCEL_PAID_DEBT: 'Cannot cancel debt that has recorded payments.',
@@ -47,7 +49,7 @@ export const enTranslations: typeof viTranslations = {
   payments: {
     CANNOT_PAY_CANCELLED_DEBT: 'Cannot make payment for a cancelled debt.',
     DEBT_FULLY_PAID: 'This debt has already been fully paid.',
-    AMOUNT_MUST_BE_POSITIVE: 'Payment amount must be greater than 0.',
+    AMOUNT_MUST_BE_POSITIVE: 'Payment amount must be positive, with at most 16 whole digits and 2 decimal places.',
     AMOUNT_EXCEEDS_REMAINING: 'Payment amount exceeds remaining debt balance.',
     PAYMENT_NOT_FOUND: 'Payment record not found.',
     AMOUNT_EXCEEDS_PARTY_BALANCE: "The amount exceeds the party's total remaining balance.",
@@ -63,10 +65,11 @@ export const enTranslations: typeof viTranslations = {
     ALREADY_SUSPENDED: 'The member is already suspended.',
   },
   items: {
+    LINE_AMOUNT_OUT_OF_RANGE: 'The rounded line amount must fit the supported monetary range and be greater than zero.',
     TOTAL_MISMATCH: 'The sum of the line items must equal the debt amount.',
     PRODUCT_NOT_FOUND: 'The product does not exist or is no longer active.',
     NAME_REQUIRED: 'The item name is required.',
-    QUANTITY_PRICE_INVALID: 'Quantity and unit price must be greater than 0.',
+    QUANTITY_PRICE_INVALID: 'Quantity and unit price must be positive and fit their storage precision (3 and 2 decimal places respectively).',
   },
   query: {
     INVALID_SORT: 'Sort field "{field}" is invalid. Valid fields: {validFields}.',

@@ -1,7 +1,7 @@
 import { PrismaUsersRepository } from '../infrastructure/prisma-users.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import { AUDIT_EVENT } from '@common/events/audit-event.js';
-import { UsersService } from '../services/users.service.js';
+import { UsersService } from '../application/users.service.js';
 
 const actor = { userId: 'owner', role: 'OWNER' as const };
 const member = {
@@ -35,7 +35,8 @@ function setup() {
     new PrismaUsersRepository({
       organizationMembership: { findFirst, count, update, create },
     } as never),
-    { emit } as never,
+    (entry) => emit('audit.recorded', entry),
+    async () => 'fixture-hash',
   );
   return { service, findFirst, count, update, create, emit };
 }
@@ -46,7 +47,7 @@ describe('UsersService member boundaries', () => {
     s.findFirst.mockResolvedValue(null);
     await expect(
       s.service.update('org-1', 'foreign-user', { role: 'ADMIN' }, actor),
-    ).rejects.toMatchObject({ status: 404 });
+    ).rejects.toMatchObject({ kind: 'not-found' });
     expect(s.findFirst.mock.calls[0][0].where).toEqual({
       organizationId: 'org-1',
       userId: 'foreign-user',
@@ -60,7 +61,7 @@ describe('UsersService member boundaries', () => {
     s.findFirst.mockResolvedValue({ ...member, role: 'OWNER' });
     await expect(
       s.service.update('org-1', 'target', { role: 'VIEWER' }, { userId: 'admin', role: 'ADMIN' }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ kind: 'forbidden' });
     expect(s.update).not.toHaveBeenCalled();
   });
 
@@ -69,7 +70,7 @@ describe('UsersService member boundaries', () => {
     s.count.mockResolvedValue(2);
     await expect(
       s.service.update('org-1', 'target', { name: 'Changed' }, actor),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ kind: 'forbidden' });
     expect(s.update).not.toHaveBeenCalled();
   });
 

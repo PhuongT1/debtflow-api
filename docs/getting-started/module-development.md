@@ -99,6 +99,5 @@ lỗi import, kiểm tra lại owner và dependency trước khi tiếp tục.
 Dùng [bảng layer/file của Party](./architecture/party-architecture.md) làm ví dụ hiện có.
 Record, input, read models và ports thuộc `application/`. `domain/party.rules.ts` giữ quy tắc nghiệp vụ thuần; chỉ thêm domain types khi quy tắc hoặc entity thực sự cần.
 `presentation/` sở hữu DTO và response mapper; adapter
-suy ra Prisma payload từ select và chuyển về application contract. Chỉ `parties.module.ts` nối các
-implementation. Kiểm tra dependency bắc cầu bằng `npm run check:architecture`; không thêm interface
-để rồi alias ngược về request DTO hay Prisma model. Các module chưa chuyển vẫn theo contract hiện tại.
+suy ra Prisma payload từ select và chuyển về application contract. File Nest module ở gốc nối các implementation. Kiểm tra dependency bắc cầu bằng `npm run check:architecture`; không thêm interface
+để rồi alias ngược về request DTO hay Prisma model.

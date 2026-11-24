@@ -1,6 +1,17 @@
 import { PrismaService } from '@database/prisma.service.js';
 import { Injectable } from '@nestjs/common';
-import { CatalogRepository } from '../repositories/catalog.repository.js';
+import { CatalogRepository } from '../application/repositories/catalog.repository.js';
+
+const catalogEntrySelect = {
+  id: true,
+  organizationId: true,
+  code: true,
+  name: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+const categorySelect = { ...catalogEntrySelect, sortOrder: true } as const;
 
 @Injectable()
 export class PrismaCatalogRepository extends CatalogRepository {
@@ -13,15 +24,24 @@ export class PrismaCatalogRepository extends CatalogRepository {
       this.prisma.category.findMany({
         where: { organizationId, isActive: true },
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: categorySelect,
       }),
       this.prisma.brand.findMany({
         where: { organizationId, isActive: true },
         orderBy: { name: 'asc' },
+        select: catalogEntrySelect,
       }),
       this.prisma.product.findMany({
         where: { organizationId, isActive: true },
         orderBy: { name: 'asc' },
-        include: { brand: true, category: true },
+        select: {
+          ...catalogEntrySelect,
+          categoryId: true,
+          brandId: true,
+          unit: true,
+          brand: { select: catalogEntrySelect },
+          category: { select: categorySelect },
+        },
       }),
       this.prisma.party.findMany({
         where: { organizationId, isActive: true, provinceCode: { not: null } },

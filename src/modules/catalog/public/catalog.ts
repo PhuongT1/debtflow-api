@@ -1,1 +1,1 @@
-export { ProductResponseDto } from '../dto/catalog-response.dto.js';
+export { ProductResponseDto } from '../presentation/dto/catalog-response.dto.js';

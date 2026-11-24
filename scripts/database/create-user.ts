@@ -17,7 +17,7 @@ import {
   Prisma,
   PrismaClient,
 } from '../../src/generated/prisma/client.ts';
-import { CreateUserDto } from '../../src/modules/users/dto/create-user.dto.js';
+import { CreateUserDto } from '../../src/modules/users/presentation/dto/create-user.dto.js';
 import { DatabaseEnvironmentError, readDatabaseEnvironment } from './database-environment.js';
 
 type UserInput = Pick<CreateUserDto, 'name' | 'email' | 'password'> & {

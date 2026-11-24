@@ -1,3 +1,4 @@
+import { prismaDebtMoneyMath } from '@common/utils/money.util.js';
 import { PartyAuditAdapter } from '../infrastructure/party-audit.adapter.js';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -7,8 +8,8 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@generated/prisma/client.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { PrismaDebtsRepository } from '@modules/debts/infrastructure/prisma-debts.repository.js';
-import { DebtsService } from '@modules/debts/services/debts.service.js';
-import { DebtLineItemService } from '@modules/debts/services/debt-line-item.service.js';
+import { DebtsService } from '@modules/debts/application/debts.service.js';
+import { DebtLineItemService } from '@modules/debts/application/debt-line-item.service.js';
 import { PrismaPartiesRepository } from '../infrastructure/prisma-parties.repository.js';
 import { PartiesService } from '../application/parties.service.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
@@ -150,7 +151,7 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
       partyTransaction((store) =>
         work({
           ...store,
-          countActiveDebts: (org, id) => count.run(() => store.countActiveDebts(org, id)),
+          countUnsettledDebts: (org, id) => count.run(() => store.countUnsettledDebts(org, id)),
         }),
       );
     debtRepo.inTransaction = (work) =>
@@ -163,7 +164,12 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
     const partyEvents = { emit: vi.fn() };
     const debtEvents = { emit: vi.fn() };
     const parties = new PartiesService(partyRepo, new PartyAuditAdapter(partyEvents as never));
-    const debts = new DebtsService(debtRepo, new DebtLineItemService(), debtEvents as never);
+    const debts = new DebtsService(
+      debtRepo,
+      new DebtLineItemService(prismaDebtMoneyMath),
+      (entry) => debtEvents.emit('audit.recorded', entry),
+      prismaDebtMoneyMath,
+    );
     const deactivation = parties.deactivate('org-a', 'deactivate-wins', 'actor-a');
     const creation = debts.create(
       {
@@ -186,7 +192,7 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
       count.release();
       await deactivation;
       active.release();
-      expect(await creationResult).toMatchObject({ status: 404 });
+      expect(await creationResult).toMatchObject({ kind: 'not-found' });
       expect(await first.debt.count({ where: { partyId: 'deactivate-wins' } })).toBe(0);
       expect(
         (await first.party.findUniqueOrThrow({ where: { id: 'deactivate-wins' } })).isActive,
@@ -210,13 +216,18 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
       transaction((store) =>
         work({
           ...store,
-          countActiveDebts: (org, id) => count.run(() => store.countActiveDebts(org, id)),
+          countUnsettledDebts: (org, id) => count.run(() => store.countUnsettledDebts(org, id)),
         }),
       );
     const partyEvents = { emit: vi.fn() };
     const debtEvents = { emit: vi.fn() };
     const parties = new PartiesService(partyRepo, new PartyAuditAdapter(partyEvents as never));
-    const debts = new DebtsService(debtRepo, new DebtLineItemService(), debtEvents as never);
+    const debts = new DebtsService(
+      debtRepo,
+      new DebtLineItemService(prismaDebtMoneyMath),
+      (entry) => debtEvents.emit('audit.recorded', entry),
+      prismaDebtMoneyMath,
+    );
     const deactivation = parties.deactivate('org-a', 'debt-wins', 'actor-a');
     const result = deactivation.then(
       () => null,
@@ -311,7 +322,7 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
     }
   }, 15_000);
 
-  it('filters an inconsistent cross-tenant debt link from detail', async () => {
+  it('rejects a cross-tenant debt link and scopes detail and writes to the owner', async () => {
     await party('detail-scope');
     const data = {
       partyId: 'detail-scope',
@@ -324,9 +335,9 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
     await first.debt.create({
       data: { ...data, id: 'own-debt', organizationId: 'org-a', code: 'OWN' },
     });
-    await first.debt.create({
+    await expect(first.debt.create({
       data: { ...data, id: 'foreign-debt', organizationId: 'org-b', code: 'FOREIGN' },
-    });
+    })).rejects.toMatchObject({ code: 'P2003' });
     const repository = new PrismaPartiesRepository(first as never);
     const result = await repository.detail('org-a', 'detail-scope');
     expect(result.debts.map(({ id }) => id)).toEqual(['own-debt']);
@@ -378,7 +389,7 @@ describe.skipIf(!connectionString)('PrismaPartiesRepository on native PostgreSQL
     await first.debt.createMany({
       data: [
         { ...debt, organizationId: 'org-a', code: 'PARITY-OWN' },
-        { ...debt, organizationId: 'org-b', code: 'PARITY-FOREIGN', originalAmount: '9999' },
+        { ...debt, partyId: 'parity-foreign', organizationId: 'org-b', code: 'PARITY-FOREIGN', originalAmount: '9999' },
       ],
     });
     const repository = new PrismaPartiesRepository(first as never);

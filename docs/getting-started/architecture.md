@@ -31,10 +31,9 @@ src/
   generated/          # code sinh tự động; sửa source/generator rồi generate
 ```
 
-Trong feature chưa chuyển Clean Architecture, các file thông thường ở gốc khi chỉ có một file cùng trách nhiệm.
-Party dùng các thư mục layer rõ ràng như trang Clean Architecture mô tả.
-Giữ `dto/`, `_test/`, `repositories/`, `infrastructure/` làm ranh giới rõ ràng.
-Không tạo sẵn `services/`, `rules/`, `queries/` nếu chưa có nhiều file cần nhóm.
+Các module API đặt controller và DTO trong `presentation/`, use case và ports trong
+`application/`, adapter trong `infrastructure/`. Dùng `domain/` cho quy tắc nghiệp vụ thuần và
+`_test/` cho test thuộc module. Module Nest ở gốc nối các lớp.
 Xem [Project structure](../development/source/project-structure.md) khi cần quy tắc đặt file chi tiết.
 
 ## Những phần dùng chung

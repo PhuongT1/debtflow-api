@@ -3392,7 +3392,7 @@
             }
           },
           "409": {
-            "description": "Resource conflict.",
+            "description": "The debt balance needs reconciliation before recording a payment.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3753,6 +3753,16 @@
           },
           "403": {
             "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "409": {
+            "description": "A debt balance needs reconciliation before recording a payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3853,6 +3863,16 @@
           },
           "403": {
             "description": "Tài khoản không có quyền thực hiện thao tác này."
+          },
+          "409": {
+            "description": "The voucher or a debt balance needs reconciliation before reversal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [

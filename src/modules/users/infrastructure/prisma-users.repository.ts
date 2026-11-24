@@ -1,25 +1,33 @@
-import type { ListQueryResult } from '@common/query/index.js';
+import { compileListQuery } from '@common/query/list-query-builder.js';
+import { USER_LIST_QUERY } from '../users.list-query.js';
+import type {
+  MemberListInput,
+  CreateMemberInput,
+  UpdateMemberInput,
+} from '../application/member.types.js';
+import type { ListQueryOptions } from '@common/query/list-query-options.types.js';
 import { getPagination, paginate } from '@common/utils/pagination.util.js';
 import { hasActiveOrganizationMember } from '@database/active-organization-member.query.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { OrganizationMembershipStatus, UserStatus } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
-import type { CreateUserDto } from '../dto/create-user.dto.js';
-import type { QueryUsersDto } from '../dto/query-users.dto.js';
-import type { UpdateUserDto } from '../dto/update-user.dto.js';
-import { MEMBER_INCLUDE } from '../queries/member.select.js';
-import { buildUsersQuery } from '../queries/users.query.js';
+import { MEMBER_INCLUDE } from './queries/member.select.js';
+import { buildUsersQuery } from './queries/users.query.js';
 
-import { UsersRepository } from '../repositories/users.repository.js';
+import { UsersRepository } from '../application/repositories/users.repository.js';
 
 @Injectable()
 export class PrismaUsersRepository extends UsersRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
   }
-  async list(organizationId: string, query: QueryUsersDto, listQuery?: ListQueryResult) {
+  async list(organizationId: string, query: MemberListInput, listQuery?: ListQueryOptions) {
     const pagination = getPagination(query);
-    const { where, orderBy } = buildUsersQuery(organizationId, query, listQuery);
+    const { where, orderBy } = buildUsersQuery(
+      organizationId,
+      query,
+      listQuery && compileListQuery(listQuery, USER_LIST_QUERY),
+    );
     const [items, total] = await this.prisma.$transaction([
       this.prisma.organizationMembership.findMany({
         where,
@@ -63,7 +71,7 @@ export class PrismaUsersRepository extends UsersRepository {
   isActive(organizationId: string, userId: string) {
     return hasActiveOrganizationMember(this.prisma, organizationId, userId);
   }
-  create(organizationId: string, body: CreateUserDto, passwordHash: string) {
+  create(organizationId: string, body: CreateMemberInput, passwordHash: string) {
     return this.prisma.organizationMembership.create({
       data: {
         organization: { connect: { id: organizationId } },
@@ -82,7 +90,7 @@ export class PrismaUsersRepository extends UsersRepository {
       include: MEMBER_INCLUDE,
     });
   }
-  update(organizationId: string, id: string, body: UpdateUserDto, editsProfile: boolean) {
+  update(organizationId: string, id: string, body: UpdateMemberInput, editsProfile: boolean) {
     return this.prisma.organizationMembership.update({
       where: { id, organizationId },
       data: {

@@ -13,19 +13,4 @@ export function emitAudit(events: EventEmitter2, entry: AuditEntry) {
   events.emit(AUDIT_EVENT, entry);
 }
 
-/**
- * Plain JSON snapshot of a record's own columns: relations (objects and arrays) are dropped, Decimals
- * and Dates become strings. Keeps audit rows small and safe to store in a Json column.
- */
-export function scalarSnapshot(record: object | null | undefined): Record<string, unknown> | null {
-  if (!record) return null;
-
-  const entries = Object.entries(record).filter(([, value]) => {
-    if (Array.isArray(value)) return false;
-    if (value === null || typeof value !== 'object') return true;
-
-    return value instanceof Date || typeof (value as { toJSON?: unknown }).toJSON === 'function';
-  });
-
-  return JSON.parse(JSON.stringify(Object.fromEntries(entries)));
-}
+export { scalarSnapshot } from './audit-snapshot.js';

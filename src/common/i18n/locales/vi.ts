@@ -31,6 +31,8 @@ export const viTranslations = {
     NO_ACTIVE_ORGANIZATION: 'Tài khoản chưa thuộc tổ chức đang hoạt động.',
   },
   debts: {
+    INVALID_ORIGINAL_AMOUNT: 'Số tiền công nợ phải lớn hơn 0, tối đa 16 chữ số phần nguyên và 2 chữ số thập phân.',
+    INCONSISTENT_PAYMENT_BALANCE: 'Số tiền thanh toán chưa nhất quán. Hãy đối soát các khoản phân bổ trước khi thử lại.',
     ASSIGNEE_NOT_FOUND: 'Người phụ trách phải là thành viên đang hoạt động trong tổ chức.',
     DUE_DATE_BEFORE_ISSUE: 'Ngày đến hạn không được trước ngày phát sinh.',
     CANNOT_CANCEL_PAID_DEBT: 'Không thể hủy công nợ đã có lịch sử thanh toán.',
@@ -46,7 +48,7 @@ export const viTranslations = {
   payments: {
     CANNOT_PAY_CANCELLED_DEBT: 'Không thể thanh toán cho khoản công nợ đã bị hủy.',
     DEBT_FULLY_PAID: 'Khoản công nợ này đã được thanh toán đủ.',
-    AMOUNT_MUST_BE_POSITIVE: 'Số tiền thanh toán phải lớn hơn 0.',
+    AMOUNT_MUST_BE_POSITIVE: 'Số tiền thanh toán phải lớn hơn 0, tối đa 16 chữ số phần nguyên và 2 chữ số thập phân.',
     AMOUNT_EXCEEDS_REMAINING: 'Số tiền thanh toán vượt quá số dư công nợ còn lại.',
     PAYMENT_NOT_FOUND: 'Không tìm thấy phiếu thanh toán yêu cầu.',
     AMOUNT_EXCEEDS_PARTY_BALANCE: 'Số tiền thu/chi vượt quá tổng công nợ còn lại của đối tác.',
@@ -62,10 +64,11 @@ export const viTranslations = {
     ALREADY_SUSPENDED: 'Thành viên đã bị tạm khóa.',
   },
   items: {
+    LINE_AMOUNT_OUT_OF_RANGE: 'Thành tiền sau khi làm tròn phải lớn hơn 0 và nằm trong phạm vi cho phép.',
     TOTAL_MISMATCH: 'Tổng tiền dòng hàng phải bằng tổng công nợ.',
     PRODUCT_NOT_FOUND: 'Mặt hàng không tồn tại hoặc đã ngừng hoạt động.',
     NAME_REQUIRED: 'Tên mặt hàng là bắt buộc.',
-    QUANTITY_PRICE_INVALID: 'Số lượng và đơn giá phải lớn hơn 0.',
+    QUANTITY_PRICE_INVALID: 'Số lượng và đơn giá phải lớn hơn 0, lần lượt tối đa 3 và 2 chữ số thập phân, trong phạm vi lưu trữ.',
   },
   query: {
     INVALID_SORT: 'Trường sắp xếp "{field}" không hợp lệ. Các trường hợp lệ: {validFields}.',

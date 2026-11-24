@@ -1,11 +1,13 @@
 import type { AuditEntry } from '@common/events/audit-event.js';
-import { applyListQuery, type ListQueryResult } from '@common/query/index.js';
+import { applyListQuery, compileListQuery } from '@common/query/list-query-builder.js';
+import type { ListQueryOptions } from '@common/query/list-query-options.types.js';
 import { getPagination, paginate } from '@common/utils/pagination.util.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { Prisma } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
-import { QueryAuditLogsDto } from '../dto/query-audit-logs.dto.js';
-import { AuditLogsRepository } from '../repositories/audit-logs.repository.js';
+import type { AuditLogListInput } from '../application/audit-log-read.types.js';
+import { AUDIT_LOG_LIST_QUERY } from '../audit-logs.list-query.js';
+import { AuditLogsRepository } from '../application/repositories/audit-logs.repository.js';
 
 @Injectable()
 export class PrismaAuditLogsRepository extends AuditLogsRepository {
@@ -13,7 +15,7 @@ export class PrismaAuditLogsRepository extends AuditLogsRepository {
     super();
   }
 
-  async list(organizationId: string, query: QueryAuditLogsDto, listQuery?: ListQueryResult) {
+  async list(organizationId: string, query: AuditLogListInput, options?: ListQueryOptions) {
     const pagination = getPagination(query);
     const baseWhere: Prisma.AuditLogWhereInput = {
       organizationId,
@@ -22,6 +24,7 @@ export class PrismaAuditLogsRepository extends AuditLogsRepository {
       entityId: query.entityId,
       action: query.action,
     };
+    const listQuery = options ? compileListQuery(options, AUDIT_LOG_LIST_QUERY) : undefined;
     const { where, orderBy } = applyListQuery<
       Prisma.AuditLogWhereInput,
       Prisma.AuditLogOrderByWithRelationInput[]
@@ -32,7 +35,18 @@ export class PrismaAuditLogsRepository extends AuditLogsRepository {
         orderBy,
         skip: pagination.skip,
         take: pagination.take,
-        include: { actor: { select: { id: true, name: true, email: true } } },
+        select: {
+          id: true,
+          organizationId: true,
+          actorId: true,
+          entityType: true,
+          entityId: true,
+          action: true,
+          before: true,
+          after: true,
+          createdAt: true,
+          actor: { select: { id: true, name: true, email: true } },
+        },
       }),
       this.prisma.auditLog.count({ where }),
     ]);

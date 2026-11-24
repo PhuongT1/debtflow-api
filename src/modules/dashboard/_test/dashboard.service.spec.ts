@@ -1,7 +1,7 @@
 import { PrismaDashboardRepository } from '../infrastructure/prisma-dashboard.repository.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
-import { DashboardService } from '../services/dashboard.service.js';
+import { DashboardService } from '../application/dashboard.service.js';
 
 function setup() {
   const prisma = {
@@ -25,8 +25,7 @@ function setup() {
     prisma,
     actionCenter,
     service: new DashboardService(
-      new PrismaDashboardRepository(prisma as never, {} as never),
-      actionCenter as never,
+      new PrismaDashboardRepository(prisma as never, actionCenter as never),
     ),
   };
 }
@@ -70,7 +69,7 @@ describe('dashboard database summaries', () => {
     { dateFrom: '2026-11-01T05:00:00Z' },
   ])('rejects invalid periods before querying: %j', async (query) => {
     const s = setup();
-    await expect(s.service.get(query, 'org-1')).rejects.toMatchObject({ status: 400 });
+    await expect(s.service.get(query, 'org-1')).rejects.toMatchObject({ kind: 'invalid' });
     expect(s.prisma.debt.groupBy).not.toHaveBeenCalled();
     expect(s.actionCenter.get).not.toHaveBeenCalled();
   });

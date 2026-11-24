@@ -17,6 +17,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 const requireCompiled = createRequire(import.meta.url);
 const membership = vi.fn();
 const aggregateDebt = vi.fn();
+const findAuditLogs = vi.fn();
+const countAuditLogs = vi.fn();
+const findCatalogEntries = {
+  brand: vi.fn(),
+  category: vi.fn(),
+  product: vi.fn(),
+  party: vi.fn(),
+};
 const findDebts = vi.fn();
 const countDebts = vi.fn();
 const writeDebt = vi.fn();
@@ -30,7 +38,14 @@ const sessions = {
   getCurrentUser: vi.fn(),
 };
 const prisma = {
-  party: { findFirst: vi.fn().mockResolvedValue({ id: 'test-party' }) },
+  party: {
+    findFirst: vi.fn().mockResolvedValue({ id: 'test-party' }),
+    findMany: findCatalogEntries.party,
+  },
+  brand: { findMany: findCatalogEntries.brand },
+  category: { findMany: findCatalogEntries.category },
+  product: { findMany: findCatalogEntries.product },
+  auditLog: { findMany: findAuditLogs, count: countAuditLogs },
   organizationMembership: { findFirst: membership },
   debt: {
     aggregate: aggregateDebt,
@@ -74,8 +89,8 @@ describe('domain module composition and HTTP access', () => {
       '../../dist/src/database/prisma.service.js',
     ) as typeof import('../database/prisma.service.js');
     const { AuthService } = requireCompiled(
-      '../../dist/src/modules/auth/auth.service.js',
-    ) as typeof import('../modules/auth/auth.service.js');
+      '../../dist/src/modules/auth/application/auth.service.js',
+    ) as typeof import('../modules/auth/application/auth.service.js');
     const { PartiesService } = requireCompiled(
       '../../dist/src/modules/parties/application/parties.service.js',
     ) as typeof import('../modules/parties/application/parties.service.js');
@@ -112,6 +127,9 @@ describe('domain module composition and HTTP access', () => {
     });
     findDebts.mockResolvedValue([]);
     countDebts.mockResolvedValue(0);
+    findAuditLogs.mockResolvedValue([]);
+    countAuditLogs.mockResolvedValue(0);
+    for (const findMany of Object.values(findCatalogEntries)) findMany.mockResolvedValue([]);
     parties.assertActive.mockResolvedValue(undefined);
     writeDebt.mockResolvedValue({ id: 'd1' });
     const storedDebt = {
@@ -356,6 +374,67 @@ describe('domain module composition and HTTP access', () => {
     expect(sessions.switchOrganization).toHaveBeenCalledWith('test-user', 'another-test-org');
   });
 
+  it('keeps Audit Logs role-gated and compiles allow-listed filters inside the tenant scope', async () => {
+    expect(await request('audit-logs', undefined, true)).toMatchObject({ status: 403 });
+    expect(findAuditLogs).not.toHaveBeenCalled();
+
+    membership.mockResolvedValue(activeMember('ADMIN'));
+    expect(
+      await request(
+        'audit-logs?filter[entityType][eq]=Debt&sortBy=createdAt&sortOrder=asc&page=2&pageSize=5',
+        undefined,
+        true,
+      ),
+    ).toMatchObject({
+      status: 200,
+      body: { success: true, data: [] },
+    });
+    const { where } = findAuditLogs.mock.calls[0][0];
+    expect(where).toMatchObject({
+      AND: [{ organizationId: 'test-org' }, { AND: [{ entityType: { equals: 'Debt' } }] }],
+    });
+    expect(countAuditLogs).toHaveBeenCalledWith({ where });
+    expect(findAuditLogs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        skip: 5,
+        take: 5,
+      }),
+    );
+
+    findAuditLogs.mockClear();
+    expect(
+      await request('audit-logs?filter[organizationId][eq]=foreign-org', undefined, true),
+    ).toMatchObject({ status: 400 });
+    expect(findAuditLogs).not.toHaveBeenCalled();
+  });
+
+  it('resolves Catalog through the compiled module and scopes every lookup to the verified tenant', async () => {
+    expect(await request('catalog/options', undefined, true)).toMatchObject({
+      status: 200,
+      body: {
+        success: true,
+        data: { brands: [], categories: [], products: [], provinces: [] },
+      },
+    });
+    for (const findMany of Object.values(findCatalogEntries)) {
+      expect(findMany).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ organizationId: 'test-org', isActive: true }),
+        }),
+      );
+    }
+  });
+
+  it('keeps the Imports scaffold role-gated and returns the documented created status', async () => {
+    expect(await request('imports/debts', {}, true)).toMatchObject({ status: 403 });
+    membership.mockResolvedValue(activeMember('ACCOUNTANT'));
+    expect(await request('imports/debts', {}, true)).toMatchObject({
+      status: 201,
+      body: { success: true, data: { message: expect.stringContaining('scaffolded') } },
+    });
+  });
+
   it('binds report filters and returns a typed full-dataset envelope irrespective of pagination', async () => {
     aggregateDebt.mockResolvedValueOnce({
       _sum: {
@@ -476,8 +555,8 @@ describe('domain module composition and HTTP access', () => {
       '../../dist/src/modules/payments/payments.module.js',
     ) as typeof import('../modules/payments/payments.module.js');
     const { PaymentsService } = requireCompiled(
-      '../../dist/src/modules/payments/payments.service.js',
-    ) as typeof import('../modules/payments/payments.service.js');
+      '../../dist/src/modules/payments/application/payments.service.js',
+    ) as typeof import('../modules/payments/application/payments.service.js');
     const { DatabaseModule } = requireCompiled(
       '../../dist/src/database/database.module.js',
     ) as typeof import('../database/database.module.js');

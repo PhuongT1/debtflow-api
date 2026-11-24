@@ -39,6 +39,7 @@ model Party {
   imageUrl   String?
 
   @@unique([organizationId, code])
+  @@unique([organizationId, id])
   @@index([organizationId, name])
   @@index([organizationId, isActive, name, id])
   @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "Party_searchText_trgm_idx")

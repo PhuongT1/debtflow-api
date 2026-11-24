@@ -3,23 +3,19 @@ import { requireOrganizationId } from '@common/validation/require-organization-i
 import { PrismaService } from '@database/prisma.service.js';
 import { DebtStatus, DebtType, Prisma } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
-import { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
-import { getDashboardPeriod } from '../dashboard.query.js';
-import { DashboardRepository } from '../repositories/dashboard.repository.js';
+import type { DashboardPeriod } from '../application/dashboard-period.types.js';
 import { PrismaDashboardActionCenter } from './prisma-dashboard-action-center.js';
 
 @Injectable()
-export class PrismaDashboardRepository extends DashboardRepository {
+export class PrismaDashboardRepository {
   constructor(
     private readonly prisma: PrismaService,
     private readonly projection: PrismaDashboardActionCenter,
-  ) {
-    super();
-  }
+  ) {}
 
-  async summary(query: DashboardQueryDto, organizationId: string) {
+  async summary(period: DashboardPeriod, organizationId: string) {
     requireOrganizationId(organizationId);
-    const { start, end } = getDashboardPeriod(query);
+    const { start, end } = period;
     const paymentPeriod = start || end ? { gte: start, lte: end } : undefined;
     const [groups, overdueCount, recentPayments, topDebts] = await Promise.all([
       this.prisma.debt.groupBy({
@@ -63,7 +59,7 @@ export class PrismaDashboardRepository extends DashboardRepository {
       topDebts,
     };
   }
-  actionCenter(query: DashboardQueryDto | undefined, organizationId: string) {
-    return this.projection.get(query, organizationId);
+  actionCenter(period: DashboardPeriod, organizationId: string) {
+    return this.projection.get(period, organizationId);
   }
 }

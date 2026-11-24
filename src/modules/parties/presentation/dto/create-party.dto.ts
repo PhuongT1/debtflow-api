@@ -3,10 +3,8 @@ import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MaxLength } from 'class
 import { OptionalBlank } from '@common/validation/optional-blank.decorator.js';
 import { Trim } from '@common/validation/trim.decorator.js';
 import { PHONE_PATTERN } from '@common/validation/phone.constants.js';
+import { MONEY_AMOUNT_PATTERN } from '@common/validation/money.constants.js';
 import { PartyType } from '@generated/prisma/client.js';
-
-/** Non-negative amount with up to 2 decimals. */
-export const AMOUNT_PATTERN = /^\d{1,16}(\.\d{1,2})?$/;
 
 export class CreatePartyDto implements CreatePartyInput {
   /** Customer, supplier, or both. */
@@ -91,7 +89,7 @@ export class CreatePartyDto implements CreatePartyInput {
    */
   @OptionalBlank()
   @Trim()
-  @Matches(AMOUNT_PATTERN, { message: 'validation.INVALID_AMOUNT' })
+  @Matches(MONEY_AMOUNT_PATTERN, { message: 'validation.INVALID_AMOUNT' })
   creditLimit?: string;
 
   /** Id of an active member of the organization responsible for this party. */

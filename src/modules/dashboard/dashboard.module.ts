@@ -1,22 +1,23 @@
 /**
- * Registers dashboard HTTP handlers, metrics and action-center services.
+ * Registers the dashboard HTTP handler and application service.
  * Binds repository and action-center reads to their Prisma implementations.
  */
-import { DashboardRepository } from './repositories/dashboard.repository.js';
 import { PrismaDashboardRepository } from './infrastructure/prisma-dashboard.repository.js';
 import { PrismaDashboardActionCenter } from './infrastructure/prisma-dashboard-action-center.js';
 import { Module } from '@nestjs/common';
-import { DashboardActionCenterService } from './services/dashboard-action-center.service.js';
-import { DashboardController } from './dashboard.controller.js';
-import { DashboardService } from './services/dashboard.service.js';
+import { DashboardController } from './presentation/dashboard.controller.js';
+import { DashboardService } from './application/dashboard.service.js';
 
 @Module({
   controllers: [DashboardController],
   providers: [
     PrismaDashboardActionCenter,
-    { provide: DashboardRepository, useClass: PrismaDashboardRepository },
-    DashboardActionCenterService,
-    DashboardService,
+    PrismaDashboardRepository,
+    {
+      provide: DashboardService,
+      inject: [PrismaDashboardRepository],
+      useFactory: (repository: PrismaDashboardRepository) => new DashboardService(repository),
+    },
   ],
 })
 export class DashboardModule {}

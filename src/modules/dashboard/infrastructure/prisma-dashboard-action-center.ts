@@ -1,4 +1,4 @@
-import { badRequest } from '@common/errors/app-errors.js';
+import { ApplicationError } from '@common/errors/application-error.js';
 import {
   addBusinessDays,
   formatBusinessDate,
@@ -8,8 +8,7 @@ import { requireOrganizationId } from '@common/validation/require-organization-i
 import { PrismaService } from '@database/prisma.service.js';
 import { DebtStatus, DebtType, Prisma } from '@generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
-import type { DashboardQueryDto } from '../dto/query-dashboard.dto.js';
-import { getDashboardPeriod } from '../dashboard.query.js';
+import type { DashboardPeriod } from '../application/dashboard-period.types.js';
 
 const ACTIVE_DEBT_STATUSES = [DebtStatus.OPEN, DebtStatus.PARTIAL];
 const QUEUE_LIMIT = 6;
@@ -20,16 +19,15 @@ type DebtScope = Pick<Prisma.DebtWhereInput, 'dueDate' | 'status' | 'type'>;
 export class PrismaDashboardActionCenter {
   constructor(private readonly prisma: PrismaService) {}
 
-  async get(period: DashboardQueryDto | undefined, organizationId: string) {
+  async get(period: DashboardPeriod, organizationId: string) {
     requireOrganizationId(organizationId);
     const now = new Date();
     const { end: endOfToday, start: startOfToday } = getBusinessDayRange(now);
-    const range = getDashboardPeriod(period);
-    const periodStart = range.start ?? startOfToday;
-    const periodEnd = range.end ?? endOfToday;
+    const periodStart = period.start ?? startOfToday;
+    const periodEnd = period.end ?? endOfToday;
 
     if (periodStart > periodEnd) {
-      throw badRequest('parties.INVALID_DATE_RANGE');
+      throw new ApplicationError('invalid', 'parties.INVALID_DATE_RANGE');
     }
     const endOfNextSevenDays = addBusinessDays(endOfToday, 6);
     const receivable = this.scope(DebtType.RECEIVABLE, organizationId);

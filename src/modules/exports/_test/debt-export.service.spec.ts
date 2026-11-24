@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as ExcelJS from 'exceljs';
 import { Prisma } from '@generated/prisma/client.js';
-import { DebtExportService } from '../debt-export.service.js';
+import { DebtExportService } from '../application/debt-export.service.js';
+import { XlsxDebtExportAdapter } from '../infrastructure/xlsx-debt-export.adapter.js';
 
 describe('DebtExportService', () => {
   it('preserves tenant/filter scope, caps export rows and writes exact monetary strings', async () => {
@@ -18,10 +19,10 @@ describe('DebtExportService', () => {
         },
       ],
     });
-    const service = new DebtExportService({ list } as never);
-    const filters = { where: { partyId: 'p1' } };
+    const service = new DebtExportService(new XlsxDebtExportAdapter({ list } as never));
+    const filters = { sort: [], filter: { operator: 'AND' as const, conditions: [] } };
     const query = { page: 99, pageSize: 1, partyId: 'p1' };
-    const buffer = await service.build('org-1', query, filters as never);
+    const buffer = await service.build('org-1', query, filters);
     expect(list).toHaveBeenCalledWith('org-1', { ...query, page: 1, pageSize: 1000 }, filters);
     expect(query.page).toBe(99);
     const workbook = new ExcelJS.Workbook();
@@ -40,8 +41,8 @@ describe('DebtExportService', () => {
 
   it('propagates a failed scoped read rather than generating a successful export', async () => {
     const list = vi.fn().mockRejectedValue(new Error('read failed'));
-    await expect(new DebtExportService({ list } as never).build('org-1', {})).rejects.toThrow(
-      'read failed',
-    );
+    await expect(
+      new DebtExportService(new XlsxDebtExportAdapter({ list } as never)).build('org-1', {}),
+    ).rejects.toThrow('read failed');
   });
 });

@@ -264,7 +264,7 @@ test('accepts explicit clean layers without redundant single-responsibility subf
       'src/modules/parties/application/repositories/parties.repository.ts':
         'export abstract class PartiesRepository {}',
       'src/modules/parties/presentation/parties.controller.ts': 'export class PartiesController {}',
-      'src/modules/parties/presentation/party.mapper.ts':
+      'src/modules/parties/presentation/party-response.mapper.ts':
         'export function mapOutput(x: string) { return x.toUpperCase(); }',
       'src/modules/parties/presentation/dto/party-response.fields.ts': 'export const FIELDS = [];',
     },

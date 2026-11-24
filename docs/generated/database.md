@@ -55,7 +55,7 @@ erDiagram
   String organizationId FK
   String code
   DebtType type
-  String partyId FK
+  String partyId
   String assignedToId FK "nullable"
   String title
   String invoiceNo "nullable"
@@ -118,7 +118,7 @@ erDiagram
 "Payment" {
   String id PK
   String organizationId FK
-  String partyId FK
+  String partyId
   DebtType type
   Decimal(18) amount
   DateTime paidAt
@@ -357,7 +357,7 @@ Properties as follows:
 
 ### `PaymentAllocation`
 
-The portion of a Payment applied to one Debt. Deleting a payment cascades here and rolls back the debts.
+The portion of a Payment applied to one Debt. The reversal workflow restores debt balances in the same transaction.
 
 Properties as follows:
 

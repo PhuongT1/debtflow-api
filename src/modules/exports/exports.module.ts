@@ -3,13 +3,21 @@
  * Imports debt providers through their owning Nest module.
  */
 import { Module } from '@nestjs/common';
-import { ExportsController } from './exports.controller.js';
+import { ExportsController } from './presentation/exports.controller.js';
 import { DebtsModule } from '@modules/debts/debts.module.js';
-import { DebtExportService } from './debt-export.service.js';
+import { XlsxDebtExportAdapter } from './infrastructure/xlsx-debt-export.adapter.js';
+import { DebtExportService } from './application/debt-export.service.js';
 
 @Module({
   imports: [DebtsModule],
   controllers: [ExportsController],
-  providers: [DebtExportService],
+  providers: [
+    XlsxDebtExportAdapter,
+    {
+      provide: DebtExportService,
+      inject: [XlsxDebtExportAdapter],
+      useFactory: (adapter: XlsxDebtExportAdapter) => new DebtExportService(adapter),
+    },
+  ],
 })
 export class ExportsModule {}

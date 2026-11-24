@@ -1,11 +1,8 @@
-import {
-  OrganizationMembershipStatus,
-  OrganizationStatus,
-} from '@generated/prisma/client.js';
+import { OrganizationMembershipStatus, OrganizationStatus } from '@generated/prisma/client.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { Injectable } from '@nestjs/common';
-import { AUTH_USER_SELECT, MEMBERSHIP_CONTEXT_SELECT } from '../auth.select.js';
-import { AuthRepository } from '../repositories/auth.repository.js';
+import { AUTH_USER_SELECT, MEMBERSHIP_CONTEXT_SELECT } from './queries/auth.select.js';
+import { AuthRepository } from '../application/repositories/auth.repository.js';
 
 @Injectable()
 export class PrismaAuthRepository extends AuthRepository {

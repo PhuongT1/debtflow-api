@@ -24,13 +24,13 @@ into the reusable core. Run `npm run ai:setup` after cloning or updating rule/sk
   dependency without a concrete requirement in the task.
 - Put business code in the owning domain under `src/modules/<feature>/`; access policy belongs to
   routes, not public/protected folder trees. Search for existing helpers and callers before adding files.
-- Keep one ordinary controller/service/query/mapper/types/rules file at the feature root. Create a
-  responsibility folder only for at least two related files. Keep `dto/`, `_test/`, `public/`,
-  `repositories/` and `infrastructure/` as explicit boundaries even when they contain one file.
-  Party uses explicit `domain/`, `application/`, `presentation/`, `infrastructure/` layer folders;
-  its repository port lives under `application/repositories/`. Domain must not depend on Application.
-  Update imports, module bindings, tests and references together; never add filler or empty folders.
-- Features use `repositories/` contracts and `infrastructure/` Prisma adapters. Services/listeners
+- Follow the Party reference layout for API features. Put controllers and DTOs in `presentation/`,
+  use cases and repository ports in `application/`, pure rules in `domain/`, and adapters in
+  `infrastructure/`. Keep the Nest module at the feature root; keep named cross-feature contracts
+  in `public/` and owned tests in `_test/`. Add layers where there is an owned responsibility.
+  Domain must not depend on Application. Enroll new API features in
+  `scripts/quality/clean-feature-layout.mjs` and update imports, composition, tests and docs together.
+- Features use `application/repositories/` contracts and `infrastructure/` Prisma adapters. Services/listeners
   MUST NOT import the database layer, PrismaClient or concrete adapters. Modules own DI bindings.
   See [Persistence architecture](./docs/development/persistence/persistence-architecture.md); transaction-scoped stores
   keep dependent writes atomic without leaking Prisma clients into application services.

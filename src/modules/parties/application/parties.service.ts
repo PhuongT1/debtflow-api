@@ -21,11 +21,6 @@ export class PartiesService {
     assertPartyOrganization(organizationId);
     return this.repository.detail(organizationId, id);
   }
-  async assertActive(organizationId: string, id: string) {
-    assertPartyOrganization(organizationId);
-    if (!(await this.repository.isActive(organizationId, id)))
-      throw new ApplicationError('not-found', 'parties.PARTY_NOT_FOUND');
-  }
   async create(organizationId: string, userId: string, input: CreatePartyInput) {
     assertPartyOrganization(organizationId);
     const data = buildPartyCreateData(input);
@@ -73,8 +68,8 @@ export class PartiesService {
     assertPartyOrganization(organizationId);
     const { before, party } = await this.repository.inTransaction(async (store) => {
       const before = await store.findRecord(organizationId, id);
-      const activeDebtCount = await store.countActiveDebts(organizationId, id);
-      if (!canDeactivateParty(activeDebtCount))
+      const unsettledDebtCount = await store.countUnsettledDebts(organizationId, id);
+      if (!canDeactivateParty(unsettledDebtCount))
         throw new ApplicationError('invalid', 'parties.CANNOT_DELETE_ACTIVE_DEBTS');
       const party = await store.deactivate(organizationId, id);
       return { before, party };

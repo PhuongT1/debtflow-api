@@ -3,7 +3,7 @@
  * Delegates use cases to PartiesService and maps results into API responses.
  */
 import { ApiListQuery } from '@common/swagger/decorators/api-list-query.decorator.js';
-import { toPartyResponse, toPartyListItem, toPartyDetailResponse } from './party.mapper.js';
+import { toPartyResponse, toPartyListItem, toPartyDetailResponse } from './party-response.mapper.js';
 import { API_ROUTES } from '@common/constants/api-routes.constants.js';
 import { API_TAGS } from '@common/constants/api-tags.constants.js';
 import {

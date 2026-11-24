@@ -57,13 +57,13 @@ stateDiagram-v2
     end note
 ```
 
-### Rules ([debts.service.ts](../../src/modules/debts/services/debts.service.ts))
+### Rules ([debts.service.ts](../../src/modules/debts/application/debts.service.ts))
 
 1. **Code**: generated per organization as `CN-YYYYMM-NNNN` (count of codes with the same month prefix + 1).
 2. **Dates**: `dueDate` must not be earlier than `issueDate`.
 3. **Items (optional)**: when `items` are sent, the sum of `lineAmount` must equal `originalAmount`.
    Product code, name, category and brand are copied onto the line so history survives catalog edits
-   ([debt-line-item.service.ts](../../src/modules/debts/services/debt-line-item.service.ts)).
+   ([debt-line-item.service.ts](../../src/modules/debts/application/debt-line-item.service.ts)).
 4. **Editing**: `PATCH /debts/{id}` only changes collection data (assignee, collection status, follow-up
    date and note) and reference numbers/description. Omitted fields stay unchanged; explicit null clears
    nullable fields, but collection status cannot be null. Amount, dates, party and type cannot be edited after creation.
@@ -76,7 +76,7 @@ stateDiagram-v2
 
 A **Payment** is one voucher for one party and one direction (`type`: RECEIVABLE = money in, PAYABLE = money out).
 It is split into **PaymentAllocation** rows, one per debt it settles
-([payments.service.ts](../../src/modules/payments/payments.service.ts)). Everything runs in a single database transaction.
+([payments.service.ts](../../src/modules/payments/application/payments.service.ts)). Everything runs in a single database transaction.
 
 ```mermaid
 flowchart TD
@@ -127,7 +127,7 @@ Every list endpoint also supports the generic `sort` and `filter[field][operator
 
 - **Dashboard** (`GET /dashboard`): original, paid and remaining totals per direction (cancelled debts excluded),
   overdue count, recent payments, the eight nearest unsettled debts, and an **action center**
-  ([dashboard-action-center.service.ts](../../src/modules/dashboard/services/dashboard-action-center.service.ts)) with
+  ([prisma-dashboard-action-center.ts](../../src/modules/dashboard/infrastructure/prisma-dashboard-action-center.ts)) with
   collect/pay/follow-up queues and period trade totals. `dateFrom`/`dateTo` bound the period (business days use `+07:00`);
   `dateFrom` after `dateTo` is a 400.
 - **Aging report** (`GET /reports/aging`): remaining balance and count across all matching OPEN/PARTIAL
@@ -149,7 +149,7 @@ Services publish a domain event after each successful change and `AuditLogsListe
 
 ## Members
 
-([users.service.ts](../../src/modules/users/services/users.service.ts))
+([users.service.ts](../../src/modules/users/application/users.service.ts))
 
 - Members are listed through memberships of the current organization.
 - `POST /users` creates a new global account and an ACTIVE membership in the current organization.

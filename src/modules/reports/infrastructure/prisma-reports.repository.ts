@@ -1,15 +1,17 @@
-import type { ListQueryResult } from '@common/query/index.js';
+import type { ListQueryOptions } from '@common/query/list-query-options.types.js';
+import { compileListQuery } from '@common/query/list-query-builder.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { DebtStatus, Prisma } from '@generated/prisma/client.js';
-import type { QueryDebtsDto } from '@modules/debts/public/debts.js';
+import { buildDebtQuery } from '@modules/debts/public/debt-report.js';
+import type { DebtFilters } from '@modules/debts/public/debt-filters.types.js';
 import {
-  buildDebtQuery,
+  DEBT_LIST_QUERY,
   DEBT_AGING_VALUES,
   getDebtAgingRanges,
 } from '@modules/debts/public/debts.js';
 import { Injectable } from '@nestjs/common';
-import type { AgingReportResponseDto } from '../dto/aging-report-response.dto.js';
-import { ReportsRepository } from '../repositories/reports.repository.js';
+import type { AgingReport } from '../application/aging-report.types.js';
+import { ReportsRepository } from '../application/repositories/reports.repository.js';
 
 @Injectable()
 export class PrismaReportsRepository extends ReportsRepository {
@@ -18,12 +20,17 @@ export class PrismaReportsRepository extends ReportsRepository {
   }
 
   async aging(
-    query: QueryDebtsDto,
+    query: DebtFilters,
     organizationId: string,
-    listQuery?: ListQueryResult,
-  ): Promise<AgingReportResponseDto> {
+    listQuery?: ListQueryOptions,
+  ): Promise<AgingReport> {
     const now = new Date();
-    const { where } = buildDebtQuery(organizationId, query, listQuery, now);
+    const { where } = buildDebtQuery(
+      organizationId,
+      query,
+      listQuery && compileListQuery(listQuery, DEBT_LIST_QUERY),
+      now,
+    );
     const ranges = getDebtAgingRanges(now);
     const totals = await this.prisma.$transaction(
       DEBT_AGING_VALUES.map((key) =>

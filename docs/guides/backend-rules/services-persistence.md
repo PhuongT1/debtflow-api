@@ -9,14 +9,13 @@ Vendure `RequestContext`/`TransactionalConnection` subsystem.
 
 Service methods MUST communicate the use case and accept the required trusted tenant/actor context.
 Preserve established signature order when extending an existing method. New methods MUST NOT use
-Express request/response objects or optional hard-coded organization fallbacks. Request DTOs are
-acceptable as typed use-case input in this codebase; a separate command layer is warranted only for
-a real independent caller/transport, not automatic boilerplate.
+Express request/response objects or optional hard-coded organization fallbacks. Application owns framework-neutral inputs and ports. HTTP DTOs validate and provide those
+inputs at the Presentation boundary.
 
 Map accepted fields explicitly; do not pass a request object directly to Prisma `data`, `where`,
 `include` or `orderBy`. Database-managed IDs, tenant, creator, audit actor, paid amount and status
 transitions must not become editable merely because a generic `Partial<Model>` includes them.
-Respect omission/null behavior and recalculate derived values from merged state. `parties/presentation/party.mapper.ts`
+Respect omission/null behavior and recalculate derived values from merged state. `parties/presentation/party-response.mapper.ts`
 and `toMemberDto` are specific useful examples; not every Prisma field is a safe public field.
 
 ## DB-02 — separate shape validation and business invariants
@@ -54,10 +53,10 @@ this.auditCreated(payment, organizationId, createdById);
 return payment;
 ```
 
-`payments/payment-allocation.rules.ts` owns amount checks and the pure allocation algorithm;
-`debts/rules/debt-payment.rules.ts` owns balance-to-status calculation reused through Debts' public
+`payments/domain/payment-allocation.rules.ts` owns amount checks and the pure allocation algorithm;
+`debts/domain/debt-payment.rules.ts` owns balance-to-status calculation reused through Debts' public
 contract by payment application and reversal. Keep those rules independent of HTTP, Prisma clients
-and event emission. `payments/queries/payments.query.ts` owns authorized list composition. Services
+and event emission. `payments/infrastructure/queries/payments.query.ts` owns authorized list composition. Services
 retain the use-case boundary through the transaction-scoped store and publish audit only after successful completion. Allocation priority
 is due date, issue date, creation time, then unique debt ID; the ID resolves otherwise equal priorities.
 The adapter binds every store operation to the same `tx`. Do not expose `TransactionClient` to
@@ -86,6 +85,13 @@ rules as applicable, remaining balances and currency consistency. Returned money
 contract. Date-only business decisions use the existing Vietnam business-date utilities and explicit
 calendar validation; do not depend on the server OS timezone.
 
+Use `@common/utils/money.util.js` for Debt and Payment amount parsing, monetary line multiplication
+and summation. Keep input amounts at the storage precision `NUMERIC(18, 2)`. Round each derived
+document line once, half-up to 2 decimal places, then sum the stored-scale lines. Party uses the
+shared amount pattern at its HTTP and application boundaries to keep its core ORM-independent.
+Payment application and reversal compare affected debt balances to allocation totals inside the
+write transaction and reject a discrepancy. Reconcile against source evidence before changing balances.
+
 ## DB-05 — schema and migration belong to the change
 
 Keep models/enums with their owning Prisma domain file. Schema constraints and indexes must match the
@@ -108,20 +114,20 @@ DB owns `repositories/<feature>.repository.ts` (abstract DI contract) and
 `provide`/`useClass`; application services and listeners inject only the contract. Do not construct
 an adapter in application code or re-export implementation classes through `public/`.
 
-Contracts expose named operations and use-case data, not Prisma delegates, arbitrary `where`/`data`
-arguments or `TransactionClient`. Reuse existing DTOs, domain rules and named projection types;
-do not invent generic CRUD repositories or duplicate all generated models. Generated enums, Decimal
-values and typed projections remain deliberate compile-time/value dependencies; this is not a claim
-of complete ORM-independent Domain Driven Design.
+Contracts expose named operations and use-case data. Reuse domain rules and named projection types.
+Keep generated enums and projections at the adapter boundaries. The debt and payment
+use cases use the shared decimal contract. Composition supplies the Prisma Decimal implementation.
 
-Party uses explicit clean layers: `domain/` owns pure business decisions and only the types those decisions need; `application/`
-owns the service, use-case inputs/read models, member/audit ports and `repositories/` contract.
+In API modules, `domain/` owns pure business decisions and their types. `application/` owns
+the service, use-case inputs, read models and any required repository or integration port.
+Party validates write-time assignees through `PartyWriteStore.hasActiveMember` in the same transaction.
 Domain MUST NOT depend on Application, HTTP, ORM or adapters, including through shared helpers.
 Application may depend on Domain and neutral shared code, never Presentation, Nest or Prisma.
 `presentation/` owns DTOs, response allow-lists and HTTP mapping. `infrastructure/` owns Prisma
 payload inference, Decimal arithmetic, SQL and event delivery. Map money to decimal text at its port.
-The feature-root `party.list-query.ts` is deliberately shared by outer HTTP/Prisma adapters and
-schema-checked; it MUST NOT enter Domain/Application. There is one allow-list, not two competing copies.
+Keep a single schema-checked list capability file shared by the HTTP and Prisma adapters, as in
+Party and Audit Logs. Presentation passes validated `ListQueryOptions` to Application.
+Infrastructure compiles the criteria against the shared allow-list before applying the Prisma query.
 Nest module factories bind implementations. Application maps rejected domain decisions to neutral
 `ApplicationError`; the HTTP filter preserves status/code/localization. Do not move HTTP concerns
 into Domain to reuse an exception constructor.

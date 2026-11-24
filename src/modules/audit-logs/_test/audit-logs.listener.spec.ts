@@ -1,7 +1,7 @@
 import { PrismaAuditLogsRepository } from '../infrastructure/prisma-audit-logs.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import { AuditAction } from '@common/events/audit-event.js';
-import { AuditLogsListener } from '../audit-logs.listener.js';
+import { AuditLogsListener } from '../infrastructure/audit-logs.listener.js';
 
 const entry = {
   organizationId: 'org-1',

@@ -1,13 +1,10 @@
 # Persistence architecture
 
-DebtFlow keeps its feature modules and adds an explicit application-to-persistence boundary.
-Single ordinary responsibility files stay at the feature root; group them when there are at least
-two. DTO/test/public/repository/infrastructure boundaries remain separate even for one file.
-This decision applies to Auth, Users, Parties, Debts, Payments, Catalog, Dashboard, Reports and
-Audit Logs. Exports already consumes Debts' public service. Imports remains a documented scaffold;
-add its own contract/adapter when implementing database operations, not empty folders now.
+DebtFlow feature modules use an application-to-persistence boundary. Application defines
+repository ports and coordinates the use case. Infrastructure implements those ports with Prisma.
+Exports uses the debt provider via an XLSX adapter. Imports currently has a Presentation scaffold.
 
-For a concrete module walkthrough and current limitations, see
+For a complete write-path example, see
 [Party implementation example](../../getting-started/architecture/party-architecture.md).
 
 ## Feature layout and dependency direction
@@ -15,15 +12,20 @@ For a concrete module walkthrough and current limitations, see
 ```text
 modules/payments/
   payments.module.ts                         # DI composition
-  payments.controller.ts         # HTTP, validation, authorization
-  payments.service.ts               # use-case and business decisions
-  repositories/payments.repository.ts        # abstract port and scoped write-store contract
-  infrastructure/prisma-payments.repository.ts
-  queries/                                  # owned projections/filter configuration
-  payment-allocation.rules.ts                # single allocation/amount rule file
-  payment.types.ts                           # single named result/value file
-  public/                                   # intentional cross-feature API
-  _test/                                    # service/adapter/rule tests
+  payments.list-query.ts
+  presentation/
+    payments.controller.ts
+    dto/
+  application/
+    payments.service.ts
+    repositories/payments.repository.ts
+  domain/
+    payment-allocation.rules.ts
+  infrastructure/
+    prisma-payments.repository.ts
+    queries/
+  public/
+  _test/
 ```
 
 The request flows Controller → Service → Repository contract. The Prisma adapter implements that
@@ -33,11 +35,11 @@ existing routes/status/envelopes. Cross-feature consumers still use public contr
 
 A repository exposes operations such as `findDebt`, `findDebts`, `createPayment` or `isActive`, not
 `prisma.debt`, a generic CRUD interface, `WhereInput` or arbitrary SQL. SQL, query composition,
-projections and snapshot pagination belong to the owning read adapter/helpers. Existing typed
-projections, generated enums and Decimal values are reused rather than mirrored as new models.
-Those remaining type/value dependencies mean this is not a completely ORM-independent domain model.
+projections and snapshot pagination belong to the owning read adapter/helpers. Database projections and Prisma Decimal implementations belong at the adapter boundary.
+Debts and Payments share a structural decimal contract for exact arithmetic and bind the existing
+Prisma Decimal functions during composition.
 
-## Party: strict Clean Architecture pilot
+## Party implementation example
 
 Party application/domain contracts are deliberately independent of Nest, HTTP DTOs and Prisma.
 `application/party-read.types.ts` owns repository records and read models; `domain/party.rules.ts` owns pure business decisions.

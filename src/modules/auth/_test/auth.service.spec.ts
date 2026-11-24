@@ -2,8 +2,9 @@ import { createAppConfig } from '@config/app.config.js';
 import { PrismaAuthRepository } from '../infrastructure/prisma-auth.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import * as bcrypt from 'bcryptjs';
-import { AuthService } from '../auth.service.js';
-import { AUTH_USER_SELECT } from '../auth.select.js';
+import { AuthService } from '../application/auth.service.js';
+import { JwtAuthCredentialsAdapter } from '../infrastructure/jwt-auth-credentials.adapter.js';
+import { AUTH_USER_SELECT } from '../infrastructure/queries/auth.select.js';
 
 function setup() {
   const user = {
@@ -42,7 +43,10 @@ function setup() {
     membership,
     prisma,
     jwt,
-    service: new AuthService(new PrismaAuthRepository(prisma as never), jwt as never, config),
+    service: new AuthService(
+      new PrismaAuthRepository(prisma as never),
+      new JwtAuthCredentialsAdapter(jwt as never, config),
+    ),
   };
 }
 
@@ -78,7 +82,7 @@ describe('auth-owned session service', () => {
     const s = setup();
     s.prisma.organizationMembership.findMany.mockResolvedValue([]);
     await expect(s.service.switchOrganization('u1', 'foreign-org')).rejects.toMatchObject({
-      status: 403,
+      kind: 'forbidden',
     });
     expect(s.prisma.organizationMembership.findMany.mock.calls[0][0].where.organizationId).toBe(
       'foreign-org',
@@ -95,7 +99,9 @@ describe('auth-owned session service', () => {
       type: 'refresh',
     });
     s.prisma.organizationMembership.findMany.mockResolvedValue([]);
-    await expect(s.service.refresh('test-placeholder')).rejects.toMatchObject({ status: 403 });
+    await expect(s.service.refresh('test-placeholder')).rejects.toMatchObject({
+      kind: 'forbidden',
+    });
     expect(s.prisma.user.findUnique).toHaveBeenCalledWith({
       where: { id: 'u1' },
       select: AUTH_USER_SELECT,

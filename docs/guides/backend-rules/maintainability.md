@@ -28,10 +28,10 @@ ownership; route decorators and service invariants define access.
 | Request auth context                | `src/auth/types/auth-context.types.ts`; refresh payload derives its shared identity fields                                                                                                                                                                             |
 | Response envelope types             | `common/http/api-response.types.ts` reuses the DTO owner; do not create another pagination/error-field definition                                                                                                                                                      |
 | Optional text and phone format      | `common/utils/optional-text.util.ts`, `common/validation/phone.constants.ts`; no feature-specific clones                                                                                                                                                               |
-| Debt filters for list/report/export | `debts/queries/debt-query.ts`; preserve scope and intersect overlapping constraints                                                                                                                                                                                    |
-| Party/member list filters           | `parties/infrastructure/queries/party-list.query.ts`, `users/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                               |
-| Payment allocation and debt status  | `payments/payment-allocation.rules.ts` owns allocation/amount checks; `debts/rules/debt-payment.rules.ts` owns state derivation and is exposed through `debts/public/debts.ts`                                                                                         |
-| Payment list composition            | `payments/queries/payments.query.ts`; tenant and named filters intersect with shared dynamic filters; retain a unique sort tie-breaker                                                                                                                                 |
+| Debt filters for list/report/export | `debts/infrastructure/queries/debt-query.ts`; preserve scope and intersect overlapping constraints                                                                                                                                                                                    |
+| Party/member list filters           | `parties/infrastructure/queries/party-list.query.ts`, `users/infrastructure/queries/users.query.ts`; keep capability allow-lists beside them                                                                                                                                               |
+| Payment allocation and debt status  | `payments/domain/payment-allocation.rules.ts` owns allocation/amount checks; `debts/domain/debt-payment.rules.ts` owns state derivation and is bound through `debts/public/debt-payment.ts`                                                                                         |
+| Payment list composition            | `payments/infrastructure/queries/payments.query.ts`; tenant and named filters intersect with shared dynamic filters; retain a unique sort tie-breaker                                                                                                                                 |
 | Swagger setup and browser helper    | `common/swagger/swagger.setup.ts` owns the document/routes; `swagger-ui.ts` owns HTML/paths; `swagger-auth.js` owns browser authorization and is linted/tested as an asset. Follow the [owner table](../../development/http/api-and-swagger.md#where-to-make-changes). |
 | Public member mapping               | `users/member.mapper.ts`; business role decisions stay in `users/users.rules.ts`                                                                                                                                                                                       |
 | XLSX document generation            | `exports/debt-export.service.ts`; controller owns headers, provider owns scoped capped data and workbook                                                                                                                                                               |
@@ -73,7 +73,7 @@ Party list count, page and balances share a RepeatableRead snapshot. Aggregate s
 by `parties/infrastructure/sql/party-balance-page.sql.ts`; `party-filter.sql.ts` adapts the canonical Prisma
 where subset rather than parsing requests again. Extend its SQL and database regression tests when
 adding a Party filter or sort. `partyListSelect(organizationId)` owns the Prisma projection and tenant-scoped relation count.
-For Party's strict Clean Architecture pilot, DB payloads derive from the actual select inside
+In the Party reference implementation, DB payloads derive from the actual select inside
 infrastructure; domain data and contracts in `application/` are deliberately ORM-independent. This
 is the explicit Party exception to the core prohibition against mirroring generated models: the
 contracts have different ownership and money representation. Keep `Pick`/`Partial` reuse within
@@ -103,7 +103,7 @@ and response DTOs may be reused through named public exports without a provider 
   establish safe concurrent sequential-code generation or eliminate all read-check-write races.
 - `debts/debt-collection.mapper.ts` owns PATCH mapping: omission keeps state, null clears only
   nullable fields, and collection status cannot be null. Do not replace it with full-record mapping.
-- `debts/rules/debt-aging.rules.ts` owns calendar-day ranges for lists, reports and exports. Due today
+- `debts/domain/debt-aging.rules.ts` owns calendar-day ranges for lists, reports and exports. Due today
   is not overdue in Vietnam; yesterday is day 1. No caller may define its own bucket boundaries.
 - Dashboard totals/counts and category totals use database aggregates. Recent/top lists remain bounded.
   Do not load all debts or line items merely to compute a sum/count in JavaScript.
@@ -116,10 +116,10 @@ behavioral tests and regenerate OpenAPI. Test a real validation/HTTP boundary as
 External API calls belong in an owned integration adapter with deliberate credentials, timeout and
 failure behavior; do not put external calls in DTOs, controllers or pure query/rule helpers.
 
-## Party clean-layer ownership
+## Clean-layer ownership
 
-Party's explicit `domain/`, `application/`, `presentation/` and `infrastructure/` layout specializes the
-compact default. Keep types with their semantic owner: types used by business rules/entities in Domain only when needed; repository records, use-case inputs,
+Use Party's layer layout as the API reference. Keep types
+with their semantic owner: types used by business rules/entities in Domain only when needed; repository records, use-case inputs,
 read models and ports in Application; response fields/DTO metadata in Presentation. Do not merge
 these responsibilities into a shared `types` file to reduce the file count. Reuse `Pick`/`Partial`
 from the inner contract and infer Prisma payloads in Infrastructure. See [Clean Architecture](../../getting-started/architecture/clean-architecture.md).

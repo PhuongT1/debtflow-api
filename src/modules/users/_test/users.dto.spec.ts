@@ -3,8 +3,8 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 import { I18nService } from '@common/i18n/i18n.service.js';
-import { CreateUserDto } from '../dto/create-user.dto.js';
-import { UpdateUserDto } from '../dto/update-user.dto.js';
+import { CreateUserDto } from '../presentation/dto/create-user.dto.js';
+import { UpdateUserDto } from '../presentation/dto/update-user.dto.js';
 
 describe('User request validation', () => {
   it('rejects null name and role while allowing phone to be cleared', async () => {

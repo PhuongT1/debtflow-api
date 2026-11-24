@@ -11,6 +11,9 @@
   `orders.module.ts`, `create-order.dto.ts`, `update-order.dto.ts`, `order-response.dto.ts`.
   Classes use PascalCase and the matching role: `OrdersController`, `CreateOrderDto`.
   Methods/variables use camelCase; shared constants use UPPER_SNAKE_CASE. Use domain action names.
+- Name operations for the business condition they implement. Use distinct wording for status,
+  eligibility and monetary calculations when their meaning differs. When a feature has both input
+  and response mappers, name the files for the mapping direction or purpose.
 - A controller binds transport input/context, declares access and response metadata, and delegates
   to a use-case service. It MUST NOT create database clients or perform persistence/calculations.
 - A service owns business decisions and persistence orchestration. Keep controller imports,

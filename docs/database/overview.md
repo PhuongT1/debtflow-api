@@ -8,6 +8,25 @@ generators and the datasource. Migrations are SQL files in [`prisma/migrations`]
 > into [generated/database.md](../generated/database.md) by `npm run docs:generate:database`. This page is the hand-written
 > guide to read that output.
 
+## Money and payment reconciliation
+
+- Debt, Payment and Party amounts are in VND. The API retains decimal strings and storage uses
+  `NUMERIC(18, 2)`. Debt and Payment amounts must be positive. A Party credit limit can be zero or
+  omitted. For debt items, multiply the stored-scale quantity and unit price, round each line
+  half-up to two decimal places, then sum those rounded lines.
+- The application derives `Payment.amount` from its allocations. `Debt.paidAmount` supports fast
+  balance queries and must equal the sum of its allocations. Applying or reversing a payment first
+  checks that equality in the write transaction. A discrepancy stops this operation with HTTP 409
+  and code `INCONSISTENT_PAYMENT_BALANCE`.
+- Reconcile a discrepancy against the original voucher, allocation history and import records.
+  Establish whether the cached balance is wrong or an allocation is missing before writing a
+  correction. Include this comparison after imports that modify payments or debts.
+- Migration `20261124100000_enforce_party_links_and_money_constraints` adds same-organization
+  foreign keys from Debt and Payment to Party and database checks for valid amounts, VND and due
+  dates. Apply the migration after verifying these invariants in the target environment. The new
+  constraints validate existing rows and check future writes. Cross-table allocation totals are
+  validated by the payment workflow. Older indexes need workload evidence before removal.
+
 ## Domain overview
 
 Domains and how they relate (tables are grouped; see the generated ERD for every column):

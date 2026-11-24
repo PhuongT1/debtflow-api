@@ -1,8 +1,8 @@
 # Một request từ FE đến DB
 
 Trang này giải thích pipeline HTTP chung và đường đi qua các layer của Party đã áp dụng
-[Clean Architecture](./clean-architecture.md). Các module khác chưa chuyển hết core độc lập. [Party](./party-architecture.md) ở trang tiếp theo
-là ví dụ có tên file và method cụ thể.
+[Clean Architecture](./clean-architecture.md). [Party](./party-architecture.md) minh họa luồng với
+tên file và method cụ thể.
 
 ## Luồng thành công của một API được bảo vệ
 
@@ -66,9 +66,8 @@ Use case có thể gọi repository nhiều lần, gọi adapter ngoài hoặc t
 - **Response:** JSON thường qua envelope; response 204/binary tuân theo ngoại lệ trong
   [API response format](../../guides/api-response-format.md).
 
-Đây là flow mục tiêu theo kiến trúc và cách tách lớp đã áp dụng ở Party. Các module chưa chuyển
-Clean Architecture vẫn có controller/service/Prisma adapter, nhưng chưa chắc có core độc lập hoặc
-folder `domain/`. Đối chiếu [ví dụ Party](./party-architecture.md) để xem tên file, method và query cụ thể.
+Đây là luồng đọc hoặc ghi của các module API có repository. Mỗi module dùng Domain khi có
+quy tắc nghiệp vụ thuần. Đối chiếu [ví dụ Party](./party-architecture.md) để xem tên file, method và query cụ thể.
 
 ### Chi tiết bên trong các nhóm
 

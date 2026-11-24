@@ -33,7 +33,7 @@ unrelated existing development server/browser session.
 
 Follow `.ai/core/workflow/verification.md` (repository source, section "Keep verification proportional").
 The commands below are a menu, not a per-request checklist. Default to affected specs/cases, for
-example `npx vitest run src/modules/parties/_test/party.mapper.spec.ts` (add `-t` for a specific case).
+example `npx vitest run src/modules/parties/_test/party-response.mapper.spec.ts` (add `-t` for a specific case).
 Do not run `npm test` or `npm run check` automatically. Full-suite or deep verification requires
 explicit approval for the proposed scope; explain the reason and wait before starting. Existing
 CI remains unchanged. Reuse passing results for unchanged code, including commit-only work.
@@ -98,11 +98,11 @@ All specs and test-only helpers/fixtures in `src` live under an owning `_test/` 
 ```text
 src/modules/parties/
   parties.service.ts
-  party.mapper.ts
+  party-response.mapper.ts
   infrastructure/sql/party-balance-page.sql.ts
   _test/
     parties.service.spec.ts
-    party.mapper.spec.ts
+    party-response.mapper.spec.ts
     party-balance-page.sql.spec.ts
     party-balance-page.postgres.spec.ts
     party-repository.postgres.spec.ts

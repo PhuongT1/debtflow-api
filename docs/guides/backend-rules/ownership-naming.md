@@ -12,7 +12,7 @@ explicit architecture boundaries `_test/`, `repositories/` and `infrastructure/`
 separate even with one file. Keep `public/` for deliberate provider contracts where used; DTO/type-only
 contracts can be imported from their actual owner without a forwarding file. Do not add filler files to satisfy the threshold.
 
-Party uses explicit clean-layer responsibility folders, each with real owned files:
+Party provides the reference layout for modules using explicit clean layers:
 
 ```text
 src/modules/parties/
@@ -26,13 +26,15 @@ src/modules/parties/
   _test/
 ```
 
-This is the selected Party architecture, not a template imposed on unmigrated features. Root-level
-single-responsibility placement still applies to their compact layout. Party's layer folders carry
-real responsibilities; do not add an extra services/types/rules folder inside them for a single file.
+Adopt only layers with an owned responsibility. Audit Logs and Catalog have Application,
+Presentation and Infrastructure. Imports has Presentation for its scaffold. Keep composition at
+the feature root and public contracts in `public/` when needed. Enroll migrated modules in
+`scripts/quality/clean-feature-layout.mjs` to enforce their layout and dependency direction.
+Apply the same layer boundaries to new API modules.
 
 When a second service/controller/mapper/types/rules/query file is needed, group the existing and
 new files in the relevant folder and update every import, Nest binding, test and reference in the
-same change. Debts, Dashboard and Users keep `services/` because they have cooperating providers.
+same change. Group related helpers inside their owning layer.
 Use role suffixes (`*.controller.ts`, `*.service.ts`, `*.mapper.ts`, `*.types.ts`, etc.) so the root
 stays readable. Never create empty folders or a second definition just to justify a folder.
 A short helper does not require a framework, generic base service/repository or an extra layer.

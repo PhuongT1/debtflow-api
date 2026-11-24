@@ -1,1 +1,1 @@
-export { DebtRecordDto, DebtItemRecordDto } from '../dto/debt-record.dto.js';
+export { DebtRecordDto, DebtItemRecordDto } from '../presentation/dto/debt-record.dto.js';

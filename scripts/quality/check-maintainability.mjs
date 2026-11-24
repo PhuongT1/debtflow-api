@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
+import { cleanFeatureRoot } from './clean-feature-layout.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const portable = (path) => path.replaceAll('\\', '/');
@@ -84,10 +85,11 @@ export function checkMaintainability(root = projectRoot) {
     const feature = path.startsWith('src/modules/') ? path.split('/')[2] : undefined;
     const folders = path.split('/').slice(3, -1);
     if (feature) {
+      const cleanLayout = Boolean(cleanFeatureRoot(path));
       const roles = [
         [/\.controller\.ts$/, ['controllers', 'api', 'presentation']],
         [/\.service\.ts$/, ['services', 'jobs', 'integrations', 'application']],
-        [/\.listener\.ts$/, ['listeners']],
+        [/\.listener\.ts$/, cleanLayout ? ['infrastructure'] : ['listeners']],
         [
           /\.repository\.ts$/,
           [path.split('/').at(-1).startsWith('prisma-') ? 'infrastructure' : 'repositories'],
@@ -95,16 +97,14 @@ export function checkMaintainability(root = projectRoot) {
         [/\.sql\.ts$/, ['sql']],
         [/(?:\.list-query|\.select|\.query|-query)\.ts$/, ['queries']],
         [/\.rules\.ts$/, ['rules', 'domain']],
-        [/\.types\.ts$/, ['types', 'domain', 'application']],
-        [/\.mapper\.ts$/, ['mappers', 'presentation', 'application']],
+        [/\.types\.ts$/, ['types', 'domain', 'application', 'public']],
+        [/\.mapper\.ts$/, ['mappers', 'presentation', 'application', 'infrastructure']],
         [/\.dto\.ts$/, ['dto']],
       ];
       const role = roles.find(([pattern]) => pattern.test(path));
-      const mandatory =
-        role &&
-        role[1].some((folder) => ['dto', 'repositories', 'infrastructure'].includes(folder));
+      const mandatory = /\.(?:dto|repository)\.ts$/.test(path);
       const boundaryFolders = new Set(['dto', '_test', 'public', 'repositories', 'infrastructure']);
-      if (feature === 'parties') {
+      if (cleanLayout) {
         for (const layer of ['domain', 'application', 'presentation']) boundaryFolders.add(layer);
       }
       const featurePrefix = `src/modules/${feature}/`;

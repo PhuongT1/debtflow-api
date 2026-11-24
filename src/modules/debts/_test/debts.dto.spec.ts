@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import { ListQueryAwareValidationPipe } from '@common/query/index.js';
-import { CreateDebtDto } from '../dto/create-debt.dto.js';
-import { UpdateDebtCollectionDto } from '../dto/update-debt-collection.dto.js';
+import { CreateDebtDto } from '../presentation/dto/create-debt.dto.js';
+import { UpdateDebtCollectionDto } from '../presentation/dto/update-debt-collection.dto.js';
 
 const pipe = new ListQueryAwareValidationPipe({
   transform: true,

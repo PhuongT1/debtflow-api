@@ -2,6 +2,8 @@ import type { CreatePartyInput, UpdatePartyInput, PartyWriteData } from './party
 import type { PartyRecord } from './party-read.types.js';
 import { normalizeOptionalText } from '@common/utils/optional-text.util.js';
 import { partySearchText } from '@common/utils/search-normalization.util.js';
+import { MONEY_AMOUNT_PATTERN } from '@common/validation/money.constants.js';
+import { ApplicationError } from '@common/errors/application-error.js';
 
 type PartySearchSource = Pick<PartyRecord, 'name' | 'code' | 'phone' | 'taxCode'>;
 
@@ -29,6 +31,8 @@ function normalizePartyOptionalFields(input: UpdatePartyInput, mode: 'create' | 
   }
   if (mode === 'create' || input.creditLimit !== undefined) {
     const value = normalizeOptionalText(input.creditLimit);
+    if (value !== null && !MONEY_AMOUNT_PATTERN.test(value))
+      throw new ApplicationError('invalid', 'validation.INVALID_AMOUNT');
     data.creditLimit = value;
   }
   return data;

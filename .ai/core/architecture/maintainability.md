@@ -46,6 +46,10 @@ Do not borrow a constant/function from another feature's request DTO. A genuinel
 constant belongs in shared validation infrastructure; a domain-specific rule stays in its domain.
 Avoid global catch-all `types.ts`, `utils.ts`, base services and repositories that hide ownership.
 
+Keep private service and port methods tied to production use cases. Before removing a method that
+only tests call directly, trace runtime wiring, public exports and indirect consumers. When the
+method is unused, remove it from the contract, implementation and its dedicated tests together.
+
 ## Keep orchestration readable
 
 Use a named typed query builder for reusable or multi-step filter/date composition. Keep the tenant

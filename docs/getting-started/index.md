@@ -18,7 +18,7 @@ nằm riêng tại [Triển khai](../deployment/index.md).
 | 3.3 | [Ví dụ thực tế: Party](./architecture/party-architecture.md) | Lần theo một API đang có từ controller tới DB và response |
 | 4 | [Viết và bảo trì API](./module-development.md) | Sửa đúng owner, nối DI, tái sử dụng types và kiểm tra phần ảnh hưởng |
 
-**Party là ví dụ đã áp dụng Clean Architecture; các module khác chưa chuyển hết.** Không sao chép toàn bộ file/folder
+**Party là ví dụ tham chiếu cho Clean Architecture của các module API.** Không sao chép toàn bộ file/folder
 của Party cho một chức năng nhỏ.
 
 ## Sau lộ trình này, bạn cần làm được gì?

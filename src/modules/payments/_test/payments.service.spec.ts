@@ -1,7 +1,9 @@
+import { prismaDebtMoneyMath } from '@common/utils/money.util.js';
+import { debtPaymentState } from '@modules/debts/public/debt-payment.js';
 import { PrismaPaymentsRepository } from '../infrastructure/prisma-payments.repository.js';
 import { describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
-import { PaymentsService } from '../payments.service.js';
+import { PaymentsService } from '../application/payments.service.js';
 
 function setup() {
   const debt = {
@@ -16,6 +18,9 @@ function setup() {
   const payment = {
     id: 'pay-1',
     organizationId: 'org-1',
+    partyId: debt.partyId,
+    type: debt.type,
+    amount: new Prisma.Decimal(10),
     allocations: [{ debtId: 'd1', amount: new Prisma.Decimal(10), debt }],
   };
   const tx = {
@@ -29,12 +34,17 @@ function setup() {
       findFirstOrThrow: vi.fn().mockResolvedValue(payment),
       delete: vi.fn().mockResolvedValue(payment),
     },
+    paymentAllocation: {
+      groupBy: vi.fn().mockResolvedValue([{ debtId: debt.id, _sum: { amount: debt.paidAmount } }]),
+    },
   };
   const transaction = vi.fn(async (run: (client: typeof tx) => unknown) => run(tx));
   const events = { emit: vi.fn() };
   const service = new PaymentsService(
     new PrismaPaymentsRepository({ $transaction: transaction } as never),
-    events as never,
+    (entry) => events.emit('audit.recorded', entry),
+    prismaDebtMoneyMath,
+    debtPaymentState,
   );
   return { service, tx, debt, payment, events, transaction };
 }
@@ -94,7 +104,9 @@ describe('payment tenant context and transaction effects', () => {
   it('does not create or audit a voucher from a foreign-tenant debt', async () => {
     const s = setup();
     s.tx.debt.findFirstOrThrow.mockResolvedValue({ ...s.debt, organizationId: 'org-2' });
-    await expect(s.service.create('d1', input, 'org-1')).rejects.toMatchObject({ status: 403 });
+    await expect(s.service.create('d1', input, 'org-1')).rejects.toMatchObject({
+      kind: 'forbidden',
+    });
     expect(s.tx.payment.create).not.toHaveBeenCalled();
     expect(s.tx.debt.update).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
@@ -122,7 +134,7 @@ describe('payment tenant context and transaction effects', () => {
       ...s.payment,
       allocations: [{ ...s.payment.allocations[0], debt: { ...s.debt, organizationId: 'org-2' } }],
     });
-    await expect(s.service.remove('pay-1', 'org-1')).rejects.toMatchObject({ status: 403 });
+    await expect(s.service.remove('pay-1', 'org-1')).rejects.toMatchObject({ kind: 'forbidden' });
     expect(s.tx.payment.delete).not.toHaveBeenCalled();
     expect(s.tx.debt.update).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
@@ -140,6 +152,31 @@ describe('payment tenant context and transaction effects', () => {
     expect(s.tx.debt.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'd1', organizationId: 'org-1' } }),
     );
+  });
+
+  it('blocks payment application and reversal when the debt balance differs from its allocations', async () => {
+    const s = setup();
+    s.tx.paymentAllocation.groupBy.mockResolvedValue([]);
+    await expect(s.service.create('d1', input, 'org-1')).rejects.toMatchObject({
+      kind: 'conflict',
+    });
+    await expect(s.service.remove('pay-1', 'org-1')).rejects.toMatchObject({ kind: 'conflict' });
+    expect(s.tx.paymentAllocation.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { debtId: { in: ['d1'] }, debt: { organizationId: 'org-1' } },
+      }),
+    );
+    expect(s.tx.payment.create).not.toHaveBeenCalled();
+    expect(s.tx.payment.delete).not.toHaveBeenCalled();
+    expect(s.tx.debt.update).not.toHaveBeenCalled();
+    expect(s.events.emit).not.toHaveBeenCalled();
+  });
+
+  it('blocks reversal when the voucher and allocation point to different parties', async () => {
+    const s = setup();
+    s.tx.payment.findFirstOrThrow.mockResolvedValue({ ...s.payment, partyId: 'other-party' });
+    await expect(s.service.remove('pay-1', 'org-1')).rejects.toMatchObject({ kind: 'conflict' });
+    expect(s.tx.payment.delete).not.toHaveBeenCalled();
   });
 
   it('does not publish success when a transaction write fails', async () => {
@@ -166,7 +203,7 @@ describe('payment tenant context and transaction effects', () => {
         { ...input, amount: '80.01', type: 'RECEIVABLE', partyId: 'p1' },
         'org-1',
       ),
-    ).rejects.toMatchObject({ status: 400 });
+    ).rejects.toMatchObject({ kind: 'invalid' });
     expect(s.tx.payment.create).not.toHaveBeenCalled();
     expect(s.tx.debt.update).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
@@ -189,6 +226,7 @@ it('supports a fake repository without exposing any Prisma delegate to the appli
   const updateDebt = vi.fn().mockResolvedValue(undefined);
   const store = {
     findDebt: vi.fn().mockResolvedValue(debt),
+    allocationTotals: vi.fn().mockResolvedValue(new Map([[debt.id, debt.paidAmount]])),
     createPayment: vi.fn().mockResolvedValue(payment),
     updateDebt,
   };
@@ -200,8 +238,17 @@ it('supports a fake repository without exposing any Prisma delegate to the appli
       return result;
     },
   };
-  const events = { emit: vi.fn(() => order.push('audit')) };
-  const service = new PaymentsService(repository as never, events as never);
+  const events = {
+    emit: vi.fn<(name: string, entry: unknown) => void>(() => {
+      order.push('audit');
+    }),
+  };
+  const service = new PaymentsService(
+    repository as never,
+    (entry) => events.emit('audit.recorded', entry),
+    prismaDebtMoneyMath,
+    debtPaymentState,
+  );
   await service.create('d1', input, 'org-1', 'actor');
   expect(store.findDebt).toHaveBeenCalledWith('org-1', 'd1');
   expect(updateDebt).toHaveBeenCalledWith(

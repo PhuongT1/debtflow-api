@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import { ListQueryAwareValidationPipe } from '@common/query/index.js';
-import { CreateAllocatedPaymentDto } from '../dto/create-allocated-payment.dto.js';
+import { CreateAllocatedPaymentDto } from '../presentation/dto/create-allocated-payment.dto.js';
 
 const pipe = new ListQueryAwareValidationPipe({
   transform: true,

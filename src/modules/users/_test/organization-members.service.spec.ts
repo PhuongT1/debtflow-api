@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { OrganizationMembersService } from '../services/organization-members.service.js';
+import { OrganizationMembersService } from '../application/organization-members.service.js';
 import { PrismaUsersRepository } from '../infrastructure/prisma-users.repository.js';
 
 describe('OrganizationMembersService repository boundary', () => {

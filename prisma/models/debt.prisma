@@ -59,7 +59,7 @@ model Debt {
   updatedAt        DateTime         @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  party      Party     @relation(fields: [partyId], references: [id], onDelete: Restrict)
+  party      Party     @relation(fields: [organizationId, partyId], references: [organizationId, id], onDelete: Restrict, onUpdate: Restrict)
   assignedTo User?     @relation("DebtAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdBy  User?     @relation("DebtCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   paymentAllocations PaymentAllocation[]

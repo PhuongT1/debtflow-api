@@ -4,9 +4,9 @@ import {
   OrganizationRole,
   UserStatus,
 } from '@generated/prisma/client.js';
-import { toMemberDto } from '../member.mapper.js';
+import { toOrganizationMember } from '../application/member.mapper.js';
 
-describe('toMemberDto', () => {
+describe('toOrganizationMember', () => {
   const base = {
     id: 'm1',
     role: OrganizationRole.VIEWER,
@@ -25,18 +25,20 @@ describe('toMemberDto', () => {
   };
 
   it('uses the user id as id and keeps the membership id separately', () => {
-    const dto = toMemberDto(base);
+    const dto = toOrganizationMember(base);
     expect(dto.id).toBe('u1');
     expect(dto.membershipId).toBe('m1');
     expect(dto.status).toBe('ACTIVE');
   });
 
   it('reports INACTIVE when the membership is suspended or the account is disabled', () => {
-    expect(toMemberDto({ ...base, status: 'SUSPENDED' }).status).toBe('INACTIVE');
-    expect(toMemberDto({ ...base, status: 'INVITED' }).status).toBe('INACTIVE');
-    expect(toMemberDto({ ...base, user: { ...base.user, status: 'INACTIVE' } }).status).toBe(
-      'INACTIVE',
+    expect(toOrganizationMember({ ...base, status: 'SUSPENDED' }).status).toBe('INACTIVE');
+    expect(toOrganizationMember({ ...base, status: 'INVITED' }).status).toBe('INACTIVE');
+    expect(
+      toOrganizationMember({ ...base, user: { ...base.user, status: 'INACTIVE' } }).status,
+    ).toBe('INACTIVE');
+    expect(toOrganizationMember({ ...base, status: 'SUSPENDED' }).membershipStatus).toBe(
+      'SUSPENDED',
     );
-    expect(toMemberDto({ ...base, status: 'SUSPENDED' }).membershipStatus).toBe('SUSPENDED');
   });
 });

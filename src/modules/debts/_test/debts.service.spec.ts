@@ -1,6 +1,7 @@
+import { prismaDebtMoneyMath } from '@common/utils/money.util.js';
 import { describe, expect, it, vi } from 'vitest';
-import { DebtsService } from '../services/debts.service.js';
-import type { DebtWriteStore } from '../repositories/debts.repository.js';
+import { DebtsService } from '../application/debts.service.js';
+import type { DebtWriteStore } from '../application/repositories/debts.repository.js';
 
 const input = {
   partyId: 'party-1',
@@ -30,7 +31,12 @@ function setup() {
   const items = { prepare: vi.fn().mockResolvedValue([]) };
   const events = { emit: vi.fn() };
   return {
-    service: new DebtsService(repository as never, items as never, events as never),
+    service: new DebtsService(
+      repository as never,
+      items as never,
+      (entry) => events.emit('audit.recorded', entry),
+      prismaDebtMoneyMath,
+    ),
     repository,
     store,
     items,
@@ -86,10 +92,14 @@ describe('debt application service using a fake persistence port', () => {
   it('rejects foreign/inactive parties and members before persistence', async () => {
     const s = setup();
     s.store.hasActiveParty.mockResolvedValue(false);
-    await expect(s.service.create(input, 'org-1', 'actor')).rejects.toMatchObject({ status: 404 });
+    await expect(s.service.create(input, 'org-1', 'actor')).rejects.toMatchObject({
+      kind: 'not-found',
+    });
     s.store.hasActiveParty.mockResolvedValue(true);
     s.store.hasActiveMember.mockResolvedValue(false);
-    await expect(s.service.create(input, 'org-1', 'actor')).rejects.toMatchObject({ status: 400 });
+    await expect(s.service.create(input, 'org-1', 'actor')).rejects.toMatchObject({
+      kind: 'invalid',
+    });
     expect(s.store.create).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
   });
@@ -110,7 +120,9 @@ describe('debt application service using a fake persistence port', () => {
       id: 'd1',
       paymentAllocations: [{}] as never[],
     });
-    await expect(s.service.cancel('d1', 'org-1', 'actor')).rejects.toMatchObject({ status: 400 });
+    await expect(s.service.cancel('d1', 'org-1', 'actor')).rejects.toMatchObject({
+      kind: 'invalid',
+    });
     expect(s.store.cancel).not.toHaveBeenCalled();
     expect(s.events.emit).not.toHaveBeenCalled();
   });

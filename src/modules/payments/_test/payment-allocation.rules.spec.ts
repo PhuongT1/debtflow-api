@@ -1,11 +1,14 @@
+import { parsePositiveMoney } from '@common/utils/money.util.js';
 import { describe, expect, it } from 'vitest';
 import { Prisma } from '@generated/prisma/client.js';
-import type { PayableDebt } from '../payment.types.js';
+import type { PayableDebt } from '../domain/payable-debt.types.js';
 import {
   allocatePayment,
   assertPayableDebt,
-  paymentAmount,
-} from '../payment-allocation.rules.js';
+  paymentAmount as parsePaymentAmount,
+} from '../domain/payment-allocation.rules.js';
+
+const paymentAmount = (value: string) => parsePaymentAmount(value, parsePositiveMoney);
 
 function debt(id: string, original: string, paid = '0'): PayableDebt {
   return {
@@ -20,12 +23,16 @@ function debt(id: string, original: string, paid = '0'): PayableDebt {
 }
 
 describe('payment allocation rules', () => {
-  it.each(['0', '-1', 'NaN', 'Infinity', '-Infinity', 'invalid'])(
+  it.each(['0', '-1', 'NaN', 'Infinity', '-Infinity', 'invalid', '0.001', '10000000000000000'])(
     'rejects invalid/nonpositive amount %s',
     (value) => {
-      expect(() => paymentAmount(value)).toThrow(expect.objectContaining({ status: 400 }));
+      expect(() => paymentAmount(value)).toThrow(expect.objectContaining({ kind: 'invalid' }));
     },
   );
+
+  it('accepts the largest supported amount exactly', () => {
+    expect(paymentAmount('9999999999999999.99').toFixed()).toBe('9999999999999999.99');
+  });
 
   it('allocates exact decimal amounts in the supplied priority order without mutating debts', () => {
     const debts = [debt('oldest', '0.30', '0.20'), debt('next', '0.40')];
@@ -36,7 +43,9 @@ describe('payment allocation rules', () => {
     ]);
     expect(debts.map(({ paidAmount }) => paidAmount.toString())).toEqual(['0.2', '0']);
     expect(
-      result.reduce((total, { amount }) => total.plus(amount), new Prisma.Decimal(0)).toString(),
+      result
+        .reduce((total, { amount }) => total.plus(amount.toString()), new Prisma.Decimal(0))
+        .toString(),
     ).toBe('0.35');
   });
 
@@ -50,13 +59,13 @@ describe('payment allocation rules', () => {
   it('rejects an amount exceeding all remaining balances, including an empty selection', () => {
     for (const debts of [[], [debt('d1', '10', '5')]])
       expect(() => allocatePayment(debts, paymentAmount('6'))).toThrow(
-        expect.objectContaining({ status: 400 }),
+        expect.objectContaining({ kind: 'invalid' }),
       );
   });
 
   it.each(['PAID', 'CANCELLED'] as const)('rejects a debt in state %s', (status) => {
     expect(() => assertPayableDebt({ ...debt('d1', '100'), status }, paymentAmount('1'))).toThrow(
-      expect.objectContaining({ status: 400 }),
+      expect.objectContaining({ kind: 'invalid' }),
     );
   });
 
@@ -64,7 +73,7 @@ describe('payment allocation rules', () => {
     const item = debt('d1', '9007199254740993.25', '9007199254740993.20');
     expect(() => assertPayableDebt(item, paymentAmount('0.05'))).not.toThrow();
     expect(() => assertPayableDebt(item, paymentAmount('0.06'))).toThrow(
-      expect.objectContaining({ status: 400 }),
+      expect.objectContaining({ kind: 'invalid' }),
     );
   });
 });

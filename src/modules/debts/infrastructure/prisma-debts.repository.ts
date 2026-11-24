@@ -1,22 +1,32 @@
-import type { ListQueryResult } from '@common/query/index.js';
+import type { ListQueryOptions } from '@common/query/list-query-options.types.js';
 import { getPagination, paginate } from '@common/utils/pagination.util.js';
 import { hasActiveOrganizationMember } from '@database/active-organization-member.query.js';
+import { Prisma } from '@generated/prisma/client.js';
+import { compileListQuery } from '@common/query/list-query-builder.js';
+import { DEBT_LIST_QUERY } from '../debts.list-query.js';
 import { PrismaService } from '@database/prisma.service.js';
 import { serializableTransaction } from '@database/serializable-transaction.js';
 import { Injectable } from '@nestjs/common';
-import type { QueryDebtsDto } from '../dto/query-debts.dto.js';
-import { buildDebtQuery } from '../queries/debt-query.js';
-import { DEBT_DETAIL_INCLUDE, DEBT_LIST_INCLUDE } from '../queries/debt.select.js';
-import { DebtsRepository, type DebtWriteStore } from '../repositories/debts.repository.js';
+import type { DebtFilters } from '../public/debt-filters.types.js';
+import { buildDebtQuery } from './queries/debt-query.js';
+import { DEBT_DETAIL_INCLUDE, DEBT_LIST_INCLUDE } from './queries/debt.select.js';
+import {
+  DebtsRepository,
+  type DebtWriteStore,
+} from '../application/repositories/debts.repository.js';
 
 @Injectable()
 export class PrismaDebtsRepository extends DebtsRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
   }
-  async list(organizationId: string, query: QueryDebtsDto, listQuery?: ListQueryResult) {
+  async list(organizationId: string, query: DebtFilters, listQuery?: ListQueryOptions) {
     const pagination = getPagination(query);
-    const { where, orderBy } = buildDebtQuery(organizationId, query, listQuery);
+    const { where, orderBy } = buildDebtQuery(
+      organizationId,
+      query,
+      listQuery && compileListQuery(listQuery, DEBT_LIST_QUERY),
+    );
     const [items, total] = await this.prisma.$transaction([
       this.prisma.debt.findMany({
         where,
@@ -58,9 +68,25 @@ export class PrismaDebtsRepository extends DebtsRepository {
           });
           return `${prefix}-${String(count + 1).padStart(4, '0')}`;
         },
-        create: ({ items, ...data }) =>
+        create: ({ items, originalAmount, paidAmount, ...data }) =>
           tx.debt.create({
-            data: { ...data, ...(items?.length ? { items: { create: items } } : {}) },
+            data: {
+              ...data,
+              originalAmount: new Prisma.Decimal(originalAmount.toString()),
+              paidAmount: new Prisma.Decimal(paidAmount.toString()),
+              ...(items?.length
+                ? {
+                    items: {
+                      create: items.map(({ quantity, unitPrice, lineAmount, ...item }) => ({
+                        ...item,
+                        quantity: new Prisma.Decimal(quantity.toString()),
+                        unitPrice: new Prisma.Decimal(unitPrice.toString()),
+                        lineAmount: new Prisma.Decimal(lineAmount.toString()),
+                      })),
+                    },
+                  }
+                : {}),
+            },
             include: { party: true },
           }),
         updateCollection: (organizationId, id, data) =>

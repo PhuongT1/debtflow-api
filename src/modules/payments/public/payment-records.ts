@@ -2,4 +2,4 @@ export {
   PaymentRecordDto,
   PaymentWithCreatorDto,
   PaymentAllocationRecordDto,
-} from '../dto/payment-record.dto.js';
+} from '../presentation/dto/payment-record.dto.js';

@@ -123,9 +123,9 @@ test('keeps Express, Swagger and controllers out of service dependencies', () =>
 test('keeps domain subfolders flexible while rejecting auth-first feature roots', () => {
   fixture(
     {
-      'src/modules/payments/jobs/reconciliation.service.ts':
+      'src/modules/payments/application/jobs/reconciliation.service.ts':
         'export class ReconciliationService {}',
-      'src/modules/payments/api/webhooks.controller.ts': 'export class WebhooksController {}',
+      'src/modules/payments/presentation/api/webhooks.controller.ts': 'export class WebhooksController {}',
       'src/modules/protected/legacy/legacy.service.ts': 'export class LegacyService {}',
       'src/modules/public/legacy/legacy.controller.ts': 'export class LegacyController {}',
     },
@@ -238,7 +238,7 @@ test('Party clean core follows indirect type imports and rejects DTO/ORM/framewo
       'src/modules/parties/presentation/dto/input.dto.ts': 'export class InputDto {}',
     },
     ({ violations }) => {
-      const issues = violations.filter(({ rule }) => rule === 'party-clean-core');
+      const issues = violations.filter(({ rule }) => rule === 'clean-core');
       assert.equal(issues.length, 4);
       assert.ok(issues.some(({ file }) => file === 'src/common/hidden.ts'));
       assert.ok(issues.some(({ file }) => file.endsWith('party.rules.ts')));
@@ -276,7 +276,7 @@ test('domain cannot reach application through a neutral-looking type export', ()
     ({ violations }) => {
       assert.ok(
         violations.some(
-          ({ rule, file }) => rule === 'party-clean-core' && file === 'src/common/bridge.ts',
+          ({ rule, file }) => rule === 'clean-core' && file === 'src/common/bridge.ts',
         ),
       );
     },
@@ -292,8 +292,8 @@ test('new application files cannot hide outer dependencies and adapters cannot i
         "import { InputDto } from '../presentation/dto/input.dto';",
     },
     ({ violations }) => {
-      assert.ok(violations.some(({ rule }) => rule === 'party-clean-core'));
-      assert.ok(violations.some(({ rule }) => rule === 'party-adapter-dependency'));
+      assert.ok(violations.some(({ rule }) => rule === 'clean-core'));
+      assert.ok(violations.some(({ rule }) => rule === 'clean-adapter-dependency'));
     },
   );
 });
@@ -311,7 +311,80 @@ test('Party persistence rejects shared HTTP helpers but accepts neutral failures
     ({ violations }) => {
       assert.deepEqual(
         violations.map(({ file, rule }) => ({ file, rule })),
-        [{ file: 'src/modules/parties/infrastructure/queries/party-list.query.ts', rule: 'party-adapter-dependency' }],
+        [
+          {
+            file: 'src/modules/parties/infrastructure/queries/party-list.query.ts',
+            rule: 'clean-adapter-dependency',
+          },
+        ],
+      );
+    },
+  );
+});
+
+test('applies the same layer boundaries to newly enrolled features', () => {
+  fixture(
+    {
+      'src/modules/catalog/catalog.service.ts': 'export class CatalogService {}',
+      'src/modules/catalog/application/catalog-options.types.ts':
+        "export type CatalogOptions = import('../presentation/dto/catalog-response.dto').CatalogDto;",
+      'src/modules/catalog/presentation/dto/catalog-response.dto.ts': 'export class CatalogDto {}',
+      'src/modules/catalog/infrastructure/prisma-catalog.repository.ts':
+        "import { CatalogDto } from '../presentation/dto/catalog-response.dto';",
+      'src/modules/imports/presentation/imports.controller.ts': 'export class ImportsController {}',
+    },
+    ({ violations }) => {
+      assert.deepEqual(violations.map(({ rule }) => rule).sort(), [
+        'clean-adapter-dependency',
+        'clean-core',
+        'clean-layer-placement',
+      ]);
+    },
+  );
+});
+
+test('shares public type contracts across cores without allowing Prisma or runtime imports', () => {
+  fixture(
+    {
+      'src/modules/debts/public/debt-filters.types.ts':
+        'export type DebtFilters = { partyId?: string };',
+      'src/modules/debts/public/unsafe.types.ts':
+        'export type Unsafe = import("@generated/prisma").PrismaClient;',
+      'src/modules/reports/application/report.service.ts':
+        'import type { DebtFilters } from "@modules/debts/public/debt-filters.types";',
+      'src/modules/exports/application/bad.service.ts':
+        'import type { Unsafe } from "@modules/debts/public/unsafe.types";',
+      'src/modules/payments/domain/bad.rules.ts':
+        'import { DebtFilters } from "@modules/debts/public/debt-filters.types";',
+    },
+    ({ violations }) => {
+      assert.deepEqual(
+        violations
+          .filter(({ rule }) => rule === 'clean-core')
+          .map(({ file }) => file)
+          .sort(),
+        ['src/modules/debts/public/unsafe.types.ts', 'src/modules/payments/domain/bad.rules.ts'],
+      );
+    },
+  );
+});
+
+test('exposes a named persistence query to adapters and keeps it out of the application core', () => {
+  fixture(
+    {
+      'src/modules/debts/infrastructure/queries/debt-query.ts':
+        'export function buildDebtQuery() {}',
+      'src/modules/debts/public/debt-report.ts':
+        'export { buildDebtQuery } from "../infrastructure/queries/debt-query";',
+      'src/modules/reports/infrastructure/prisma-reports.repository.ts':
+        'import { buildDebtQuery } from "@modules/debts/public/debt-report";',
+      'src/modules/reports/application/bad.service.ts':
+        'import { buildDebtQuery } from "@modules/debts/public/debt-report";',
+    },
+    ({ violations }) => {
+      assert.deepEqual(
+        violations.map(({ rule, file }) => [rule, file]),
+        [['clean-core', 'src/modules/reports/application/bad.service.ts']],
       );
     },
   );

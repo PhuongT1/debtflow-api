@@ -1,8 +1,9 @@
 # Clean Architecture của DebtFlow
 
 **DebtFlow là Modular Monolith, áp dụng Clean Architecture từng module.** Các feature chạy trong
-cùng ứng dụng NestJS và dùng PostgreSQL. **Party đã có Domain/Application độc lập Nest và Prisma**;
-các module còn lại đang giữ ranh giới service → repository → adapter, chưa chuyển hết sang core độc lập.
+cùng ứng dụng NestJS và dùng PostgreSQL. **Party là module mẫu.** Các API dùng cùng quy tắc
+phụ thuộc giữa các lớp. Imports dùng Presentation cho endpoint scaffold.
+Xem [tiến độ áp dụng theo module](#tien-do-ap-dung-theo-module).
 
 ## Vì sao có hai tên kiến trúc?
 
@@ -23,7 +24,7 @@ Các tên layer dưới đây được dùng thống nhất trong bảng, sơ đ
 
 | Layer | Chịu trách nhiệm | Code Party hiện có | Không thuộc layer này |
 | --- | --- | --- | --- |
-| 1. Presentation — HTTP | Route, request DTO/validation, policy quyền của route, Swagger, response mapper | `presentation/parties.controller.ts`, `presentation/dto/`, `presentation/party.mapper.ts` | Query DB, transaction, quyết định nghiệp vụ |
+| 1. Presentation — HTTP | Route, request DTO/validation, policy quyền của route, Swagger, response mapper | `presentation/parties.controller.ts`, `presentation/dto/`, `presentation/party-response.mapper.ts` | Query DB, transaction, quyết định nghiệp vụ |
 | 2. Application — use case và ports | Điều phối thao tác, tenant/actor context, kiểm tra related IDs qua ports, gọi rule, yêu cầu đọc/ghi và phát audit sau thành công | `application/parties.service.ts`, `party.inputs.ts`, `party-read.types.ts`, `party.ports.ts`, `repositories/parties.repository.ts` | Nest decorators, HTTP DTO, Prisma, concrete adapters |
 | 3. Domain — quy tắc nghiệp vụ thuần | Quyết định nghiệp vụ từ dữ liệu được truyền vào; entity/value object chỉ khi có nhu cầu | `domain/party.rules.ts`: `canDeactivateParty` | I/O, DB query, HTTP, event emitter, phụ thuộc Application |
 | 4. Infrastructure — DB, audit và tích hợp | Triển khai ports bằng Prisma/SQL hoặc cơ chế giao tiếp thực tế; mapping DB và quản lý transaction | `infrastructure/prisma-parties.repository.ts`, `infrastructure/party-audit.adapter.ts`, `queries/`, `sql/` | Nhận HTTP request, chọn HTTP status, tự thay đổi policy nghiệp vụ |
@@ -57,7 +58,7 @@ không phải các tầng nghiệp vụ mới. Controller không tự lấy tena
 | `PartyAudit` | Gửi thông tin thay đổi để ghi lịch sử audit | `PartyAuditAdapter` |
 
 Input, read model và ports nằm trong Application vì chúng phục vụ use case. `party-write.mapper.ts`
-chuẩn hóa input và giữ ngữ nghĩa PATCH; `presentation/party.mapper.ts` chọn dữ liệu HTTP đầu ra.
+chuẩn hóa input và giữ ngữ nghĩa PATCH; `presentation/party-response.mapper.ts` chọn dữ liệu HTTP đầu ra.
 Hai mapper khác trách nhiệm, không tạo bản sao cùng một phép chuyển đổi.
 
 ### 3. Domain — quy tắc nghiệp vụ
@@ -76,14 +77,14 @@ một rule trong `domain/party.rules.ts`; chưa có entity hoặc value object r
 **“Party chỉ được vô hiệu hóa khi không còn khoản nợ đang hoạt động.”**
 
 ```ts
-export function canDeactivateParty(activeDebtCount: number): boolean {
-  return activeDebtCount === 0;
+export function canDeactivateParty(unsettledDebtCount: number): boolean {
+  return unsettledDebtCount === 0;
 }
 ```
 
 Đọc hàm theo nghĩa nghiệp vụ:
 
-- `activeDebtCount`: số khoản nợ đang hoạt động, do repository cung cấp.
+- `unsettledDebtCount`: số khoản nợ còn mở hoặc mới trả một phần, do repository cung cấp.
 - Trả `true`: không còn nợ đang hoạt động, được phép vô hiệu hóa.
 - Trả `false`: còn nợ đang hoạt động, phải từ chối thao tác.
 
@@ -107,7 +108,7 @@ Hàm chỉ được gọi khi thực hiện **vô hiệu hóa Party**, trong
 | Bước | Nơi thực hiện | Việc thực hiện |
 | --- | --- | --- |
 | 1 | Application service → Infrastructure repository | Mở transaction; đọc Party và đếm nợ đang hoạt động qua store |
-| 2 | Application service → Domain rule | Gọi `canDeactivateParty(activeDebtCount)` với số nợ vừa đọc |
+| 2 | Application service → Domain rule | Gọi `canDeactivateParty(unsettledDebtCount)` với số nợ vừa đọc |
 | 3a: trả `false` | Application service | Ném `ApplicationError` với key `parties.CANNOT_DELETE_ACTIVE_DEBTS`; không yêu cầu cập nhật |
 | 3b: trả `true` | Application service → Infrastructure repository | Yêu cầu vô hiệu hóa Party trong cùng transaction |
 | 4: commit thành công | Application service → audit port | Gửi thông tin thay đổi để ghi audit |
@@ -245,8 +246,8 @@ trước; chỉ thêm adapter cho nhu cầu thực tế, không tạo folder r�
 
 ### Ngoài bốn tầng: Composition — nối các implementation
 
-`parties.module.ts` ở gốc feature là nơi Nest đăng ký controller và dùng factory để cấp repository,
-audit adapter, member service vào `PartiesService`. Nó không chứa nghiệp vụ hoặc query.
+`parties.module.ts` ở gốc feature đăng ký controller, gắn `PartiesRepository` với `PrismaPartiesRepository`
+bằng `useClass`, rồi dùng `useFactory` cấp repository và audit adapter cho `PartiesService`.
 PostgreSQL và event bus là công cụ/hệ thống mà adapters sử dụng, không phải các layer nghiệp vụ mới.
 
 ## Thư mục và tên file
@@ -261,12 +262,12 @@ src/modules/parties/
     parties.service.ts                # Coordinates use cases and transactions through ports
     party.inputs.ts                   # Accepted use-case inputs and writable data
     party-read.types.ts               # Repository records and read models returned by use cases
-    party.ports.ts                    # Audit and member-lookup contracts
+    party.ports.ts                    # Audit contract
     party-write.mapper.ts             # Normalizes accepted input; preserves PATCH omissions
     repositories/parties.repository.ts
   presentation/
     parties.controller.ts
-    party.mapper.ts                   # Maps use-case results to HTTP response fields
+    party-response.mapper.ts          # Maps use-case results to HTTP response fields
     dto/                              # Validation and OpenAPI metadata
   infrastructure/
     prisma-parties.repository.ts
@@ -293,15 +294,13 @@ flowchart LR
   end
   subgraph Application["2. Application — use case và ports"]
     S["Application service"]
-    RP["Repository port"]
+    RP["Repository port / PartyWriteStore"]
     AP["Audit port"]
-    MP["Member lookup port"]
     S --> RP
     S --> AP
-    S --> MP
   end
   subgraph Domain["3. Domain — quy tắc nghiệp vụ thuần"]
-    D["Quy định: Party còn nợ phải giữ hoạt động<br/>canDeactivateParty(activeDebtCount)<br/>Không tự đọc hoặc ghi DB"]
+    D["Quy định: Party còn nợ phải giữ hoạt động<br/>canDeactivateParty(unsettledDebtCount)<br/>Không tự đọc hoặc ghi DB"]
   end
   subgraph Infrastructure["4. Infrastructure — DB, audit và tích hợp"]
     R["Prisma repository"]
@@ -355,7 +354,7 @@ sequenceDiagram
 ```
 
 `PartyAuditAdapter` gọi `emitAudit` trong `src/common/events/audit-event.ts`.
-`AuditLogsListener` ở `src/modules/audit-logs/audit-logs.listener.ts` nhận event và gọi repository
+`AuditLogsListener` ở `src/modules/audit-logs/infrastructure/audit-logs.listener.ts` nhận event và gọi repository
 của module audit-logs để lưu vào bảng `AuditLog`. GET list không phát event thay đổi.
 
 **Giới hạn hiện tại:** `EventEmitter2.emit` không chờ listener async ghi DB xong.
@@ -388,7 +387,7 @@ Auth guard cũng có thể đọc DB trước controller; lỗi dừng luồng v
 
 BE/AI bắt đầu từ use case và owner có sẵn, xác định input/output và invariant trước khi tạo file.
 Tái sử dụng port/helper phù hợp; không tạo class/folder theo số lượng layer cho đủ hình thức.
-Chỉ mở rộng các module khác theo cùng mô hình khi task yêu cầu; Party hiện là module mẫu.
+Dùng Party làm ví dụ khi chuyển các module sang cùng hướng phụ thuộc.
 
 ## Vì sao chọn cách này?
 
@@ -406,11 +405,27 @@ Chỉ mở rộng các module khác theo cùng mô hình khi task yêu cầu; Pa
 
 ## Những gì đã áp dụng và cách giữ đúng kiến trúc
 
-Party có service thuần TypeScript, rules thuần, repository/audit ports và Prisma/event adapters.
-`check:architecture` kiểm tra mọi file Domain/Application và dependency gián tiếp, bao gồm type imports.
-Domain không được phụ thuộc Application; cả hai không được phụ thuộc Presentation, Nest hay Prisma.
-HTTP và database adapter không được import implementation của nhau.
-Những module khác chưa được xác nhận tuân thủ đầy đủ cùng mức này.
+### Tiến độ áp dụng theo module {#tien-do-ap-dung-theo-module}
+
+| Module | Điểm bắt đầu khi đọc code | Phạm vi triển khai |
+| --- | --- | --- |
+| Party | `parties/presentation/parties.controller.ts` → `application/parties.service.ts` | Repository port, Domain rule, Prisma adapter và audit adapter |
+| Audit Logs | `audit-logs/presentation/audit-logs.controller.ts` → `application/audit-logs.service.ts` | Controller xác thực query và chuyển tiêu chí lọc/sắp xếp vào Application. Prisma adapter biên dịch tiêu chí, giới hạn theo tenant và đọc lịch sử. Listener ghi audit nằm trong Infrastructure |
+| Catalog | `catalog/presentation/catalog.controller.ts` → `application/catalog.service.ts` | Application giới hạn theo tenant qua repository port. Prisma adapter chọn các trường trả về cho brand, category, product và province |
+| Imports | `imports/presentation/imports.controller.ts` | HTTP scaffold giữ role gate và response hiện hành. Use case import sẽ thuộc Application khi có parser và luồng ghi |
+| Auth | `auth/presentation/auth.controller.ts` → `auth/application/auth.service.ts` | Application kiểm tra tài khoản và membership. Adapter Prisma đọc dữ liệu, adapter credentials xử lý bcrypt và JWT |
+| Users | `users/presentation/users.controller.ts` → `users/application/users.service.ts` | Domain giữ quy tắc cấp quyền và trạng thái membership. Module cấp adapter cho băm mật khẩu, ghi dữ liệu và phát audit |
+| Debts | `debts/presentation/debts.controller.ts` → `debts/application/debts.service.ts` | Application kiểm tra dòng hàng và điều phối thao tác qua store của transaction. Adapter dùng Prisma Decimal và biên dịch bộ lọc |
+| Payments | `payments/presentation/payments.controller.ts` → `payments/application/payments.service.ts` | Domain phân bổ tiền. Module nối quy tắc trạng thái nợ từ Debts. Prisma adapter tạo hoặc đảo phiếu và cập nhật dư nợ trong một transaction |
+| Dashboard | `dashboard/presentation/dashboard.controller.ts` → `dashboard/application/dashboard.service.ts` | Application xác định khoảng ngày. Adapter tính tổng và tải nhóm việc cần xử lý |
+| Reports | `reports/presentation/reports.controller.ts` → `reports/application/reports.service.ts` | Adapter dùng bộ lọc của Debts để tổng hợp tuổi nợ theo tenant |
+| Exports | `exports/presentation/exports.controller.ts` → `exports/application/debt-export.service.ts` | Application đặt giới hạn dòng. Adapter gọi Debts qua public provider rồi ghi XLSX |
+
+`check:architecture` áp dụng quy tắc layer cho các module trong
+`scripts/quality/clean-feature-layout.mjs`. Gate đi theo cả dependency gián tiếp và type imports.
+Domain chỉ dùng code thuần và Application có thể gọi Domain. Presentation và Infrastructure
+giao tiếp qua Application. Module Nest ở gốc nối service với adapter bằng provider bindings.
+Khi thêm module API, bổ sung module vào danh sách và kiểm chứng cả ranh giới import lẫn API.
 
 Khi thêm tính năng, đặt code theo trách nhiệm thực tế và giữ transaction, tenant scope cùng response
 contract. Không tạo Entity, UseCase hoặc Repository mới nếu chỉ lặp lại trách nhiệm đã có.
@@ -421,8 +436,7 @@ Cách thực hiện: [viết và bảo trì API](../module-development.md).
 
 ### Kết quả rà soát Party theo bốn tầng
 
-Rà soát code ngày **16/11/2026**. Kết quả dưới đây là bằng chứng tại thời điểm kiểm tra,
-không thay thế kiểm tra khi có thay đổi mới.
+Rà soát code ngày **24/11/2026**.
 
 | Tầng | Đã đối chiếu trong code | Kết luận |
 | --- | --- | --- |
@@ -436,7 +450,7 @@ không thay thế kiểm tra khi có thay đổi mới.
 'parties.INVALID_DATE_RANGE')`; tenant helper dùng `ApplicationError('forbidden', 'errors.FORBIDDEN')`.
 `ApiExceptionFilter` là nơi map sang HTTP 400/403, giữ error key và EN/VI. Helper tenant được dùng
 chung; thay đổi này giữ hành vi HTTP cho các module khác, không chuyển kiến trúc của chúng.
-Checker chặn Party Infrastructure import trực tiếp shared HTTP error helpers, HTTP/auth/Swagger/filter modules;
+Checker chặn Infrastructure của module đã áp dụng import trực tiếp shared HTTP error helpers, HTTP/auth/Swagger/filter modules;
 Domain/Application tiếp tục được kiểm tra dependency bắc cầu. Các kiểm tra này không thay thế review semantics.
 
 | API Party | Luồng nghiệp vụ và layer cần dùng |
@@ -446,11 +460,9 @@ Domain/Application tiếp tục được kiểm tra dependency bắc cầu. Các
 | PATCH update | Application đọc/kiểm tra assignee và cập nhật qua transaction-scoped store; Infrastructure thực thi transaction. Audit sau commit; không tạo Domain rule chỉ để bọc PATCH |
 | DELETE deactivate | Application đọc Party/số nợ qua store → Domain quyết định cho phép → Application yêu cầu cập nhật trong cùng transaction → audit sau commit → Presentation map response |
 
-Kiểm chứng cho thay đổi lỗi: **100 test** thuộc Party service/SQL builder và HTTP error filter pass;
-**29 test** tenant/organization của các caller dùng chung pass; **15 test** architecture checker pass.
-Các spec rule/write mapper/response mapper đã pass ở lượt rà soát trước và code của chúng không thay đổi.
-Không chạy PostgreSQL/concurrency hoặc kiểm thử tải trong lượt này; không suy từ test mock rằng mọi
-đường ghi DB đều an toàn. Audit vẫn best-effort như mục audit đã mô tả.
+Kiểm chứng trong lượt rà soát này gồm năm suite test Party về service, rule, mapper và SQL builder,
+cùng các kiểm tra architecture và maintainability. Hành vi concurrency và tải trên PostgreSQL
+cần xác minh bằng các suite PostgreSQL riêng khi đánh giá thay đổi query hoặc transaction.
 
 ## Nguồn tham khảo và quyết định áp dụng
 

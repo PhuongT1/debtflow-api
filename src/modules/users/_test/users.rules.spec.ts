@@ -6,7 +6,7 @@ import {
   assertCanGrantRole,
   assertCanReactivate,
   assertCanSuspend,
-} from '../users.rules.js';
+} from '../domain/users.rules.js';
 
 const owner = { userId: 'u-owner', role: OrganizationRole.OWNER };
 const admin = { userId: 'u-admin', role: OrganizationRole.ADMIN };
@@ -16,7 +16,7 @@ const codeOf = (fn: () => unknown) => {
   try {
     fn();
   } catch (error) {
-    return (error as { getResponse: () => { code: string } }).getResponse().code;
+    return (error as { key: string }).key.split('.').at(-1);
   }
   return undefined;
 };
